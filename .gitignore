@@ -1,0 +1,73 @@
+# --- PYTHON & SISTEMA ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- ENTORNOS VIRTUALES ---
+# Nombres comunes para venvs
+env/
+venv/
+.env/
+.venv/
+venv.bak/
+
+# --- VARIABLES DE ENTORNO Y SECRETOS (CRÍTICO) ---
+.env
+.env.local
+.streamlit/secrets.toml
+
+# --- BASES DE DATOS (SQLITE) ---
+# Ignoramos las DBs porque se generan con data_manager.py
+*.db
+*.sqlite3
+*.sqlite
+
+# --- MEMORIA VECTORIAL (RAG - CHROMA) ---
+# Estas carpetas son muy pesadas y se regeneran con setup_rag.py
+chroma_db/
+**/chroma_db/
+
+# --- MODELOS ENTRENADOS ---
+# Ignoramos los binarios. Se regeneran con trainer.py
+# Si quieres guardar los modelos en git, comenta estas líneas.
+*.joblib
+*.pkl
+*.h5
+*.pt
+
+# --- CARPETAS DE MODELOS (Opcional) ---
+# Si quieres mantener la estructura de carpetas pero no los archivos dentro
+# asegúrate de crear un archivo .gitkeep dentro de las carpetas models/
+# y descomenta la siguiente línea si quisieras ignorar todo el contenido:
+# models/*
+# !models/.gitkeep
+
+# --- IDEs & EDITORES ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# --- VISUALIZACIÓN / LOGS ---
+*.log
+tfg_plot_output.html
+tfg_visualizacion.html
