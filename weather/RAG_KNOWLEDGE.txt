@@ -1,0 +1,18 @@
+CONOCIMIENTO TÉCNICO Y GEOGRÁFICO: CLIMATOLOGÍA Y ANÁLISIS TÉRMICO
+
+1. NATURALEZA DE LA TEMPERATURA Y MEDICIÓN
+La temperatura atmosférica es una magnitud física que indica la energía cinética interna de las partículas de aire. En este sistema, se utiliza la Media Diaria (AvgTemperature), que es la integración de las mediciones horarias para suavizar el ciclo diurno de insolación.
+
+2. CONTEXTO GEOGRÁFICO DE LAS CIUDADES DEL DATASET
+- Madrid (España): Latitud 40°N. Presenta un clima mediterráneo continentalizado. Se caracteriza por una fuerte oscilación térmica estacional y diaria. Los veranos son secos y calurosos, mientras que los inviernos son moderadamente fríos. El dataset refleja la influencia de la Meseta Central.
+- París (Francia): Latitud 48°N. Clima oceánico degradado. Recibe influencias directas del Atlántico, lo que resulta en temperaturas más suaves pero con mayor nubosidad y humedad constante. Su variabilidad diaria suele ser menor que la de Madrid.
+- New York City (EE.UU.): Latitud 40°N. Clima continental húmedo. A pesar de estar a la misma latitud que Madrid, sufre climas mucho más extremos debido a la ausencia de barreras montañosas que frenen las masas de aire polar ártico. Los veranos son muy húmedos (influencia subtropical) y los inviernos pueden registrar grandes nevadas.
+- Tokyo (Japón): Latitud 35°N. Clima subtropical húmedo. Está fuertemente influenciado por el sistema de monzones y las corrientes oceánicas. Presenta veranos muy cálidos y húmedos e inviernos secos y despejados.
+
+3. TRANSFORMACIÓN TÉCNICA DE DATOS
+- Conversión Celsius: Los datos originales de la fuente (Kaggle/NCDC) se registran en grados Fahrenheit (°F), escala donde el punto de congelación del agua es 32° y el de ebullición 212°. El sistema convierte estos valores a Celsius (°C) mediante la función lineal: C = (F - 32) * (5/9).
+- Limpieza de Outliers: El valor -99.0 es un código de error del National Climatic Data Center que indica la ausencia de datos válidos. Su eliminación es crítica para que el Random Forest no detecte caídas de temperatura imposibles.
+
+4. INTERPRETACIÓN ESTADÍSTICA DEL MODELO
+- Autocorrelación: La temperatura de hoy está fuertemente correlacionada con la de ayer debido a la inercia térmica de la atmósfera y la superficie terrestre.
+- MAE (Mean Absolute Error): Representa la magnitud de la diferencia promedio entre la predicción y el valor real. Un MAE de 3°C indica una precisión física alta considerando la naturaleza caótica de los sistemas meteorológicos locales.

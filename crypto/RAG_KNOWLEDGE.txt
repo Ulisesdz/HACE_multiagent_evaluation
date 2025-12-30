@@ -1,0 +1,18 @@
+CONOCIMIENTO TÉCNICO E HISTÓRICO: CRIPTOMONEDAS Y MODELOS FINANCIEROS
+
+1. DEFINICIÓN TÉCNICA DE CRIPTOMONEDA
+Una criptomoneda es un activo digital que emplea cifrado criptográfico para garantizar su titularidad, asegurar la integridad de las transacciones y controlar la creación de unidades adicionales. A diferencia de las divisas tradicionales, no están reguladas por instituciones centrales y utilizan un registro distribuido llamado Blockchain (Cadena de Bloques).
+
+2. ACTIVOS EN EL DATASET: HISTORIA Y CARACTERÍSTICAS
+- Bitcoin (BTC): Creado en 2009 por la entidad anónima Satoshi Nakamoto. Es la primera criptomoneda basada en el algoritmo de consenso Proof of Work (PoW). Su suministro está limitado matemáticamente a 21 millones de unidades, lo que le otorga una naturaleza deflacionaria. En el dataset, BTC actúa como el "activo reserva" que marca la tendencia del mercado.
+- Ethereum (ETH): Propuesta en 2013 por Vitalik Buterin y lanzada en 2015. Introdujo los "Smart Contracts" o contratos inteligentes, programas que se ejecutan automáticamente en la blockchain. Ha transicionado de PoW a Proof of Stake (PoS) en un evento conocido como "The Merge", reduciendo su consumo energético en un 99%.
+- Solana (SOL): Lanzada en 2020 por Solana Labs. Utiliza un mecanismo de consenso único llamado Proof of History (PoH) junto con PoS. Es conocida en el dataset por su extrema volatilidad pero también por su alta capacidad de transacciones por segundo (TPS).
+
+3. FUNDAMENTOS MATEMÁTICOS DEL MODELO
+- Series Temporales: El dataset se trata como una secuencia de datos {x_t} donde el tiempo es una variable independiente implícita.
+- Random Forest Regressor: Es un algoritmo de aprendizaje supervisado que utiliza un "ensemble" de árboles de decisión. Cada árbol se entrena con una submuestra de los datos (bagging). La predicción final es el promedio de todas las predicciones de los árboles individuales, lo que reduce la varianza y el riesgo de sobreajuste (overfitting) en comparación con un solo árbol.
+- Ventana Deslizante (Lags): Se transforman los datos univariantes en un problema de aprendizaje supervisado creando columnas para t-1, t-2 y t-3. Matemáticamente, buscamos una función f tal que: Precio(t) = f(Precio(t-1), Precio(t-2), Precio(t-3)).
+
+4. ANÁLISIS DE MERCADO PARA EL AGENTE
+- Market Cap: El valor total de todas las unidades en circulación. Influye en la liquidez; activos con mayor capitalización suelen ser menos volátiles.
+- Correlación con Fiat: El precio se mide en el par USD (Dólar estadounidense). Factores macroeconómicos como las tasas de interés de la FED (Reserva Federal) afectan inversamente al valor de estos activos.
