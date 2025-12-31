@@ -27,7 +27,7 @@ def build_graph():
         }
     )
 
-    # Una vez que el subagente termina su trabajo, volvemos al supervisor 
+    # Una vez que el subagente termina su trabajo, vuelve al supervisor 
     # (o podríamos ir a END si queremos un solo turno)
     workflow.add_edge("Crypto_Agent", END)
     workflow.add_edge("Weather_Agent", END)

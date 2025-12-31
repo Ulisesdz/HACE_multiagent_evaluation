@@ -7,30 +7,34 @@ El sistema combina Modelos de Machine Learning Tradicional (Random Forest para s
 
 ```plaintext
 multiagent_evalutation/
-├── orchestrator/          # [NUEVO] Cerebro del sistema (LangGraph)
-    ├── agents.py          # Definición de Supervisor y Sub-agentes
-    ├── config.py          # Configuración de LLM (Ollama) y rutas
-    ├── graph.py           # Construcción del grafo de estados
-    ├── main.py            # Ejecución por consola
-    ├── state.py           # Definición del estado compartido
-    └── tools.py           # Conexión entre Agentes y herramientas (ML/SQL/RAG)
+├── orchestrator/          # Cerebro del sistema (LangGraph)
+│   ├── agents.py          # Definición de Supervisor y Sub-agentes
+│   ├── config.py          # Configuración de LLM (Ollama), rutas y MLflow
+│   ├── graph.py           # Construcción del grafo de estados
+│   ├── main.py            # Ejecución por consola
+│   ├── prompts.py         # Gestión centralizada de Prompts y Grounding
+│   ├── tools.py           # Herramientas con Introspección de Esquema (Schema Awareness)
+│   └── utils.py           # Decoradores de logs y utilidades
 ├── crypto/
-    ├── crypto_data.db     # Base de datos SQLite
-    ├── RAG_KNOWLEDGE.txt  # Contexto técnico e histórico para el agente RAG
-    ├── models/            # Modelos .joblib entrenados
-    └── src/            # Modelos .joblib entrenados    
-        ├── crypto_data.db     # Base de datos SQLite
-        ├── data_manager.py    # Descarga de datos y gestión de DB
-        ├── trainer.py         # Entrenamiento y validación cronológica
-        └── predictor.py       # Inferencia y predicciones futuras
+│   ├── crypto_data.db     # Base de datos SQLite con precios históricos
+│   ├── RAG_KNOWLEDGE.txt  # Contexto técnico para el agente RAG
+│   ├── models/            # Modelos .joblib entrenados
+│   ├── plots/             # Gráficas de validación de los modelos
+│   └── src/               # Scripts de ML
+│       ├── data_manager.py    # ETL: Descarga de Yahoo Finance
+│       ├── trainer.py         # Entrenamiento + Validación + Gráficas
+│       └── predictor.py       # Inferencia para el Agente
 └── weather/
-    ├── weather_data.db    # Base de datos SQLite
-    ├── RAG_KNOWLEDGE.txt  # Conocimiento  de ciudades y climatología para el agente RAG
-    ├── models/            # Modelos .joblib entrenados
-    └── src/            # Modelos .joblib entrenados    
-        ├── data_manager.py    # Descarga de Kaggle y gestión de DB
-        ├── trainer.py         # Entrenamiento y cálculo de métricas (MAE, R2)
-        └── predictor.py       # Inferencia de temperatura por ciudad
+│   ├── weather_data.db    # Base de datos SQLite
+│   ├── RAG_KNOWLEDGE.txt  # Conocimiento geográfico para RAG
+│   ├── models/            # Modelos .joblib entrenados
+│   ├── plots/             # [NUEVO] Gráficas de validación de los modelos
+│   └── src/               
+│       ├── data_manager.py    # ETL: Gestión de Datasets Climáticos
+│       ├── trainer.py         # Entrenamiento + Validación + Gráficas
+│       └── predictor.py       # Inferencia para el Agente
+├── frontend.py            # Interfaz de usuario con Streamlit
+└── setup_rag.py           # Script para vectorizar conocimiento
 ```
 ## Prerrequisitos
 Este sistema funciona 100% en local para garantizar privacidad y coste cero.
@@ -82,6 +86,24 @@ Opción B: Consola (CLI) Interacción rápida por terminal.
 python -m orchestrator.main
 ```
 
+## Características Avanzadas
+### Observabilidad con MLflow
+El proyecto integra MLflow para la trazabilidad completa de la IA.
+1. Interactúa con el chat en Streamlit.
+2. Ejecuta en otra terminal: mlflow ui.
+```bash
+ mlflow ui
+```
+3. Accede a http://127.0.0.1:5000 para ver:
+- Traces: Diagramas de cascada (Waterfall) de cada interacción Agente-Herramienta.
+- Prompts: Inspección de qué texto exacto se envía al LLM.
+- Latencia: Tiempos de respuesta de cada nodo.
+
+## Guardrails y Grounding Dinámico
+El sistema implementa mecanismos de seguridad robustos:
+- Introspección de Esquema: Los agentes leen la base de datos al inicio para saber qué tablas (Monedas/Ciudades) existen realmente.
+- Anclaje (Grounding): Si preguntas por una ciudad que no está en la DB, el agente rechazará la pregunta en lugar de alucinar datos.
+- Prompting Estricto: Reglas explícitas para diferenciar entre un dato histórico (SQL) y una predicción (ML).
 
 ## Arquitectura del Sistema
 
@@ -89,6 +111,7 @@ python -m orchestrator.main
 Analiza la intención del usuario y decide a qué experto derivar la consulta.
 - Si la pregunta es sobre Bitcoin/Ethereum -> Crypto Agent.
 - Si la pregunta es sobre clima/temperatura -> Weather Agent.
+- Si es charla trivial -> Fin.
 
 ### 2. Los Sub-Agentes (ReAct)
 Cada agente especializado (Crypto y Weather) tiene autonomía para decidir qué herramienta usar según el contexto temporal de la pregunta:

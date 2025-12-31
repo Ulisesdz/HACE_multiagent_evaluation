@@ -43,6 +43,7 @@ venv.bak/
 
 # --- MEMORIA VECTORIAL (RAG - CHROMA) ---
 # Estas carpetas son muy pesadas y se regeneran con setup_rag.py
+embedding_model/
 chroma_db/
 **/chroma_db/
 
@@ -58,7 +59,7 @@ chroma_db/
 # Si quieres mantener la estructura de carpetas pero no los archivos dentro
 # asegúrate de crear un archivo .gitkeep dentro de las carpetas models/
 # y descomenta la siguiente línea si quisieras ignorar todo el contenido:
-# models/*
+# models/
 # !models/.gitkeep
 
 # --- IDEs & EDITORES ---
@@ -67,7 +68,8 @@ chroma_db/
 *.swp
 .DS_Store
 
-# --- VISUALIZACIÓN / LOGS ---
+# --- VISUALIZACIÓN / LOGS / MLFLOW ---
 *.log
 tfg_plot_output.html
 tfg_visualizacion.html
+mlruns/

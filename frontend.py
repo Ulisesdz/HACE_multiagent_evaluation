@@ -1,10 +1,23 @@
 import streamlit as st
+import mlflow
 from langchain_core.messages import HumanMessage, AIMessage
 from orchestrator.graph import build_graph
 
+
+# --- CONFIGURACIÓN ML FLOW ---
+# Carpeta local mlruns
+mlflow.set_tracking_uri("file:./mlruns")
+
+# Nombre experimento
+mlflow.set_experiment("TFG_MultiAgent_Orchestrator")
+
+# Autolog para Langchain
+mlflow.langchain.autolog()
+
+
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
-    page_title="IA Multi-Agente TFG",
+    page_title="Sistema Multi-Agente",
     page_icon="🤖",
     layout="wide"
 )
@@ -17,27 +30,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- BARRA LATERAL (SIDEBAR) ---
-with st.sidebar:
-    st.title("🎛️ Panel de Control")
-    st.markdown("### 🎓 Proyecto TFG")
-    st.info(
-        "Sistema jerárquico de agentes para predicción de Criptomonedas y Clima "
-        "utilizando Modelos Locales (Llama 3.1) y RAG."
-    )
-    
-    st.divider()
-    
-    st.markdown("### 🛠️ Agentes Activos")
-    st.success("🟢 **Supervisor**: Enrutamiento inteligente")
-    st.warning("🟠 **Crypto Agent**: Predicción y Análisis")
-    st.info("🔵 **Weather Agent**: Meteorología y Datos")
-    
-    st.divider()
-    if st.button("🧹 Limpiar Chat"):
-        st.session_state.messages = []
-        st.rerun()
-
 # --- INICIALIZACIÓN DEL ESTADO ---
 # Cargamos el grafo una sola vez usando caché para no recargar el modelo en cada interacción
 @st.cache_resource
@@ -46,14 +38,42 @@ def load_app():
 
 app = load_app()
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# --- BARRA LATERAL (SIDEBAR) ---
+with st.sidebar:
+    st.title("Panel de Control")
+    st.markdown("### Agentes Activos")
+    st.success("🟢 **Supervisor**: Enrutamiento inteligente")
+    st.warning("🟠 **Crypto Agent**: Predicción y Análisis")
+    st.info("🔵 **Weather Agent**: Meteorología y Datos")
+
+    if st.button("Limpiar Chat"):
+        st.session_state.messages = []
+        st.rerun()
+
+    st.divider()
+    
+    # BOTÓN PARA MOSTRAR GRAFO
+    st.markdown("### Arquitectura")
+    if st.button("Ver Grafo de Agentes"):
+        try:
+            # Obtenemos la imagen binaria del grafo
+            # graph_image = app.get_graph(xray=1).draw_mermaid_png() # Para ver lógica de cada agente
+            graph_image = app.get_graph().draw_mermaid_png()
+            st.image(graph_image, caption="Arquitectura Jerárquica LangGraph")
+        except Exception as e:
+            st.error(f"No se pudo generar el grafo visual: {e}") 
+
+
 
 # --- INTERFAZ PRINCIPAL ---
-st.title("🤖 Asistente IA: Crypto & Weather")
+st.title("Sistema MultiAgente: Crypto & Weather")
+st.markdown("Sistema jerárquico de agentes para predicción de Criptomonedas y Clima utilizando Modelos Locales (Llama 3.1) y RAG")
 st.markdown("Pregunta sobre *Bitcoin*, *predicciones futuras*, *clima en Madrid* o *datos históricos*.")
 
 # 1. Mostrar historial de mensajes
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
 for message in st.session_state.messages:
     if isinstance(message, HumanMessage):
         with st.chat_message("user", avatar="👤"):
@@ -85,21 +105,39 @@ if user_input:
             for event in app.stream(inputs):
                 for node_name, node_output in event.items():
                     
-                    # LOGICA DE VISUALIZACIÓN DE PASOS
+                    # 1. LOGICA SUPERVISOR
                     if node_name == "Supervisor":
                         next_agent = node_output.get("next", "FINISH")
                         status_container.write(f"📡 **Supervisor:** Redirigiendo a `{next_agent}`")
                     
-                    elif node_name == "Crypto_Agent":
-                        status_container.write("💰 **Crypto Agent:** Analizando mercado y herramientas...")
-                        # Capturamos la respuesta si existe
-                        if "messages" in node_output:
-                            final_response = node_output["messages"][-1].content
+                    # 2. LOGICA DE AGENTES (Crypto y Weather)
+                    elif "messages" in node_output:
+                        # Analizamos los mensajes nuevos generados en este paso
+                        for msg in node_output["messages"]:
                             
-                    elif node_name == "Weather_Agent":
-                        status_container.write("🌤️ **Weather Agent:** Consultando datos meteorológicos...")
-                        if "messages" in node_output:
-                            final_response = node_output["messages"][-1].content
+                            # A) El Agente QUIERE usar una herramienta (Tool Call)
+                            if hasattr(msg, "tool_calls") and len(msg.tool_calls) > 0:
+                                for tool_call in msg.tool_calls:
+                                    tool_name = tool_call["name"]
+                                    tool_args = tool_call["args"]
+                                    status_container.write(f"**{node_name}** decide usar: `{tool_name}`")
+                                    with status_container.expander(f"Inputs para {tool_name}"):
+                                        st.json(tool_args)
+
+                            # B) La herramienta YA SE EJECUTÓ (Tool Output)
+                            # Nota: LangGraph a veces emite el ToolMessage en un nodo separado o junto al agente
+                            # dependiendo de cómo esté configurado 'create_react_agent'.
+                            # Si detectamos un mensaje de tipo ToolMessage:
+                            if msg.type == "tool":
+                                tool_name = msg.name
+                                tool_output = msg.content
+                                status_container.write(f"✅ **Resultado de {tool_name}:**")
+                                with status_container.expander(f"Ver Output de {tool_name}"):
+                                    st.code(tool_output) # Usamos code para que se vea bien si es CSV o tabla
+
+                            # C) Respuesta final del Agente (AIMessage sin tools)
+                            if msg.type == "ai" and not msg.tool_calls:
+                                final_response = msg.content
 
             # Cierre del estado de proceso
             status_container.update(label="✅ Respuesta Generada", state="complete", expanded=False)
