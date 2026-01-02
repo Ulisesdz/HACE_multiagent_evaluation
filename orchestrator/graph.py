@@ -9,7 +9,6 @@ def build_graph():
     workflow.add_node("Supervisor", supervisor_node)
     
     # Nodos de Agentes (Wrapper simple para invocar el agente preconstruido)
-    # create_react_agent devuelve un ejecutable, lo llamamos dentro de una lambda o función
     workflow.add_node("Crypto_Agent", lambda state: crypto_agent.invoke(state))
     workflow.add_node("Weather_Agent", lambda state: weather_agent.invoke(state))
 
@@ -28,7 +27,6 @@ def build_graph():
     )
 
     # Una vez que el subagente termina su trabajo, vuelve al supervisor 
-    # (o podríamos ir a END si queremos un solo turno)
     workflow.add_edge("Crypto_Agent", END)
     workflow.add_edge("Weather_Agent", END)
 

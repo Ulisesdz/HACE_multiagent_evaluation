@@ -15,7 +15,7 @@ from orchestrator.config import (
     get_llm, get_embeddings, CRYPTO_DB, WEATHER_DB, 
     CRYPTO_VECTOR_DB, WEATHER_VECTOR_DB)
 
-# Añadimos la raíz al path para poder importar tus módulos
+# Raíz al path para poder importar tus módulos
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 llm = get_llm()

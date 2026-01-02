@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import mlflow
 from langchain_core.messages import HumanMessage, AIMessage
@@ -6,7 +7,8 @@ from orchestrator.graph import build_graph
 
 # --- CONFIGURACIÓN ML FLOW ---
 # Carpeta local mlruns
-mlflow.set_tracking_uri("file:./mlruns")
+os.makedirs("mlruns", exist_ok=True)
+mlflow.set_tracking_uri("sqlite:///mlruns/mlflow.db")
 
 # Nombre experimento
 mlflow.set_experiment("TFG_MultiAgent_Orchestrator")
@@ -31,7 +33,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- INICIALIZACIÓN DEL ESTADO ---
-# Cargamos el grafo una sola vez usando caché para no recargar el modelo en cada interacción
+# Carga del grafo una sola vez usando caché para no recargar el modelo en cada interacción
 @st.cache_resource
 def load_app():
     return build_graph()
@@ -56,7 +58,7 @@ with st.sidebar:
     st.markdown("### Arquitectura")
     if st.button("Ver Grafo de Agentes"):
         try:
-            # Obtenemos la imagen binaria del grafo
+            # Imagen binaria del grafo
             # graph_image = app.get_graph(xray=1).draw_mermaid_png() # Para ver lógica de cada agente
             graph_image = app.get_graph().draw_mermaid_png()
             st.image(graph_image, caption="Arquitectura Jerárquica LangGraph")
@@ -68,7 +70,7 @@ with st.sidebar:
 # --- INTERFAZ PRINCIPAL ---
 st.title("Sistema MultiAgente: Crypto & Weather")
 st.markdown("Sistema jerárquico de agentes para predicción de Criptomonedas y Clima utilizando Modelos Locales (Llama 3.1) y RAG")
-st.markdown("Pregunta sobre *Bitcoin*, *predicciones futuras*, *clima en Madrid* o *datos históricos*.")
+st.markdown("Pregunta predicciones futuras o datos históricos sobre *Bitcoin, Solana o Ethereum* para criptomonedas, o clima en *Tokio, New York, Paris o Madrid* para información meteorológica.")
 
 # 1. Mostrar historial de mensajes
 if "messages" not in st.session_state:
@@ -133,7 +135,7 @@ if user_input:
                                 tool_output = msg.content
                                 status_container.write(f"✅ **Resultado de {tool_name}:**")
                                 with status_container.expander(f"Ver Output de {tool_name}"):
-                                    st.code(tool_output) # Usamos code para que se vea bien si es CSV o tabla
+                                    st.code(tool_output) # Uso de code para que se vea bien si es CSV o tabla
 
                             # C) Respuesta final del Agente (AIMessage sin tools)
                             if msg.type == "ai" and not msg.tool_calls:

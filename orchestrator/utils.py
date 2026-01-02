@@ -35,7 +35,7 @@ def log_execution(func):
 
 def get_table_columns(db_path, table_name):
     """
-    Funcioón para Schema Introspection.
+    Función para Schema Introspection.
     Devuelve una lista con los nombres de las columnas de una tabla.
     """
     try:
@@ -70,3 +70,4 @@ def get_available_entities(db_path):
         return tables
     except Exception:
         return []
+    

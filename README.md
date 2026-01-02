@@ -92,7 +92,7 @@ El proyecto integra MLflow para la trazabilidad completa de la IA.
 1. Interactúa con el chat en Streamlit.
 2. Ejecuta en otra terminal: mlflow ui.
 ```bash
- mlflow ui
+uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db
 ```
 3. Accede a http://127.0.0.1:5000 para ver:
 - Traces: Diagramas de cascada (Waterfall) de cada interacción Agente-Herramienta.
