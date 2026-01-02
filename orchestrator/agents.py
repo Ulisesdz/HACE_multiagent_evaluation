@@ -23,22 +23,49 @@ llm = get_llm()
 available_coins = get_available_entities(CRYPTO_DB)
 crypto_prompt_text = get_crypto_agent_prompt(available_coins)
 
-crypto_agent = create_react_agent(
+_crypto_agent_executor = create_react_agent(
     llm,
     tools=[crypto_history_tool, crypto_prediction_tool, crypto_rag_tool],
     prompt=crypto_prompt_text 
 )
+
+@log_execution
+def crypto_node(state):
+    """
+    Nodo que ejecuta el agente de Cripto.
+    FILTRO: Solo le pasa el último mensaje del usuario para evitar contaminación.
+    """
+    # Última instrucción del usuario
+    last_message = state["messages"][-1]
+    
+    # El agente 'olvide' todo lo anterior.
+    result = _crypto_agent_executor.invoke({"messages": [last_message]})
+    
+    # Devuelve el resultado para que LangGraph lo añada al historial global
+    # (El usuario ve el historial, pero el agente NO lo usa para pensar)
+    return {"messages": result["messages"]}
 
 # --- 2. SUB-AGENTE WEATHER ---
 # Listas reales desde los archivos .db
 available_cities = get_available_entities(WEATHER_DB)
 weather_prompt_text = get_weather_agent_prompt(available_cities)
 
-weather_agent = create_react_agent(
+_weather_agent_executor = create_react_agent(
     llm,
     tools=[weather_history_tool, weather_prediction_tool, weather_rag_tool],
     prompt=weather_prompt_text
 )
+
+@log_execution
+def weather_node(state):
+    """
+    Nodo que ejecuta el agente de Clima.
+    FILTRO: Solo le pasa el último mensaje.
+    """
+    last_message = state["messages"][-1]
+    result = _weather_agent_executor.invoke({"messages": [last_message]})
+    return {"messages": result["messages"]}
+
 
 # --- 3. SUPERVISOR ---
 class RouterOutput(BaseModel):

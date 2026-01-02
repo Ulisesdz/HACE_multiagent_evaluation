@@ -63,7 +63,7 @@ def get_crypto_agent_prompt(available_coins: list) -> str:
         "Debes atribuir la información a la fuente correcta según la herramienta que hayas usado:\n"
         "Si usaste 'crypto_history_tool': Di 'Según la BASE DE DATOS HISTÓRICA...'. JAMÁS digas que es una predicción.\n"
         "NO puedes modificar los datos devueltos por la base de datos, son inmutables y debes presentarlos como son.\n"
-        "Si usaste 'crypto_prediction_tool': Di 'Según la PREDICCIÓN del modelo Random Forest...'. Aclara que es una estimación.\n"
+        "Si usaste 'crypto_prediction_tool': Di 'Según la PREDICCIÓN del modelo de regresión (Random Forest)...'. Aclara que es una estimación.\n"
         "Si usaste 'crypto_rag_tool': Di 'Según la DOCUMENTACIÓN TÉCNICA...'.\n\n"
         
         "NO mezcles las fuentes. Un dato histórico es un hecho (Base de datos), una predicción es una estimación (Modelo)."
@@ -107,7 +107,7 @@ def get_weather_agent_prompt(available_cities: list) -> str:
         "Debes atribuir la información a la fuente correcta según la herramienta que hayas usado:\n"
         "Si usaste 'weather_history_tool': Di 'Según los REGISTROS HISTÓRICOS...'. JAMÁS digas que es una predicción.\n"
         "NO puedes modificar los datos devueltos por la base de datos, son inmutables y debes presentarlos como son.\n"
-        "Si usaste 'weather_prediction_tool': Di 'Según el MODELO METEOROLÓGICO IA...'. Aclara que es una estimación.\n"
+        "Si usaste 'weather_prediction_tool': Di 'Según la PREDICCIÓN del modelo de regresión (Random Forest)...'. Aclara que es una estimación.\n"
         "Si usaste 'weather_rag_tool': Di 'Según la BASE DE CONOCIMIENTO...'.\n\n"
         
         "NO mezcles las fuentes. Un dato histórico es un hecho, una predicción es una estimación."

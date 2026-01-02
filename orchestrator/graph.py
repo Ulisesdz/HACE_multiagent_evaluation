@@ -1,16 +1,14 @@
 from langgraph.graph import StateGraph, END, START
 from orchestrator.state import AgentState
-from orchestrator.agents import supervisor_node, crypto_agent, weather_agent
+from orchestrator.agents import supervisor_node, crypto_node, weather_node
 
 def build_graph():
     workflow = StateGraph(AgentState)
 
     # Nodos
     workflow.add_node("Supervisor", supervisor_node)
-    
-    # Nodos de Agentes (Wrapper simple para invocar el agente preconstruido)
-    workflow.add_node("Crypto_Agent", lambda state: crypto_agent.invoke(state))
-    workflow.add_node("Weather_Agent", lambda state: weather_agent.invoke(state))
+    workflow.add_node("Crypto_Agent", crypto_node)
+    workflow.add_node("Weather_Agent", weather_node)
 
     # Edges
     workflow.add_edge(START, "Supervisor")
