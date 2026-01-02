@@ -120,21 +120,21 @@ def crypto_prediction_tool(coin: str):
         conn = sqlite3.connect(CRYPTO_DB)
 
         # Usa comillas dobles en price_col por si tiene espacios
-        query = f"SELECT \"{price_col}\" FROM {clean_coin} ORDER BY {order_clause} LIMIT 2" 
+        query = f"SELECT \"{price_col}\" FROM {clean_coin} ORDER BY {order_clause} LIMIT 3" 
         df = pd.read_sql_query(query, conn)
         conn.close()
 
-        if len(df) < 2:
+        if len(df) < 3:
             return f"No hay suficientes datos históricos."
 
         last_prices = df[price_col].values 
         
         # 5. PREDECIR
         model = joblib.load(model_path)
-        input_df = pd.DataFrame([last_prices], columns=['t-1', 't-2'])
+        input_df = pd.DataFrame([last_prices], columns=['d-1', 'd-2', 'd-3'])
         prediction = model.predict(input_df)[0]
         
-        return f"PREDICCIÓN CRYPTO: Basado en '{price_col}' ({last_prices[0]:.2f}, {last_prices[1]:.2f}), estimación para {clean_coin}: ${prediction:.2f}"
+        return f"PREDICCIÓN CRYPTO: Basado en '{price_col}' ({last_prices[0]:.2f}, {last_prices[1]:.2f}, {last_prices[2]:.2f}), estimación para {clean_coin}: ${prediction:.2f}"
 
     except Exception as e:
         return f"Error generando predicción de Crypto: {str(e)}"
