@@ -1,0 +1,21 @@
+id,question,agent_answer,tool_context,score,error_type,reasoning
+1,Dime cuales han sido los 3 valores más bajos de cierre del Bitcoin,"Según la BASE DE DATOS HISTÓRICA, los 3 valores más bajos de cierre del Bitcoin han sido:
+
+1. $123,513.48 (05/10/2025)
+2. $123,354.87 (08/10/2025)
+3. $124,752.53 (06/10/2025)","                  Date          Close
+0  2025-10-06 00:00:00  124752.531250
+1  2025-10-05 00:00:00  123513.476562
+2  2025-10-08 00:00:00  123354.867188...",0,Fabrication,La respuesta del agente no se basa exclusivamente en el contexto real.
+2,Predice el precio de Ethereum para mañana,"Lo siento, pero parece que la herramienta 'crypto_prediction_tool' no está funcionando correctamente en este momento. No encontré los datos específicos para realizar una predicción precisa del precio de Ethereum para mañana.
+
+Según la PREDICCIÓN del modelo de regresión (Random Forest), no se pudo generar una predicción confiable.","Error generando predicción de Crypto: The feature names should match those that were passed during fit.
+Feature names unseen at fit time:
+- t-1
+- t-2
+Feature names seen at fit time, yet now missing:
+-...",0,prediccion,Fabrication
+3,Dime todo lo que sepas sobre el clima en Madrid,"Según la BASE DE CONOCIMIENTO, Madrid tiene un clima mediterráneo continentalizado con una fuerte oscilación térmica estacional y diaria. Los veranos son secos y calurosos, mientras que los inviernos son moderadamente fríos.","2. CONTEXTO GEOGRÁFICO DE LAS CIUDADES DEL DATASET
+- Madrid (España): Latitud 40°N. Presenta un clima mediterráneo continentalizado. Se caracteriza por una fuerte oscilación térmica estacional y diari...",0,Fabrication,La respuesta del agente se basa EXCLUSIVAMENTE en el 'CONTEXTO REAL'?
+4,"Hola, ¿qué tal estás?","Hola, ¿qué tal estás?",No se usó ninguna herramienta (Respuesta directa)....,0,Fabrication,La respuesta del agente se basa EXCLUSIVAMENTE en el 'CONTEXTO REAL'?
+5,Dime la temperatura de Madrid el 15 de agosto de 1950,"Lo siento, actualmente solo monitoreo el clima de: Madrid, Paris, New_York_City, Tokyo.",No se encontraron datos históricos....,0,Temporal,Fabrication

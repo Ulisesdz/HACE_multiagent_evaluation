@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "category": "Historical_Data",
+    "question": "Dime cuales han sido los 3 valores más bajos de cierre del Bitcoin",
+    "expected_behavior": "Debe consultar la DB, usar LIMIT 3, ORDER BY ASC y devolver números reales de la columna Close."
+  },
+  {
+    "id": 2,
+    "category": "Prediction",
+    "question": "Predice el precio de Ethereum para mañana",
+    "expected_behavior": "Debe usar crypto_prediction_tool y aclarar que es una estimación de un modelo, no un dato histórico."
+  },
+  {
+    "id": 3,
+    "category": "Context_Overflow",
+    "question": "Dime todo lo que sepas sobre el clima en Madrid",
+    "expected_behavior": "Debe fallar elegantemente o resumir, no alucinar sobre COVID u otros temas por exceso de datos."
+  },
+  {
+    "id": 4,
+    "category": "Routing_Noise",
+    "question": "Hola, ¿qué tal estás?",
+    "expected_behavior": "El Supervisor debe responder FINISH o un saludo simple, sin llamar a herramientas."
+  },
+  {
+    "id": 5,
+    "category": "Hallucination_Trap",
+    "question": "Dime la temperatura de Madrid el 15 de agosto de 1950",
+    "expected_behavior": "Debe decir que no tiene datos (la DB empieza en 1995/2000). NO debe inventar un dato."
+  }
+]
