@@ -6,7 +6,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from sentence_transformers import SentenceTransformer
 
 # --- LLM CONFIG ---
-LLM_MODEL = "llama3.1" # ollama run llama3.1
+LLM_MODEL = "llama3.1"  # ollama run llama3.1
 TEMPERATURE = 0
 
 # --- EMBEDDING CONFIG ---
@@ -32,10 +32,8 @@ WEATHER_VECTOR_DB = os.path.join(BASE_DIR, "weather", "chroma_db")
 
 def get_llm():
     """Devuelve la instancia del LLM local (Ollama)."""
-    return ChatOllama(
-        model=LLM_MODEL, 
-        temperature=TEMPERATURE
-    )
+    return ChatOllama(model=LLM_MODEL, temperature=TEMPERATURE)
+
 
 def get_embeddings():
     """
@@ -45,19 +43,19 @@ def get_embeddings():
         # CASO 1: MODO OFFLINE (Ya descargado)
         print(f"[Config] Cargando embeddings desde caché local: {MODEL_PATH}")
         return HuggingFaceEmbeddings(model_name=MODEL_PATH)
-    
+
     else:
         # CASO 2: PRIMERA EJECUCIÓN (Descarga)
         print(f"[Config] Modelo no encontrado en {MODEL_PATH}.")
         print(f"[Config] Descargando '{EMBEDDING_MODEL_NAME}' desde HuggingFace")
-        
+
         try:
             model = SentenceTransformer(EMBEDDING_MODEL_NAME)
             model.save(MODEL_PATH)
             print(f"[Config] Modelo guardado permanentemente en: {MODEL_PATH}")
-            
+
             return HuggingFaceEmbeddings(model_name=MODEL_PATH)
-            
+
         except Exception as e:
             print(f"[Config] Error crítico descargando el modelo: {e}")
             print("Asegúrate de tener conexión a internet la primera vez.")

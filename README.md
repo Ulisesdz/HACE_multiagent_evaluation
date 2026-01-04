@@ -33,6 +33,12 @@ multiagent_evalutation/
 │       ├── data_manager.py    # ETL: Gestión de Datasets Climáticos
 │       ├── trainer.py         # Entrenamiento + Validación + Gráficas
 │       └── predictor.py       # Inferencia para el Agente
+└── evaluation/
+│   └── llm_j/  # Módulo para evaluación LLM-as-a-judge
+│       ├── dataset.json        # Dataset Adversario: Casos diseñados para provocar fallos (Logic, Overflow, etc.)
+│       ├── judge.py            # Lógica del Juez: Prompt de Chain-of-Thought (CoT) y esquemas Pydantic
+│       ├── run_eval.py         # Script de ejecución offline (Batch Testing)
+│       └── results_report.csv  # Reporte generado con métricas y veredictos
 ├── frontend.py            # Interfaz de usuario con Streamlit
 └── setup_rag.py           # Script para vectorizar conocimiento
 ```
@@ -54,7 +60,7 @@ Para poner en marcha el sistema completo, debes seguir este orden lógico: Datos
 | Paso | Comando                         | Descripción                                                                 |
 |-----:|---------------------------------|-----------------------------------------------------------------------------|
 | 1    | `python -m crypto.src.data_manager` | Descarga datos de BTC, ETH y SOL y los guarda en la DB.          |
-| 2    | `python -m crypto.src.trainer`      | Crea la carpeta `models/` y entrena un modelo por cada moneda.             |
+| 2    | `python -m crypto.src.trainer`      | Entrena modelos Random Forest por moneda y muestra el MAE y la precisión.                |
 | 3    | `python -m crypto.src.predictor`    | Carga el modelo entrenado y predice el próximo precio de cierre.           |
 
 #### 2. Módulo de Clima (Weather)
@@ -62,7 +68,7 @@ Para poner en marcha el sistema completo, debes seguir este orden lógico: Datos
 | Paso | Comando                          | Descripción                                                                 |
 |-----:|----------------------------------|-----------------------------------------------------------------------------|
 | 1    | `python -m weather.src.data_manager` | Descarga el dataset de Kaggle, y guarda los datos en °C  de Madrid, NY, Paris y Tokio en la SB|
-| 2    | `python -m weather.src.trainer`      | Entrena modelos por ciudad y muestra el MAE y la precisión.                |
+| 2    | `python -m weather.src.trainer`      | Entrena modelos Random Forest por ciudad y muestra el MAE y la precisión.                |
 | 3    | `python -m weather.src.predictor`    | Predice la temperatura de mañana para una ciudad específica.               |
 
 ### Fase 2: Configuración del RAG (Base de Conocimiento)
@@ -99,14 +105,26 @@ uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db
 - Prompts: Inspección de qué texto exacto se envía al LLM.
 - Latencia: Tiempos de respuesta de cada nodo.
 
-## Guardrails y Grounding Dinámico
+### Guardrails y Grounding Dinámico
 El sistema implementa mecanismos de seguridad robustos:
 - Introspección de Esquema: Los agentes leen la base de datos al inicio para saber qué tablas (Monedas/Ciudades) existen realmente.
 - Anclaje (Grounding): Si preguntas por una ciudad que no está en la DB, el agente rechazará la pregunta en lugar de alucinar datos.
 - Prompting Estricto: Reglas explícitas para diferenciar entre un dato histórico (SQL) y una predicción (ML).
 
-## Arquitectura del Sistema
+### Tipos de Auditoría Implementados
+#### LLM As A Judge
+El LLM Evaluador analiza la triada: Pregunta Usuario -> Contexto Técnico (SQL/Tool) -> Respuesta Agente y evalúa (Score 0-10) en base a la Fidelidad del Dato y Validación de Procedimiento
 
+1. Auditoría en Tiempo Real (Online) Integrada en la interfaz de Streamlit (frontend.py).
+- El usuario puede activar el modo "Juez" mediante un toggle.
+- Tras cada respuesta del agente, el sistema inyecta una subtarea de evaluación.
+- Visualización: Muestra una tarjeta con Puntuación (0-10), Razonamiento del Juez y Tipo de Error detectado.
+2. Evaluación Adversaria (Offline) Ejecuta un banco de pruebas (dataset.json) diseñado para estresar el sistema.
+```bash
+python -m evaluation.llm_j.run_eval
+```
+
+## Arquitectura del Sistema
 ### 1. El Supervisor (Router)
 Analiza la intención del usuario y decide a qué experto derivar la consulta.
 - Si la pregunta es sobre Bitcoin/Ethereum -> Crypto Agent.
