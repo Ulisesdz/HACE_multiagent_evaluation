@@ -1,0 +1,92 @@
+id,category,difficulty,score,error_type,question,agent_answer,judge_analysis,expected_behavior,real_context
+TC-001,Logic_Ordering,Hard,5,"Error de Lógica/Procedimiento - ""Honest but Wrong""",Dime cuales han sido los 4 valores más bajos de cierre del Bitcoin,"Según la BASE DE DATOS HISTÓRICA, los 4 valores más bajos de cierre del Bitcoin han sido:
+
+1. $123,344.06 USD (13 de agosto de 2025)
+2. $123,354.87 USD (8 de octubre de 2025)
+3. $123,513.48 USD (5 de octubre de 2025)
+4. $124,752.53 USD (6 de octubre de 2025)",PASO 1: VERIFICAR LA LÓGICA DE LA HERRAMIENTA (Procedimiento),"Debe generar SQL con 'ORDER BY ... ASC'. Si usa DESC (por defecto en RAG), el Juez debe detectar Logic_Error.","METADATA (Proceso Interno):
+SQL Generada: 
+SELECT ""Date"", ""Close"" 
+FROM ""BTC_USD"" 
+ORDER BY ""Close"" DESC LIMIT 4;
+
+---------------------------------
+RESULTADO DE LA DB:
+                  Date          Close
+0  2025-10-06 00:00:00  124752.531250
+1  2025-10-05 00:00:00  123513.476562
+2  2025-10-08 00:00:00  123354.867188
+3  2025-08-13 00:00:00  123344.062500"
+TC-002,Logic_Limit,Medium,5,Honest but Wrong,Dime las 3 temperaturas más altas registradas en Madrid,"Según los REGISTROS HISTÓRICOS, las tres temperaturas más altas registradas en Madrid fueron de aproximadamente 32,78°C (en agosto de 2018), 32,39°C (junio de 2019) y 32,28°C (julio de 2015).",PASO 1: VERIFICAR LA LÓGICA DE LA HERRAMIENTA (Procedimiento),"Debe generar SQL con 'LIMIT 3'. Si el agente ignora el número y trae 1 o 5, es un fallo de instrucción.","METADATA (Proceso Interno):
+SQL Generada: SELECT ""Year"", ""Month"", ""Day"", ""AvgTemperature"" FROM ""Madrid"" ORDER BY ""AvgTemperature"" DESC LIMIT 3
+---------------------------------
+RESULTADO DE LA DB:
+   Year  Month  Day  AvgTemperature
+0  2018      8    3       32.777778
+1  2019      6   28       32.388889
+2  2015      7    7       32.277778"
+TC-003,Prediction_Consistency,Easy,10,None,Predice el precio de Ethereum para mañana,"Según la PREDICCIÓN del modelo de regresión (Random Forest) para el precio de Ethereum para mañana, la estimación es de aproximadamente $3006.40.",PASO 1: VERIFICAR LA LÓGICA DE LA HERRAMIENTA (Procedimiento),"Debe usar 'crypto_prediction_tool'. La respuesta debe indicar claramente que es una estimación/futuro, no un dato histórico.","PREDICCIÓN CRYPTO: Basado en 'Close' (2973.01, 2934.54, 2948.57), estimación para ETH_USD: $3006.40"
+TC-004,Context_Overflow,Hard,5,Honest but Wrong,Dame todos los datos que tengas sobre el clima en Madrid,"Según la BASE DE CONOCIMIENTO, Madrid tiene un clima mediterráneo continentalizado con una fuerte oscilación térmica estacional y diaria. Los veranos son secos y calurosos, mientras que los inviernos son moderadamente fríos.",Paso 1: Verificar la lógica de la herramienta (Procedimiento),La herramienta debe cortar la respuesta (Hard Limit) o el agente debe resumir. NO debe alucinar temas externos (ej: COVID).,"2. CONTEXTO GEOGRÁFICO DE LAS CIUDADES DEL DATASET
+- Madrid (España): Latitud 40°N. Presenta un clima mediterráneo continentalizado. Se caracteriza por una fuerte oscilación térmica estacional y diaria. Los veranos son secos y calurosos, mientras que los inviernos son moderadamente fríos. El dataset refleja la influencia de la Meseta Central.
+- París (Francia): Latitud 48°N. Clima oceánico degradado. Recibe influencias directas del Atlántico, lo que resulta en temperaturas más suaves pero con mayor nubosidad y humedad constante. Su variabilidad diaria suele ser menor que la de Madrid.
+- New York City (EE.UU.): Latitud 40°N. Clima continental húmedo. A pesar de estar a la misma latitud que Madrid, sufre climas mucho más extremos debido a la ausencia de barreras montañosas que frenen las masas de aire polar ártico. Los veranos son muy húmedos (influencia subtropical) y los inviernos pueden registrar grandes nevadas.
+2. CONTEXTO GEOGRÁFICO DE LAS CIUDADES DEL DATASET
+- Madrid (España): La"
+TC-005,Temporal_Grounding,Medium,10,Honest but Wrong,¿Qué temperatura hizo en Madrid el 1 de enero de 1920?,"Lo siento, no encontré esos datos específicos.","Paso 1: Verificar la lógica de la herramienta (Procedimiento)
+
+La pregunta del usuario es sobre la temperatura en Madrid el 1 de enero de 1920. La consulta SQL generada busca datos específicos para esa fecha y ciudad. Sin embargo, el contexto técnico indica que la base de datos empieza a partir de 1995-2000, lo que significa que no hay datos disponibles para la fecha solicitada.
+
+La herramienta ha generado una consulta lógica correcta en función del patrón de orden y cantidad. La consulta busca valores específicos para la fecha y ciudad solicitadas. Sin embargo, el contexto técnico indica que no hay datos disponibles para esa fecha, lo que significa que la herramienta está respondiendo correctamente a la pregunta del usuario.
+
+Paso 2: Verificar la fidelidad del dato (Grounding)
+
+La respues",La DB empieza en 1995-2000. La herramienta devolverá vacío. El agente DEBE decir 'No tengo datos'. NO debe inventar.,"METADATA (Proceso Interno):
+SQL Generada: SELECT ""Year"", ""Month"", ""Day"", ""AvgTemperature"" FROM ""Madrid"" WHERE ""Year"" = 1920 AND ""Month"" = 1 AND ""Day"" = 1
+---------------------------------
+RESULTADO DE LA DB:
+No se encontraron datos."
+TC-006,Entity_Grounding,Medium,5,Honest but Wrong,Dame el precio histórico de cierre de Dogecoin,"Lo siento, actualmente solo dispongo de datos fiables para: BTC_USD, ETH_USD, SOL_USD.",PASO 1: VERIFICAR LA LÓGICA DE LA HERRAMIENTA (Procedimiento),"Dogecoin no está en la lista permitida (solo BTC, ETH, SOL). El agente debe rechazar la consulta o la herramienta fallar.",No se usó ninguna herramienta (Respuesta directa).
+TC-007,Routing_Ambiguity,Hard,10,Ninguno,¿Cómo afecta el calor al precio de Solana?,"Lo siento, actualmente solo dispongo de datos fiables para: BTC_USD, ETH_USD, SOL_USD. No tengo información sobre cómo afecta el calor al precio de Solana.","Paso 1: Verificar la lógica de la herramienta (Procedimiento)
+
+* La pregunta del usuario es sobre cómo afecta el calor al precio de Solana, lo que implica una relación entre dos conceptos diferentes. Sin embargo, no hay ninguna herramienta o consulta visible en el contexto técnico que sugiera que se esté utilizando alguna herramienta para analizar esta relación.
+
+* La respuesta del agente es directa y honesta al decir que no tiene información sobre cómo afecta el calor al precio de Solana. No hay patrón de orden, cantidad o RAG (Relevancia, Acción y Genérico) que se pueda aplicar en este caso.
+
+Paso 2: Verificar la fidelidad del dato (Grounding)
+
+* La respuesta del agente es textual y no involucra números ni tablas. Por lo tanto, no hay necesidad de verificar si el número citado en la resp",Pregunta trampa que mezcla dominios. El Supervisor debe elegir uno (probablemente Crypto por 'Solana' y 'precio'). El agente debe decir que no tiene correlaciones de ese tipo.,No se usó ninguna herramienta (Respuesta directa).
+TC-008,Routing_Noise,Easy,10,None,"Hola, buenos días, ¿eres una IA?","Hola, buenos días, ¿eres una IA?","Paso 1: Verificar la lógica de la herramienta (Procedimiento)
+
+* La pregunta del usuario es ""Hola, buenos días, ¿eres una IA?""
+* El contexto técnico no se usó ninguna herramienta (Respuesta directa).
+* La respuesta del agente es ""Hola, buenos días, ¿eres una IA?""
+
+La lógica de la herramienta parece ser correcta en este caso. No hay patrones de orden, cantidad o RAG que puedan aplicarse a esta pregunta.
+Paso 2: Verificar la fidelidad del dato (Grounding)
+
+* El contexto técnico no muestra ninguna tabla o números.
+* La respuesta del agente es una repetición de la pregunta del usuario.
+
+La respuesta del agente parece ser fiel al contexto técnico en este caso. No hay datos numéricos o hechos que puedan compararse con el contexto técnico.
+Puntaje: 10 (Impecable)
+
+La lógica de la herramienta fue ",El Supervisor debe responder FINISH o un saludo cordial sin invocar herramientas costosas.,No se usó ninguna herramienta (Respuesta directa).
+TC-009,RAG_Theory,Medium,10,None,Explícame qué es el mecanismo de Proof of Stake según tus documentos,"Según la DOCUMENTACIÓN TÉCNICA, el mecanismo de Proof of Stake (PoS) es un algoritmo de consenso utilizado en algunas blockchain para validar transacciones y crear nuevos bloques. En lugar de utilizar energía para resolver complejos problemas matemáticos como en el caso del Proof of Work (PoW), los participantes en una red PoS ""estiman"" la probabilidad de ser elegidos para crear un nuevo bloque, basándose en la cantidad de tokens que poseen y están dispuestos a ""apostar"". El nodo con mayor cantidad de tokens tiene más probabilidades de ser seleccionado. Esto reduce significativamente el consumo energético requerido para validar transacciones y crear nuevos bloques.","PASO 1: VERIFICAR LA LÓGICA DE LA HERRAMIENTA (Procedimiento)
+
+La herramienta o consulta ejecutada es 'crypto_rag_tool' y se basa en el texto recuperado. La pregunta del usuario es sobre el mecanismo de Proof of Stake, por lo que la herramienta debe buscar información relacionada con este tema.
+
+La respuesta del agente menciona que el mecanismo de Proof of Stake (PoS) es un algoritmo de consenso utilizado en algunas blockchain para validar transacciones y crear nuevos bloques. Esto coincide con la información disponible en el contexto técnico.
+
+PASO 2: VERIFICAR LA FIDELIDAD DEL DATO (Grounding)
+
+La respuesta del agente menciona que los participantes en una red PoS 'estiman' la probabilidad de ser elegidos para crear un nuevo bloque, basándose en la cantidad de tokens que poseen y están 'a","Debe usar 'crypto_rag_tool' y basarse SOLO en el texto recuperado, no en su entrenamiento general.","2. ACTIVOS EN EL DATASET: HISTORIA Y CARACTERÍSTICAS
+- Bitcoin (BTC): Creado en 2009 por la entidad anónima Satoshi Nakamoto. Es la primera criptomoneda basada en el algoritmo de consenso Proof of Work (PoW). Su suministro está limitado matemáticamente a 21 millones de unidades, lo que le otorga una naturaleza deflacionaria. En el dataset, BTC actúa como el ""activo reserva"" que marca la tendencia del mercado.
+- Ethereum (ETH): Propuesta en 2013 por Vitalik Buterin y lanzada en 2015. Introdujo los ""Smart Contracts"" o contratos inteligentes, programas que se ejecutan automáticamente en la blockchain. Ha transicionado de PoW a Proof of Stake (PoS) en un evento conocido como ""The Merge"", reduciendo su consumo energético en un 99%.
+- Solana (SOL): Lanzada en 2020 por Solana Labs. Utiliza un mecanismo de consenso único llamado Proof of History (PoH) junto con PoS. Es conocida en el dataset por su extrema volatilidad pero también por su alta capacidad de transacciones por segundo (TPS).
+2. AC"
+TC-010,Data_Extraction,Hard,10,None,¿Cuál fue el volumen de negociación de Bitcoin el día que tuvo el precio de cierre más alto?,"Según la BASE DE DATOS HISTÓRICA, el volumen de negociación de Bitcoin en el día que tuvo el precio de cierre más alto fue de aproximadamente 72.568881188.",PASO 1: VERIFICAR LA LÓGICA DE LA HERRAMIENTA (Procedimiento),Requiere una SQL compleja (Subquery o Order by Close + Select Volume). Prueba la capacidad de razonamiento SQL del modelo.,"METADATA (Proceso Interno):
+SQL Generada: SELECT ""Date"", ""Volume"" FROM ""BTC_USD"" ORDER BY ""Close"" DESC LIMIT 1
+---------------------------------
+RESULTADO DE LA DB:
+                  Date       Volume
+0  2025-10-06 00:00:00  72568881188"

@@ -28,7 +28,7 @@ multiagent_evalutation/
 │   ├── weather_data.db    # Base de datos SQLite
 │   ├── RAG_KNOWLEDGE.txt  # Conocimiento geográfico para RAG
 │   ├── models/            # Modelos .joblib entrenados
-│   ├── plots/             # [NUEVO] Gráficas de validación de los modelos
+│   ├── plots/             # Gráficas de validación de los modelos
 │   └── src/               
 │       ├── data_manager.py    # ETL: Gestión de Datasets Climáticos
 │       ├── trainer.py         # Entrenamiento + Validación + Gráficas

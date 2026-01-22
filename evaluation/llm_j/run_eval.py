@@ -2,7 +2,7 @@ import json
 import pandas as pd
 from langchain_core.messages import ToolMessage, AIMessage
 from orchestrator.graph import build_graph
-from evaluation.judge import evaluate_response
+from evaluation.llm_j.judge import evaluate_response
 
 FILE_PATH = "evaluation/llm_j/dataset"
 
@@ -48,6 +48,7 @@ def run_evaluation():
                 context = "\n".join(tool_outputs)
 
             # Juez
+            print("Juez evaluando")
             eval_result = evaluate_response(
                 question=question,
                 context=context,
