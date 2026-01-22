@@ -32,7 +32,12 @@ WEATHER_VECTOR_DB = os.path.join(BASE_DIR, "weather", "chroma_db")
 
 def get_llm():
     """Devuelve la instancia del LLM local (Ollama)."""
-    return ChatOllama(model=LLM_MODEL, temperature=TEMPERATURE)
+    return ChatOllama(
+        model=LLM_MODEL,
+        temperature=TEMPERATURE,
+        base_url="http://localhost:11434"
+    )
+
 
 
 def get_embeddings():
