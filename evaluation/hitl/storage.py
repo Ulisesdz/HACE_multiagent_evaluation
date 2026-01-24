@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-CSV_INPUT = "evaluation/hitl/dataset.csv"
+CSV_INPUT = "evaluation/llm_j/dataset_results.csv"
 CSV_OUTPUT = "evaluation/hitl/golden_dataset.csv"
 
 def load_data_for_labeling():
@@ -11,10 +11,10 @@ def load_data_for_labeling():
     
     df_llm = pd.read_csv(CSV_INPUT)
     
-    # Si ya existe el golden, cargamos lo que ya hemos hecho para no repetir
+    # Si ya existe el golden, carga de lo ya hecho para no repetir
     if os.path.exists(CSV_OUTPUT):
         df_gold = pd.read_csv(CSV_OUTPUT)
-        # Filtramos IDs que ya están en el gold
+        # Filtro IDs que ya están en el gold
         processed_ids = df_gold["id"].tolist()
         df_to_label = df_llm[~df_llm["id"].isin(processed_ids)]
     else:
@@ -24,14 +24,12 @@ def load_data_for_labeling():
 
 def save_human_label(row_data, human_score, human_notes):
     """Guarda una fila corregida en el Golden Dataset."""
-    # Añadimos los campos humanos
+    # Campos humanos
     row_data["human_score"] = human_score
     row_data["human_notes"] = human_notes
     
-    # Convertimos a DF de una fila
     df_new = pd.DataFrame([row_data])
     
-    # Guardamos (Append mode)
     if not os.path.exists(CSV_OUTPUT):
         df_new.to_csv(CSV_OUTPUT, index=False)
     else:

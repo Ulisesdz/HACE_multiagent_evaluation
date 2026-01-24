@@ -55,7 +55,7 @@ app = load_app()
 
 # --- SIDEBAR (Panel de Control) ---
 with st.sidebar:
-    st.title("🏛️ Comité de Inversión")
+    st.title("Comité de Inversión")
     st.markdown("### Roles Activos")
     
     st.markdown(
@@ -86,6 +86,7 @@ with st.sidebar:
     st.markdown("### Debugging")
     if st.button("Ver Grafo del Sistema"):
         try:
+            # graph_image = app.get_graph(xray=1).draw_mermaid_png() # Para ver lógica de cada agente
             graph_image = app.get_graph().draw_mermaid_png()
             st.image(graph_image, caption="Arquitectura Jerárquica")
         except Exception as e:

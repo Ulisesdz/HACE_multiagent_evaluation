@@ -33,7 +33,6 @@ def get_llm():
     )
 
 
-
 def get_embeddings():
     """
     Gestión del modelo de Embeddings:
