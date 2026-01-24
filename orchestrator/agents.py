@@ -4,96 +4,102 @@ from typing import Literal
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import SystemMessage
 
-from orchestrator.config import get_llm, CRYPTO_DB, WEATHER_DB
+from orchestrator.config import get_llm, CRYPTO_DB
 from orchestrator.utils import get_available_entities, log_execution
+
+# --- IMPORTACIÓN DE TOOLS --- 
 from orchestrator.tools import (
     crypto_history_tool,
     crypto_prediction_tool,
+    crypto_chart_tool,
     crypto_rag_tool,
-    weather_history_tool,
-    weather_prediction_tool,
-    weather_rag_tool,
+    crypto_news_tool,
+    crypto_volatility_tool
 )
+
+# --- IMPORTACIÓN DE PROMPTS ---
 from orchestrator.prompts import (
     SUPERVISOR_SYSTEM_PROMPT,
-    get_crypto_agent_prompt,
-    get_weather_agent_prompt,
+    get_technical_agent_prompt,
+    get_fundamental_agent_prompt,
+    get_risk_agent_prompt
 )
 
 llm = get_llm()
 
-# --- 1. SUB-AGENTE CRYPTO ---
-# Listas reales desde los archivos .db
+# Monedas disponibles para dar contexto al Technical Agent
 available_coins = get_available_entities(CRYPTO_DB)
-crypto_prompt_text = get_crypto_agent_prompt(available_coins)
 
-_crypto_agent_executor = create_react_agent(
+# ============================================================
+# 1. AGENTE TÉCNICO (THE QUANT)
+# ============================================================
+technical_prompt_text = get_technical_agent_prompt(available_coins)
+
+_technical_agent = create_react_agent(
     llm,
-    tools=[crypto_history_tool, crypto_prediction_tool, crypto_rag_tool],
-    prompt=crypto_prompt_text,
+    tools=[crypto_history_tool, crypto_prediction_tool, crypto_chart_tool],
+    prompt=technical_prompt_text, 
 )
 
-
 @log_execution
-def crypto_node(state):
-    """
-    Nodo que ejecuta el agente de Cripto.
-    FILTRO: Solo le pasa el último mensaje del usuario para evitar contaminación.
-    """
-    # Última instrucción del usuario
+def technical_node(state):
+    """Nodo del Analista Técnico."""
     last_message = state["messages"][-1]
-
-    # El agente 'olvide' todo lo anterior.
-    result = _crypto_agent_executor.invoke({"messages": [last_message]})
-
-    # Devuelve el resultado para que LangGraph lo añada al historial global
-    # (El usuario ve el historial, pero el agente NO lo usa para pensar)
+    result = _technical_agent.invoke({"messages": [last_message]})
     return {"messages": result["messages"]}
 
 
-# --- 2. SUB-AGENTE WEATHER ---
-# Listas reales desde los archivos .db
-available_cities = get_available_entities(WEATHER_DB)
-weather_prompt_text = get_weather_agent_prompt(available_cities)
+# ============================================================
+# 2. AGENTE FUNDAMENTAL (THE RESEARCHER)
+# ============================================================
+fundamental_prompt_text = get_fundamental_agent_prompt()
 
-_weather_agent_executor = create_react_agent(
+_fundamental_agent = create_react_agent(
     llm,
-    tools=[weather_history_tool, weather_prediction_tool, weather_rag_tool],
-    prompt=weather_prompt_text,
+    tools=[crypto_rag_tool, crypto_news_tool],
+    prompt=fundamental_prompt_text,
 )
 
-
 @log_execution
-def weather_node(state):
-    """
-    Nodo que ejecuta el agente de Clima.
-    FILTRO: Solo le pasa el último mensaje.
-    """
+def fundamental_node(state):
+    """Nodo del Investigador Fundamental."""
     last_message = state["messages"][-1]
-    result = _weather_agent_executor.invoke({"messages": [last_message]})
+    result = _fundamental_agent.invoke({"messages": [last_message]})
     return {"messages": result["messages"]}
 
 
-# --- 3. SUPERVISOR ---
+# ============================================================
+# 3. AGENTE DE RIESGOS (RISK OFFICER)
+# ============================================================
+risk_prompt_text = get_risk_agent_prompt()
+
+_risk_agent = create_react_agent(
+    llm,
+    tools=[crypto_volatility_tool],
+    prompt=risk_prompt_text,
+)
+
+@log_execution
+def risk_node(state):
+    """Nodo del Gestor de Riesgos."""
+    last_message = state["messages"][-1]
+    result = _risk_agent.invoke({"messages": [last_message]})
+    return {"messages": result["messages"]}
+
+
+# ============================================================
+# 4. SUPERVISOR (CHIEF INVESTMENT OFFICER)
+# ============================================================
 class RouterOutput(BaseModel):
-    """Decide a qué experto enviar la consulta."""
-
-    next: Literal["Crypto_Agent", "Weather_Agent", "FINISH"]
-    reasoning: str = Field(description="Razón de la elección")
-
+    """Decide a qué miembro del comité de inversión enviar la consulta."""
+    next: Literal["Technical_Analyst", "Fundamental_Analyst", "Risk_Officer", "FINISH"]
+    reasoning: str = Field(description="Por qué elegiste a este experto.")
 
 supervisor_llm = llm.with_structured_output(RouterOutput)
-
 
 @log_execution
 def supervisor_node(state):
     messages = state["messages"]
-
-    # --- ESTRATEGIA DE "RESET DE MEMORIA" PARA ENRUTAMIENTO ---
-    # Para evitar que el Supervisor se confunda con las tablas SQL o conversaciones
-    # anteriores, le mostramos SOLO el último mensaje del usuario.
-    # Esto fuerza al modelo a evaluar la intención ACTUAL desde cero.
-    # print(f"   └─ MESSAGES: {messages}")
     if not messages:
         return {"next": "FINISH"}
 
@@ -103,5 +109,4 @@ def supervisor_node(state):
         [SystemMessage(content=SUPERVISOR_SYSTEM_PROMPT)] + [last_user_message]
     )
 
-    # Next para que el grafo sepa a dónde ir
     return {"next": response.next}

@@ -10,76 +10,99 @@ judge_llm = get_llm()
 class EvaluationResult(BaseModel):
     step_by_step_analysis: Annotated[
         str,
-        StringConstraints(max_length=800)
+        StringConstraints(max_length=1000)
     ] = Field(
         description=(
-            "Análisis conciso paso a paso. "
-            "Máximo 120 palabras o 800 caracteres."
+            "Análisis crítico paso a paso (Enrutamiento -> Herramientas -> Fidelidad). "
+            "Máximo 150 palabras."
         )
     )
     score: int = Field(
-        description="Puntuación 0-10. 0=Error Crítico/Invención, 5=Error Lógico/Procedimiento, 10=Perfecto."
+        description="Puntuación 0-10. 0=Error Crítico, 5=Error Procedimiento/Routing, 10=Perfecto."
     )
     error_type: str = Field(
-        description="Categoría: 'None' (Correcto), 'Fabrication' (Dato inventado), 'Logic_Error' (SQL/Tool mal formulada), 'Data_Mismatch' (Dato mal leído)."
+        description=(
+            "Categoría del error: "
+            "'None' (Correcto), "
+            "'Routing_Error' (Supervisor eligió al agente incorrecto), "
+            "'Fabrication' (Dato inventado), "
+            "'Logic_Error' (SQL mal ordenado/Tool mal usada), "
+            "'Risk_Negligence' (Ignoró advertencia de riesgo), "
+            "'Parametric_Leak' (Usó conocimiento externo en vez de RAG), "
+            "'Loop_Error' (Repetición sin respuesta)."
+        )
     )
 
-
 JUDGE_PROMPT = """
-Eres un Auditor de Calidad para sistemas de Inteligencia Artificial (LLM-as-a-Judge).
-Tu trabajo es evaluar una interacción completa basándote en el CONTEXTO TÉCNICO disponible y el COMPORTAMIENTO ESPERADO (en caso de que esté especificado).
+Eres un Auditor de Calidad Financiera y Técnica para un sistema de IA de Inversión.
+Tu trabajo es evaluar la interacción completa: desde la elección del Supervisor hasta la respuesta del Agente.
 
---- INPUTS DEL SISTEMA ---
-1. [PREGUNTA]: {question}
-2. [COMPORTAMIENTO ESPERADO]: {expected_behavior}
-3. [CONTEXTO TÉCNICO] (Tools/SQL): {context}
-4. [RESPUESTA AGENTE]: {answer}
+--- INPUTS DE LA AUDITORÍA ---
+1. [PREGUNTA DEL INVERSOR]: {question}
+2. [AGENTE ELEGIDO POR SUPERVISOR]: {agent_selected}
+3. [COMPORTAMIENTO ESPERADO]: {expected_behavior}
+4. [EVIDENCIA TÉCNICA] (Output de Tools/SQL/RAG): 
+{context}
+5. [RESPUESTA FINAL]: {answer}
 -------------------------
 
---- PROCEDIMIENTO DE AUDITORÍA (PASO A PASO) ---
+--- PROCEDIMIENTO DE AUDITORÍA (CHECKLIST JERÁRQUICO) ---
 
-PASO 1: VERIFICAR LA LÓGICA DE LA HERRAMIENTA (Procedimiento)
-Analiza si la herramienta o consulta ejecutada (visible en [CONTEXTO TÉCNICO]) tiene sentido para la [PREGUNTA].
-- **Patrón de Orden:** Si el usuario pide "Mínimos/Bajos/Peores", la SQL/Lógica debe buscar valores ascendentes (ASC). Si usa DESC (descendente), es un **Logic_Error**.
-- **Patrón de Cantidad:** Si el usuario pide "Top 3", la consulta debe tener un límite acorde (LIMIT 3). Si trae solo 1, es un error de procedimiento.
-- **Patrón RAG:** Si es texto, verifica si el fragmento recuperado tiene relación semántica con la pregunta.
-- Máximo 120 palabras y Formato en viñetas (bullets).
+PASO 1: EVALUACIÓN DEL ENRUTAMIENTO (SUPERVISOR) 
+Verifica si el [AGENTE ELEGIDO] es el especialista correcto para la [PREGUNTA]:
+- **Technical_Analyst:** Solo para PRECIOS, GRÁFICOS, PREDICCIONES numéricas o SQL histórico.
+- **Risk_Officer:** Solo para VOLATILIDAD, SEGURIDAD, RIESGO o "Es seguro invertir".
+- **Fundamental_Analyst:** Solo para NOTICIAS, CONTEXTO, CONCEPTOS ("Qué es") o tecnología.
+- **FINISH:** Para saludos o temas fuera de dominio.
+-> *Si el enrutamiento es incorrecto (ej: Risk Officer para pedir un precio), marca error: **Routing_Error**.*
 
-PASO 2: VERIFICAR LA FIDELIDAD DEL DATO (Grounding)
-Compara los datos/hechos de la [RESPUESTA FINAL] con el [CONTEXTO TÉCNICO].
-- **Si hay Tabla/Números:** Verifica que el número citado en la respuesta coincida exactamente con la celda correspondiente del contexto. Si el agente cita una columna equivocada (ej: Low en vez de Close) o un número que no existe, es **Fabrication** o **Data_Mismatch**.
-- **Si hay Texto (RAG):** Verifica que la afirmación del agente esté respaldada por el texto recuperado.
-- **Si hay Error/Vacío:** Si el contexto dice "No results" y el agente inventa una respuesta, es **Fabrication** (Muy grave).
+PASO 2: VERIFICAR COHERENCIA FINANCIERA Y RIESGO
+- **Risk Officer:** Si la herramienta `crypto_volatility_tool` indica Riesgo "ALTO" o "EXTREMO", ¿la respuesta final advierte al usuario? Si lo omite, es **Risk_Negligence**.
+- **Technical Analyst:** Si la herramienta devuelve una predicción numérica (ej: $3000), ¿la respuesta coincide? Si dice $3500, es **Fabrication**.
+- **Fundamental Analyst:** Si usa RAG, ¿la información está en el texto recuperado? Si responde correctamente pero con datos que NO están en la [EVIDENCIA TÉCNICA], es **Parametric_Leak**.
+
+PASO 3: VERIFICAR LÓGICA DE HERRAMIENTAS
+- **Gráficos:** Si se pidió un gráfico, ¿se generó el archivo .png?
+- **Orden SQL:** Si pidieron "máximos", ¿el SQL usó DESC? (Logic_Error).
+- **Bucles:** ¿La evidencia muestra la misma herramienta ejecutándose múltiples veces? (Loop_Error).
+
+PASO 4: DETECCIÓN DE ALUCINACIONES
+- Si la [EVIDENCIA TÉCNICA] está vacía o dice "No data found", el agente DEBE decir "No lo sé". Si inventa un dato, es **Fabrication** (Score 0).
 
 --- GUÍA DE PUNTUACIÓN ---
 
-* **SCORE 10 (Impecable):** * La lógica de la herramienta fue correcta (ej: orden correcto).
-    * El agente extrajo el dato fielmente del contexto.
-    * O BIEN: El contexto estaba vacío y el agente respondió honestamente que no sabía.
+* **SCORE 10 (Impecable):** * Supervisor eligió al agente correcto.
+    * Agente usó la herramienta correcta.
+    * Datos fieles a la evidencia.
 
-* **SCORE 5 (Error de Lógica/Procedimiento - "Honest but Wrong"):**
-    * El agente reporta fielmente lo que dice el contexto, PERO la consulta subyacente estaba mal planteada para la intención del usuario (ej: el usuario pidió los precios más bajos, la SQL trajo los más altos, y el agente reportó esos precios altos). El agente no miente, pero el sistema falló.
-    * El agente reporta fielmente lo que dice el contexto, PERO NO responde con todos los datos ofrecidos por la herramienta. (ej: una consulta con LIMIT 3 y un dataframe con 3 filas, pero el agente solo reporta 2 resultados). El agente no miente, pero el sistema falló. 
+* **SCORE 5 (Error de Procedimiento / Routing):**
+    * **Routing_Error:** El Supervisor se equivocó de agente, aunque la respuesta final sea razonable.
+    * **Logic_Error:** SQL/Tool mal formulada.
+    * **Parametric_Leak:** Respuesta correcta pero no basada en RAG (memoria interna).
 
-* **SCORE 0 (Alucinación/Invención - "Liar"):**
-    * El agente da datos numéricos o hechos que NO aparecen en el contexto.
-    * El agente modifica los datos arbitrariamente.
-    * El contexto es un error y el agente responde como si tuviera datos.
+* **SCORE 0 (Error Crítico / Mentira):**
+    * **Fabrication:** Inventó un precio o dato.
+    * **Risk_Negligence:** Omitió una alerta de riesgo alta.
+    * **Loop_Error:** El sistema entró en bucle.
 
-Analiza críticamente. No asumas nada. Tu veredicto debe basarse solo en la evidencia mostrada.
+Tu veredicto debe ser estricto. La precisión financiera y el enrutamiento correcto son vitales.
 """
 
-
-def evaluate_response(question, context, answer, expected_behavior="Sin especificar"):
+def evaluate_response(question, agent_selected, context, answer, expected_behavior="Sin especificar"):
     structured_llm = judge_llm.with_structured_output(EvaluationResult)
     prompt = ChatPromptTemplate.from_template(JUDGE_PROMPT)
 
     chain = prompt | structured_llm
 
     try:
+        # Limpieza básica del contexto
+        if len(str(context)) > 3000:
+            context = str(context)[:3000] + "... [TRUNCADO]"
+
         result = chain.invoke(
             {
                 "question": question,
+                "agent_selected": agent_selected,
                 "context": context,
                 "answer": answer,
                 "expected_behavior": expected_behavior,

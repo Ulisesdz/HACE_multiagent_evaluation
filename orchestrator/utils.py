@@ -2,9 +2,8 @@ import os
 import functools
 import sqlite3
 
-
 def log_execution(func):
-    """Decorador para imprimir inputs y outputs de las herramientas."""
+    """Decorador para imprimir inputs y outputs de las herramientas (Tools)."""
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -20,7 +19,7 @@ def log_execution(func):
             result = func(*args, **kwargs)
 
             # 3. Capturar Output
-            # Cortamos el log si es muy largo (ej. tabla de datos)
+            # Cortamos el log si es muy largo (ej. tabla de datos muy grande)
             log_result = str(result)
             if len(log_result) > 200:
                 log_result = log_result[:200] + "... (truncado)"
@@ -30,7 +29,7 @@ def log_execution(func):
             return result
 
         except Exception as e:
-            print(f"   └─ Error: {e}")
+            print(f"   └─ Error crítico en Tool: {e}")
             raise e
 
     return wrapper
@@ -39,7 +38,7 @@ def log_execution(func):
 def get_table_columns(db_path, table_name):
     """
     Función para Schema Introspection.
-    Devuelve una lista con los nombres de las columnas de una tabla.
+    Devuelve una lista con los nombres de las columnas de una tabla SQLite.
     """
     try:
         conn = sqlite3.connect(db_path)
@@ -53,13 +52,14 @@ def get_table_columns(db_path, table_name):
         column_names = [col[1] for col in columns_info]
         return column_names
     except Exception as e:
+        print(f"Error leyendo columnas de {table_name}: {e}")
         return []
 
 
 def get_available_entities(db_path):
     """
     Devuelve una lista limpia de las tablas en la DB.
-    Ejemplo: ['Madrid', 'New_York', 'BTC_USD']
+    Ejemplo: ['BTC_USD', 'ETH_USD', 'SOL_USD']
     """
     if not os.path.exists(db_path):
         return []

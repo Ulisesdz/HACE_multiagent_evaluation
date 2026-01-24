@@ -24,12 +24,6 @@ CRYPTO_DB = os.path.join(BASE_DIR, "crypto", "crypto_data.db")
 CRYPTO_RAG_TXT = os.path.join(BASE_DIR, "crypto", "RAG_KNOWLEDGE.txt")
 CRYPTO_VECTOR_DB = os.path.join(BASE_DIR, "crypto", "chroma_db")
 
-# Weather Paths
-WEATHER_DB = os.path.join(BASE_DIR, "weather", "weather_data.db")
-WEATHER_RAG_TXT = os.path.join(BASE_DIR, "weather", "RAG_KNOWLEDGE.txt")
-WEATHER_VECTOR_DB = os.path.join(BASE_DIR, "weather", "chroma_db")
-
-
 def get_llm():
     """Devuelve la instancia del LLM local (Ollama)."""
     return ChatOllama(
