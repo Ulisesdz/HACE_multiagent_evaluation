@@ -3,7 +3,6 @@ import pandas as pd
 import sys
 import os
 import joblib
-import numpy as np
 import uuid
 
 import matplotlib
@@ -274,13 +273,17 @@ def crypto_chart_tool(coin: str):
         date_col = next((c for c in cols if "date" in c.lower()), "Date")
         price_col = next((c for c in cols if "close" in c.lower()), "Close")
 
-        # Traemos 60 días para el gráfico
+        # 60 días para el gráfico
         query = f'SELECT "{date_col}", "{price_col}" FROM {clean_coin} ORDER BY "{date_col}" ASC LIMIT 60'
         df = pd.read_sql_query(query, conn)
         conn.close()
 
         if df.empty:
             return "No hay datos para graficar."
+
+        # Reordena cronológicamente (ASC)
+        df[date_col] = pd.to_datetime(df[date_col])
+        df = df.sort_values(by=date_col, ascending=True)
 
         # Generar Plot
         plt.figure(figsize=(10, 5))
@@ -294,7 +297,7 @@ def crypto_chart_tool(coin: str):
         plt.tight_layout()
 
         # Guardar archivo
-        # Asegura que existe la carpeta 'static' o similar
+        # Asegura que existe la carpeta 'static'
         plot_dir = "plots_temp"
         os.makedirs(plot_dir, exist_ok=True)
         filename = f"{plot_dir}/{clean_coin}_chart_{uuid.uuid4().hex[:6]}.png"
@@ -302,7 +305,7 @@ def crypto_chart_tool(coin: str):
         plt.savefig(filename)
         plt.close()
 
-        return f"Gráfico generado correctamente: {filename} (El frontend debería mostrarlo)."
+        return f"Gráfico generado correctamente: {filename}"
 
     except Exception as e:
         return f"Error generando gráfico: {e}"

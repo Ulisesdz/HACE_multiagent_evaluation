@@ -3,6 +3,7 @@ import re
 import streamlit as st
 import mlflow
 from langchain_core.messages import HumanMessage, AIMessage
+
 from evaluation.llm_j.judge import evaluate_response 
 from orchestrator.graph import build_graph
 
@@ -24,25 +25,29 @@ st.markdown("""
 <style>
     .stChatMessage {border-radius: 10px; background-color: #f0f2f6;}
     .stStatus {border: 1px solid #e0e0e0; border-radius: 5px; padding: 10px;}
-    .role-supervisor {
-        border: 1px solid #d0d0d0;
-        border-radius: 6px;
+    
+    /* Estilos para las tarjetas de Reporte de Agentes */
+    .agent-card {
+        border-left: 5px solid #ccc;
+        background-color: #f9f9f9;
         padding: 12px;
-        background-color: #fafafa;
-        margin-bottom: 0.5rem;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        font-size: 0.95rem;
     }
-    .role-supervisor-title {
-        font-weight: 600;
-        color: #333333;
+    .card-tech { border-left-color: #0068c9; background-color: #f0f7ff; }
+    .card-fund { border-left-color: #00cc96; background-color: #f0fff8; }
+    .card-risk { border-left-color: #ff2b2b; background-color: #fff5f5; }
+    
+    .card-title {
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        color: #333;
     }
-    .role-supervisor-desc {
-        font-size: 0.85rem;
-        color: #666666;
-    }
-    /* Colores para los roles */
-    .role-tech {color: #0068c9; font-weight: bold;}
-    .role-fund {color: #00cc96; font-weight: bold;}
-    .role-risk {color: #ff2b2b; font-weight: bold;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -60,9 +65,9 @@ with st.sidebar:
     
     st.markdown(
         """
-        <div class="role-supervisor">
-            <div class="role-supervisor-title">🏛️ Supervisor (CIO)</div>
-            <div class="role-supervisor-desc">Coordinación y control del flujo</div>
+        <div style="border:1px solid #d0d0d0; border-radius:6px; padding:10px; background-color:#fafafa; margin-bottom:10px;">
+            <div style="font-weight:600;">🏛️ Supervisor (CIO)</div>
+            <div style="font-size:0.85rem; color:#666;">Coordinación y control del flujo</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -86,7 +91,6 @@ with st.sidebar:
     st.markdown("### Debugging")
     if st.button("Ver Grafo del Sistema"):
         try:
-            # graph_image = app.get_graph(xray=1).draw_mermaid_png() # Para ver lógica de cada agente
             graph_image = app.get_graph().draw_mermaid_png()
             st.image(graph_image, caption="Arquitectura Jerárquica")
         except Exception as e:
@@ -125,50 +129,76 @@ if user_input:
 
     # B. Procesamiento
     with st.chat_message("assistant", avatar="🤖"):
-        status_container = st.status("El Comité está deliberando...", expanded=True)
+        # La caja contenedora de todo el proceso técnico
+        status_container = st.status("El Comité está deliberando (Flujo Iterativo)...", expanded=True)
         
         run_name = f"Turno_{len(st.session_state.messages)//2 + 1}"
+        
+        final_response_text = "" 
+        tool_outputs_audit = []
+        agent_selected = "Supervisor"
 
         with mlflow.start_run(run_name=run_name) as run:
             try:
                 inputs = {"messages": st.session_state.messages}
-                current_turn_tools = []
-                final_response = "Sin respuesta."
                 
-                agent_selected = "None" 
-
                 # --- BUCLE DE EJECUCIÓN (STREAMING) ---
                 for event in app.stream(inputs):
                     for node_name, node_output in event.items():
                         
-                        # 1. LOGICA SUPERVISOR
+                        # ==========================================
+                        # 1. LOGICA SUPERVISOR (Routing y Final)
+                        # ==========================================
                         if node_name == "Supervisor":
                             next_agent = node_output.get("next", "FINISH")
                             agent_selected = next_agent
-                            status_container.write(f"📡 **CIO (Supervisor):** Derivando a `{next_agent}`")
+                            
+                            if next_agent == "FINISH":
+                                status_container.write(f"🏁 **CIO (Supervisor):** Recopilando informes y finalizando.")
 
+                                if "messages" in node_output and len(node_output["messages"]) > 0:
+                                    final_msgs = [
+                                        m.content for m in node_output.get("messages", [])
+                                        if isinstance(m, AIMessage) and m.content.strip()
+                                    ]
+
+                                    if final_msgs:
+                                        final_response_text = final_msgs[-1]
+                            else:
+                                status_container.write(f"📡 **CIO (Supervisor):** Derivando tarea a `{next_agent}`...")
+
+                        # ==========================================
                         # 2. LOGICA DE LOS ESPECIALISTAS
+                        # ==========================================
                         elif "messages" in node_output:
-                            # Asignar iconos según el agente
-                            icon = "🏛️"
-                            if node_name == "Technical_Analyst": icon = "📊"
-                            elif node_name == "Fundamental_Analyst": icon = "📄"
-                            elif node_name == "Risk_Officer": icon = "⚠️"
+                            # Configuración visual por rol
+                            icon, card_class = "🤖", "agent-card"
+                            if node_name == "Technical_Analyst": 
+                                icon, card_class = "📊", "card-tech"
+                            elif node_name == "Fundamental_Analyst": 
+                                icon, card_class = "📄", "card-fund"
+                            elif node_name == "Risk_Officer": 
+                                icon, card_class = "⚠️", "card-risk"
 
+                            # Iteramos sobre TODOS los mensajes que devolvió el agente (Tools + Respuesta)
                             for msg in node_output["messages"]:
-                                # A) USO DE HERRAMIENTAS (Tool Call)
+                                
+                                # A) USO DE HERRAMIENTAS (Tool Call - Input)
                                 if hasattr(msg, "tool_calls") and len(msg.tool_calls) > 0:
                                     for tool_call in msg.tool_calls:
                                         t_name = tool_call["name"]
                                         t_args = tool_call["args"]
-                                        status_container.write(f"**{icon} {node_name}** usa herramienta: `{t_name}`")
-                                        with status_container.expander(f"Inputs: {t_name}"):
+                                        
+                                        # Input en expander independiente
+                                        status_container.write(f"🛠️ **{node_name}** ejecuta: `{t_name}`")
+                                        with status_container.expander(f"📥 Ver Input ({t_name})"):
                                             st.json(t_args)
 
-                                # B) RESULTADO DE HERRAMIENTA (Tool Output)
-                                if msg.type == "tool":
+                                # B) RESULTADO DE HERRAMIENTA (Tool Message - Output)
+                                elif msg.type == "tool":
                                     tool_name = msg.name
                                     output_content = msg.content
+                                    tool_outputs_audit.append(output_content) # Guardar para auditoría
                                     
                                     # --- DETECCIÓN DE IMÁGENES ---
                                     if ".png" in output_content and "plots_temp" in output_content:
@@ -184,47 +214,67 @@ if user_input:
                                         except Exception:
                                             status_container.code(output_content)
                                     else:
-                                        # Output normal
-                                        status_container.write(f"✅ **Dato obtenido ({tool_name}):**")
-                                        with status_container.expander("Ver detalle"):
+                                        # Output de texto normal en expander independiente
+                                        with status_container.expander(f"📤 Ver Output ({tool_name})"):
                                             st.code(output_content)
-                                    
-                                    current_turn_tools.append(output_content)
 
-                                # C) RESPUESTA TEXTUAL (AI Message)
-                                if msg.type == "ai" and not msg.tool_calls:
-                                    final_response = msg.content
+                                # C) REPORTE FINAL DEL AGENTE (AIMessage)
+                                elif msg.type == "ai":
+                                    content = msg.content
+                                    # Verifica si es un reporte firmado
+                                    if "### REPORTE" in content:
+                                        # Limpieza del texto para que se vea limpio
+                                        clean_text = content.replace("### REPORTE DEL", "").replace("###", "").strip()
+                                        clean_text = clean_text.replace("TECHNICAL_ANALYST", "").replace("RISK_OFFICER", "").replace("FUNDAMENTAL_ANALYST", "").strip()
+                                        
+                                        # Renderizamos TARJETA HTML con la respuesta del agente
+                                        status_container.markdown(
+                                            f"""
+                                            <div class="agent-card {card_class}">
+                                                <div class="card-title">{icon} Reporte: {node_name}</div>
+                                                {clean_text}
+                                            </div>
+                                            """, 
+                                            unsafe_allow_html=True
+                                        )
 
-                status_container.update(label="✅ Informe Generado", state="complete", expanded=False)
-                st.markdown(final_response)
-                st.session_state.messages.append(AIMessage(content=final_response))
+                # --- FIN DEL PROCESAMIENTO ---
+                status_container.update(label="✅ Proceso Completado", state="complete", expanded=False)
+                
+                # --- CORRECCIÓN AQUÍ: Usamos la misma variable ---
+                if not final_response_text:
+                    final_response_text = "⚠️ El Supervisor finalizó el proceso pero no se capturó un resumen final de texto."
+
+                # MOSTRAR RESPUESTA FINAL
+                st.markdown(final_response_text)
+                st.session_state.messages.append(AIMessage(content=final_response_text))
 
                 # --- 3. AUDITORÍA (LLM-as-a-Judge) ---
                 if audit_mode:
-                    if not current_turn_tools:
+                    if not tool_outputs_audit:
                         context_text = "NO_DATA_RETRIEVED"
                     else:
-                        context_text = "\n---\n".join([str(c) for c in current_turn_tools])
+                        context_text = "\n---\n".join([str(c) for c in tool_outputs_audit])
 
-                    with st.spinner("⚖️ El Auditor está revisando la calidad y el enrutamiento..."):
+                    with st.spinner("⚖️ El Auditor está evaluando el caso completo..."):
                         
                         generic_expectation = (
-                            "El Agente debe ser fiel a los datos financieros recuperados. "
-                            "El Supervisor debió elegir al especialista correcto. "
+                            "El sistema debe haber descompuesto la pregunta compleja en pasos lógicos. "
+                            "Debe haber llamado a los agentes correspondientes (Técnico/Riesgo/Fundamental) "
+                            "y la respuesta final debe integrar los datos obtenidos sin alucinar."
                         )
 
                         verdict = evaluate_response(
                             question=user_input,
-                            agent_selected=agent_selected,
+                            agent_selected="Iterative_System_Flow",
                             context=context_text,
-                            answer=final_response,
+                            answer=final_response_text,
                             expected_behavior=generic_expectation 
                         )
                         
                         # Guardar métricas en MLflow
                         mlflow.log_metric("faithfulness_score", verdict.score)
                         mlflow.log_param("error_type", verdict.error_type)
-                        mlflow.log_param("routing_decision", agent_selected)
 
                     # Tarjeta de Resultados
                     if verdict.score == 10:
