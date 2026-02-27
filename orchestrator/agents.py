@@ -3,10 +3,17 @@ from pydantic import BaseModel, Field
 from typing import Literal
 
 from langgraph.prebuilt import create_react_agent
-from langchain_core.messages import SystemMessage, AIMessage, HumanMessage, BaseMessage
+from langchain_core.messages import SystemMessage, AIMessage, HumanMessage
 
 from orchestrator.config import get_llm, CRYPTO_DB
-from orchestrator.utils import get_available_entities, log_execution
+from orchestrator.utils import (
+    get_available_entities,
+    log_execution,
+    extract_reports,
+    extract_asset_from_task,
+    get_current_turn_messages,
+    get_last_user_message
+)
 
 # --- IMPORTACIÓN DE TOOLS --- 
 from orchestrator.tools import (
@@ -28,111 +35,12 @@ from orchestrator.prompts import (
     get_risk_agent_prompt
 )
 
+
 llm = get_llm()
 available_coins = get_available_entities(CRYPTO_DB)
 
-# ============================================================
-# FUNCIONES AUXILIARES DE FILTRADO DE MENSAJES
-# ============================================================
 
-def get_current_turn_messages(messages: List[BaseMessage]) -> List[BaseMessage]:
-    """
-    Filtra el historial de mensajes para obtener solo los del turno actual.
-    
-    Retrocede desde el final hasta encontrar el primer mensaje humano que no sea
-    una instrucción interna del supervisor, y devuelve todos los mensajes desde
-    ese punto hacia adelante.
-    
-    Args:
-        messages: Lista completa de mensajes del historial.
-        
-    Returns:
-        Lista de mensajes correspondientes al turno actual.
-    """
-    for i in range(len(messages) - 1, -1, -1):
-        m = messages[i]
-        if isinstance(m, HumanMessage):
-            # Ignorar instrucciones internas del supervisor
-            if m.name == "supervisor_instruction":
-                continue
-            return messages[i:]
-    return messages
-
-
-def get_last_user_message(messages: List[BaseMessage]) -> BaseMessage:
-    """
-    Extrae el último mensaje del usuario del historial.
-    
-    Args:
-        messages: Lista de mensajes del historial.
-        
-    Returns:
-        El último mensaje de tipo HumanMessage encontrado, o el último mensaje
-        de la lista si no se encuentra ninguno humano.
-    """
-    for m in reversed(messages):
-        if isinstance(m, HumanMessage):
-            return m
-    return messages[-1]
-
-
-def extract_reports(messages: List[BaseMessage]) -> List[BaseMessage]:
-    """
-    Extrae y consolida los reportes generados por los agentes especialistas.
-    
-    Busca mensajes que contengan la marca "### REPORTE" y los agrupa en un único
-    mensaje consolidado con metadata sobre qué agentes participaron.
-    
-    Args:
-        messages: Lista de mensajes del turno actual.
-        
-    Returns:
-        Lista con un único mensaje consolidado que contiene todos los reportes,
-        o lista vacía si no se encontraron reportes.
-    """
-    reports_text = []
-    participating_agents = set()
-
-    # Iterar sobre todos los mensajes buscando reportes
-    for m in messages:
-        if isinstance(m, AIMessage) and "### REPORTE" in m.content:
-            reports_text.append(m.content)
-            
-            # Identificar qué agente generó el reporte
-            if "TECHNICAL_ANALYST" in m.content:
-                participating_agents.add("Technical Analyst")
-            elif "FUNDAMENTAL_ANALYST" in m.content:
-                participating_agents.add("Fundamental Analyst")
-            elif "RISK_OFFICER" in m.content:
-                participating_agents.add("Risk Officer")
-
-    # Return de lista vacía si no hay reportes
-    if not reports_text:
-        return []
-
-    # Consolidar todos los reportes en un único mensaje
-    joined = "\n\n".join(reports_text)
-    agents_list = ", ".join(participating_agents)
-
-    return [
-        HumanMessage(
-            content=(
-                f"--- METADATA: AGENTES PARTICIPANTES ---\n"
-                f"Solo han trabajado: [{agents_list}].\n"
-                f"Ignora áreas de agentes que NO estén aquí.\n\n"
-                f"--- CONTENIDO DE LOS INFORMES ---\n"
-                f"{joined}\n\n"
-                "Usando EXCLUSIVAMENTE los datos brutos de arriba, genera el resumen final.\n"
-                "No inventes nada ni rechaces la tarea. Simplemente transforma los datos técnicos en un texto legible en español."
-            )
-        )
-    ]
-
-
-# ============================================================
 # AGENTES REACT - NODOS DEL GRAFO
-# ============================================================
-
 # --- ANALISTA TÉCNICO ---
 technical_prompt_text = get_technical_agent_prompt(available_coins)
 _technical_agent = create_react_agent(
@@ -171,7 +79,11 @@ def technical_node(state):
     # Firmar el reporte con el identificador del agente
     generated_messages = result["messages"]
     last_resp = generated_messages[-1].content
-    signed_response = f"### REPORTE DEL TECHNICAL_ANALYST ###\n{last_resp}"
+    
+    # Extraer el activo de la tarea para incluirlo en el reporte
+    asset_name = extract_asset_from_task(clean_instruction) if clean_instruction else "Activo no especificado"
+    
+    signed_response = f"### REPORTE DEL TECHNICAL_ANALYST ###\n**Activo:** {asset_name}\n\n{last_resp}"
     generated_messages[-1] = AIMessage(content=signed_response)
 
     return {"messages": generated_messages}
@@ -211,7 +123,11 @@ def fundamental_node(state):
     # Firmar el reporte
     generated_messages = result["messages"]
     last_resp = generated_messages[-1].content
-    signed_response = f"### REPORTE DEL FUNDAMENTAL_ANALYST ###\n{last_resp}"
+    
+    # Extraer el activo de la tarea
+    asset_name = extract_asset_from_task(clean_instruction) if clean_instruction else "Activo no especificado"
+    
+    signed_response = f"### REPORTE DEL FUNDAMENTAL_ANALYST ###\n**Activo:** {asset_name}\n\n{last_resp}"
     generated_messages[-1] = AIMessage(content=signed_response)
 
     return {"messages": generated_messages}
@@ -251,16 +167,17 @@ def risk_node(state):
     # Firmar el reporte
     generated_messages = result["messages"]
     last_resp = generated_messages[-1].content
-    signed_response = f"### REPORTE DEL RISK_OFFICER ###\n{last_resp}"
+    
+    # Extraer el activo de la tarea
+    asset_name = extract_asset_from_task(clean_instruction) if clean_instruction else "Activo no especificado"
+    
+    signed_response = f"### REPORTE DEL RISK_OFFICER ###\n**Activo:** {asset_name}\n\n{last_resp}"
     generated_messages[-1] = AIMessage(content=signed_response)
 
     return {"messages": generated_messages}
 
 
-# ============================================================
 # PLANIFICADOR - GENERACIÓN DE LISTA DE TAREAS
-# ============================================================
-
 class PlanningOutput(BaseModel):
     """Esquema de salida estructurada para el planificador."""
     tasks: List[str] = Field(description="Lista de tareas.")
@@ -314,10 +231,7 @@ def planner_node(state):
     }
 
 
-# ============================================================
 # SUPERVISOR - COORDINACIÓN Y ENRUTAMIENTO
-# ============================================================
-
 class RouterOutput(BaseModel):
     """Esquema de salida estructurada para el router del supervisor."""
     agent: Literal["Technical_Analyst", "Fundamental_Analyst", "Risk_Officer"]
@@ -347,11 +261,16 @@ def supervisor_node(state):
     if not pending:
         # Extraer y consolidar reportes del turno actual
         reports = extract_reports(get_current_turn_messages(state["messages"]))
+
+        # Pregunta del usuario para dar contexto al resumen de lo que se ha generado
+        last_user_msg = get_last_user_message(state["messages"])
         
         # Generar resumen final ejecutivo
         summary = llm.invoke(
-            [SystemMessage(content=SUPERVISOR_SUMMARY_PROMPT)] + reports
-        )
+                [SystemMessage(content=SUPERVISOR_SUMMARY_PROMPT)] + 
+                [last_user_msg] + 
+                reports
+            )
         
         return {"next": "FINISH", "messages": [summary]}
 

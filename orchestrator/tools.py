@@ -31,7 +31,7 @@ embeddings = get_embeddings()
 search = DuckDuckGoSearchRun()
 
 # ==========================================
-# 1. HERRAMIENTAS DE DATOS (SQL) - Para el QUANT
+# 1. HERRAMIENTAS DE DATOS (SQL)
 # ==========================================
 
 @tool
@@ -79,7 +79,7 @@ def crypto_history_tool(query: str):
 
 
 # ==========================================
-# 2. HERRAMIENTAS DE PREDICCIÓN (ML) - Para el QUANT
+# 2. HERRAMIENTAS DE PREDICCIÓN (ML)
 # ==========================================
 
 @tool
@@ -144,7 +144,7 @@ def crypto_prediction_tool(coin: str):
 
 
 # ==========================================
-# 3. HERRAMIENTAS DE RIESGO - Para el RISK OFFICER
+# 3. HERRAMIENTAS DE RIESGO
 # ==========================================
 
 @tool
@@ -210,7 +210,7 @@ def crypto_volatility_tool(coin: str):
 
 
 # ==========================================
-# 4. HERRAMIENTAS DE CONTEXTO (RAG + WEB) - Para el RESEARCHER
+# 4. HERRAMIENTAS DE CONTEXTO (RAG + WEB)
 # ==========================================
 
 @tool
@@ -250,7 +250,7 @@ def crypto_news_tool(query: str):
 
 
 # ==========================================
-# 5. HERRAMIENTA DE VISUALIZACIÓN - Para el REPORTE
+# 5. HERRAMIENTA DE VISUALIZACIÓN
 # ==========================================
 
 @tool

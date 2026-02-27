@@ -12,7 +12,7 @@ class AgentState(TypedDict):
     # La lista de tareas que faltan por hacer
     pending_tasks: List[str]
     
-    # Acumulamos qué hemos hecho para ayudar al resumen final
+    # Acumula tareas realizadas hecho para ayudar al resumen final
     completed_outputs: Annotated[List[str], lambda x, y: x + y]
 
     # Tarea que el agente debe de hacer

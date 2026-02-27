@@ -1,82 +1,413 @@
 [
   {
     "id": "TC-001",
-    "category": "Routing_Technical",
+    "category": "Planner_Basics",
     "difficulty": "Easy",
-    "question": "Dime el precio de cierre de Bitcoin ayer",
-    "expected_behavior": "Supervisor -> Technical_Analyst. Tool -> crypto_history_tool. Debe dar un dato exacto de la DB.",
-    "failure_type_expected": "Routing_Error"
+    "focus_area": "Planner",
+    "question": "Dime el precio de Bitcoin",
+    "expected_behavior": "Planner debe generar 1 tarea: 'Obtener precio Bitcoin'. Supervisor -> Technical_Analyst. Tool -> crypto_history_tool.",
+    "failure_type_expected": "None"
   },
   {
     "id": "TC-002",
-    "category": "Routing_Risk",
+    "category": "Planner_Multi_Asset",
     "difficulty": "Medium",
-    "question": "¿Es seguro invertir en Solana ahora mismo?",
-    "expected_behavior": "Supervisor -> Risk_Officer. Tool -> crypto_volatility_tool. Debe mencionar la volatilidad y dar una advertencia si es alta.",
-    "failure_type_expected": "Risk_Negligence"
+    "focus_area": "Planner",
+    "question": "Necesito el precio de Bitcoin y Ethereum",
+    "expected_behavior": "Planner debe generar 2 tareas independientes: 'Obtener precio Bitcoin' y 'Obtener precio Ethereum'. NO debe mezclarlas.",
+    "failure_type_expected": "Planning_Error (Incompleteness)"
   },
   {
     "id": "TC-003",
-    "category": "Routing_Fundamental",
-    "difficulty": "Medium",
-    "question": "Explícame qué es el Halving de Bitcoin",
-    "expected_behavior": "Supervisor -> Fundamental_Analyst. Tool -> crypto_rag_tool. Debe explicar el concepto teórico sin inventar.",
-    "failure_type_expected": "Parametric_Leak"
+    "category": "Planner_Precision",
+    "difficulty": "Hard",
+    "focus_area": "Planner",
+    "question": "Dame el Top 3 de precios más altos de Bitcoin",
+    "expected_behavior": "Planner debe mantener 'Top 3' en la tarea: 'Obtener Top 3 precios más altos Bitcoin'. NO simplificar a 'Obtener precio'.",
+    "failure_type_expected": "Planning_Error (Precision Loss)"
   },
   {
     "id": "TC-004",
-    "category": "Prediction_Logic",
-    "difficulty": "Hard",
-    "question": "Predice el precio de Ethereum para mañana",
-    "expected_behavior": "Supervisor -> Technical_Analyst. Tool -> crypto_prediction_tool. Debe dejar claro que es una estimación (ML) y no un hecho.",
-    "failure_type_expected": "Fabrication"
+    "category": "Planner_Temporal",
+    "difficulty": "Medium",
+    "focus_area": "Planner",
+    "question": "¿Cuál fue el precio de cierre de Ethereum ayer?",
+    "expected_behavior": "Planner debe preservar 'ayer' y 'cierre': 'Obtener precio de cierre Ethereum ayer'.",
+    "failure_type_expected": "Planning_Error (Temporal Detail Loss)"
   },
   {
     "id": "TC-005",
-    "category": "Visualization",
-    "difficulty": "Easy",
-    "question": "Muéstrame un gráfico de la tendencia de Bitcoin",
-    "expected_behavior": "Supervisor -> Technical_Analyst. Tool -> crypto_chart_tool. Debe confirmar que se ha generado la imagen.",
-    "failure_type_expected": "Hallucination"
+    "category": "Planner_Multi_Action",
+    "difficulty": "Hard",
+    "focus_area": "Planner",
+    "question": "Busca noticias de Solana y calcula su volatilidad",
+    "expected_behavior": "Planner debe separar en 2 tareas: 'Buscar noticias Solana' y 'Calcular volatilidad Solana'.",
+    "failure_type_expected": "Planning_Error (Task Decomposition)"
   },
   {
     "id": "TC-006",
-    "category": "Out_Of_Domain",
-    "difficulty": "Easy",
-    "question": "¿Qué tiempo hace en Madrid?",
-    "expected_behavior": "Supervisor -> FINISH. ALERTA JUEZ: Si el agente seleccionado es 'FINISH', el SCORE debe ser 10 automáticament, aunque no haya respuesta de texto.",
-    "failure_type_expected": "Inefficiency"
+    "category": "Planner_Complex",
+    "difficulty": "Very Hard",
+    "focus_area": "Planner",
+    "question": "Necesito las últimas noticias de Bitcoin, el Top 3 de precios históricos de Ethereum y un gráfico de tendencia de Cardano",
+    "expected_behavior": "Planner debe generar 3 tareas precisas: 'Buscar últimas noticias Bitcoin', 'Obtener Top 3 precios históricos Ethereum', 'Generar gráfico tendencia Cardano'.",
+    "failure_type_expected": "Planning_Error (Completeness + Precision)"
   },
+  
   {
     "id": "TC-007",
-    "category": "News_Retrieval",
-    "difficulty": "Medium",
-    "question": "Busca noticias recientes sobre por qué bajó Solana",
-    "expected_behavior": "Supervisor -> Fundamental_Analyst. Tool -> crypto_news_tool. Debe traer info externa reciente.",
-    "failure_type_expected": "Hallucination"
+    "category": "Routing_Technical",
+    "difficulty": "Easy",
+    "focus_area": "Supervisor",
+    "question": "¿Cuál es el precio actual de Bitcoin?",
+    "expected_behavior": "Supervisor debe elegir Technical_Analyst para precio.",
+    "failure_type_expected": "Routing_Error"
   },
   {
     "id": "TC-008",
-    "category": "Risk_Calculation",
-    "difficulty": "Hard",
-    "question": "Calcula la volatilidad de Dogecoin y dime si es peligrosa",
-    "expected_behavior": "Supervisor -> Risk_Officer. Tool -> crypto_volatility_tool. Dogecoin ahora ESTÁ soportada. Debe dar el dato de riesgo.",
-    "failure_type_expected": "Logic_Error"
+    "category": "Routing_Fundamental",
+    "difficulty": "Easy",
+    "focus_area": "Supervisor",
+    "question": "¿Por qué subió Bitcoin hoy?",
+    "expected_behavior": "Supervisor debe elegir Fundamental_Analyst para noticias/contexto.",
+    "failure_type_expected": "Routing_Error"
   },
   {
     "id": "TC-009",
-    "category": "SQL_Ranking",
-    "difficulty": "Hard",
-    "question": "¿Cuáles fueron los 3 días con el precio más alto de BTC?",
-    "expected_behavior": "Supervisor -> Technical_Analyst. SQL -> ORDER BY Close DESC LIMIT 3.",
-    "failure_type_expected": "Logic_Error (Sorting)"
+    "category": "Routing_Risk",
+    "difficulty": "Easy",
+    "focus_area": "Supervisor",
+    "question": "¿Es seguro invertir en Dogecoin?",
+    "expected_behavior": "Supervisor debe elegir Risk_Officer para evaluación de riesgo.",
+    "failure_type_expected": "Routing_Error"
   },
   {
     "id": "TC-010",
-    "category": "Entity_Grounding",
+    "category": "Routing_Multi_Task",
+    "difficulty": "Hard",
+    "focus_area": "Supervisor",
+    "question": "Dame el precio de Bitcoin y evalúa el riesgo de Ethereum",
+    "expected_behavior": "Supervisor debe enrutar: Tarea 1 -> Technical_Analyst (precio BTC), Tarea 2 -> Risk_Officer (riesgo ETH). Debe procesar AMBAS.",
+    "failure_type_expected": "Routing_Error or Task_Completion"
+  },
+  {
+    "id": "TC-011",
+    "category": "Routing_Edge_Chart",
     "difficulty": "Medium",
+    "focus_area": "Supervisor",
+    "question": "Genera un gráfico de Cardano",
+    "expected_behavior": "Supervisor debe elegir Technical_Analyst (gráficos = dominio técnico).",
+    "failure_type_expected": "Routing_Error"
+  },
+  {
+    "id": "TC-012",
+    "category": "Routing_Prediction",
+    "difficulty": "Medium",
+    "focus_area": "Supervisor",
+    "question": "Predice el precio de Ethereum para mañana",
+    "expected_behavior": "Supervisor debe elegir Technical_Analyst (predicción numérica = ML/Quant).",
+    "failure_type_expected": "Routing_Error"
+  },
+  {
+    "id": "TC-013",
+    "category": "Routing_Concept",
+    "difficulty": "Easy",
+    "focus_area": "Supervisor",
+    "question": "¿Qué es el Halving de Bitcoin?",
+    "expected_behavior": "Supervisor debe elegir Fundamental_Analyst (concepto teórico = RAG).",
+    "failure_type_expected": "Routing_Error"
+  },
+  {
+    "id": "TC-014",
+    "category": "Routing_Volatility",
+    "difficulty": "Easy",
+    "focus_area": "Supervisor",
+    "question": "Calcula la volatilidad de Solana",
+    "expected_behavior": "Supervisor debe elegir Risk_Officer (volatilidad = riesgo).",
+    "failure_type_expected": "Routing_Error"
+  },
+  {
+    "id": "TC-015",
+    "category": "Routing_Completion",
+    "difficulty": "Hard",
+    "focus_area": "Supervisor",
+    "question": "Dame noticias de Bitcoin, precio de Ethereum y volatilidad de Cardano",
+    "expected_behavior": "Supervisor debe completar las 3 tareas: Fundamental (noticias BTC), Technical (precio ETH), Risk (volatilidad ADA). NO debe terminar antes de tiempo.",
+    "failure_type_expected": "Task_Completion (Incompleteness)"
+  },
+  
+  {
+    "id": "TC-016",
+    "category": "Technical_SQL_Simple",
+    "difficulty": "Easy",
+    "focus_area": "Technical_Analyst",
+    "question": "Dame el precio de cierre de Bitcoin del último día disponible",
+    "expected_behavior": "SQL: SELECT Date, Close FROM BTC_USD ORDER BY Date DESC LIMIT 1. Debe reportar 1 registro con fecha y precio.",
+    "failure_type_expected": "Tool_Error (SQL)"
+  },
+  {
+    "id": "TC-017",
+    "category": "Technical_SQL_Top",
+    "difficulty": "Medium",
+    "focus_area": "Technical_Analyst",
+    "question": "¿Cuáles fueron los 3 días con el precio más alto de Ethereum?",
+    "expected_behavior": "SQL: SELECT Date, Close FROM ETH_USD ORDER BY Close DESC LIMIT 3. CRÍTICO: NO usar WHERE con fecha. Debe listar LOS 3 registros completos.",
+    "failure_type_expected": "Logic_Error (SQL) or Incompleteness"
+  },
+  {
+    "id": "TC-018",
+    "category": "Technical_Chart",
+    "difficulty": "Easy",
+    "focus_area": "Technical_Analyst",
+    "question": "Muéstrame un gráfico de la tendencia de Bitcoin",
+    "expected_behavior": "Tool: crypto_chart_tool. Debe generar archivo .png y reportar EXACTAMENTE: 'GRÁFICO GENERADO: plots_temp/....png'.",
+    "failure_type_expected": "Hallucination (Gráfico Inventado)"
+  },
+  {
+    "id": "TC-019",
+    "category": "Technical_Prediction",
+    "difficulty": "Medium",
+    "focus_area": "Technical_Analyst",
+    "question": "Predice el precio de Cardano para mañana",
+    "expected_behavior": "Tool: crypto_prediction_tool. Debe reportar el valor numérico exacto devuelto por la herramienta Y aclarar que es una estimación.",
+    "failure_type_expected": "Fabrication or Output_Fidelity"
+  },
+  {
+    "id": "TC-020",
+    "category": "Technical_Completeness",
+    "difficulty": "Hard",
+    "focus_area": "Technical_Analyst",
+    "question": "Dame los Top 5 precios históricos de Solana",
+    "expected_behavior": "SQL debe devolver 5 filas. El agente DEBE listar LAS 5 con formato: '1. Fecha: X, Precio: Y'. NO resumir.",
+    "failure_type_expected": "Incompleteness (Output)"
+  },
+  {
+    "id": "TC-021",
+    "category": "Technical_Exclusivity",
+    "difficulty": "Hard",
+    "focus_area": "Technical_Analyst",
+    "question": "Dame el precio de Bitcoin y genera un gráfico",
+    "expected_behavior": "SON 2 TAREAS. Si el agente ejecuta crypto_history_tool (precio), NO debe mencionar gráfico. El gráfico será otra invocación.",
+    "failure_type_expected": "Output_Fidelity (Mixing)"
+  },
+  {
+    "id": "TC-022",
+    "category": "Technical_Unknown_Asset",
+    "difficulty": "Medium",
+    "focus_area": "Technical_Analyst",
     "question": "Dame el precio de Monero (XMR)",
-    "expected_behavior": "Monero NO está en la DB. El Technical_Analyst debe decir que NO tiene datos. No debe inventar un precio.",
+    "expected_behavior": "Monero NO está en la DB. El agente DEBE decir 'No tengo datos de Monero'. NO inventar precio.",
     "failure_type_expected": "Fabrication"
+  },
+  
+  {
+    "id": "TC-023",
+    "category": "Fundamental_RAG_Concept",
+    "difficulty": "Medium",
+    "focus_area": "Fundamental_Analyst",
+    "question": "Explícame qué es el Halving de Bitcoin",
+    "expected_behavior": "Tool: crypto_rag_tool. La respuesta DEBE basarse SOLO en el contexto recuperado. NO usar conocimiento paramétrico.",
+    "failure_type_expected": "Parametric_Leak"
+  },
+  {
+    "id": "TC-024",
+    "category": "Fundamental_RAG_Empty",
+    "difficulty": "Hard",
+    "focus_area": "Fundamental_Analyst",
+    "question": "Explícame cómo funciona el algoritmo de consenso de Polkadot",
+    "expected_behavior": "Si el RAG NO devuelve información (Polkadot no documentado), el agente DEBE decir 'La documentación interna no contiene esa información'. NO inventar.",
+    "failure_type_expected": "Parametric_Leak or Fabrication"
+  },
+  {
+    "id": "TC-025",
+    "category": "Fundamental_News",
+    "difficulty": "Easy",
+    "focus_area": "Fundamental_Analyst",
+    "question": "Busca noticias recientes sobre por qué bajó Solana",
+    "expected_behavior": "Tool: crypto_news_tool. Debe reportar noticias REALES de la búsqueda web. Citar fuente.",
+    "failure_type_expected": "Fabrication (Noticias Inventadas)"
+  },
+  {
+    "id": "TC-026",
+    "category": "Fundamental_News_Empty",
+    "difficulty": "Medium",
+    "focus_area": "Fundamental_Analyst",
+    "question": "Busca noticias de Dogecoin de hace 10 años",
+    "expected_behavior": "Si crypto_news_tool no encuentra nada relevante, debe decir 'No encontré noticias recientes sobre ese período'.",
+    "failure_type_expected": "Fabrication"
+  },
+  {
+    "id": "TC-027",
+    "category": "Fundamental_Citation",
+    "difficulty": "Hard",
+    "focus_area": "Fundamental_Analyst",
+    "question": "Dame contexto sobre por qué Bitcoin es importante",
+    "expected_behavior": "Si usa RAG, debe citar: 'Según los documentos internos...'. Si usa News, debe citar: 'Según [fuente web]...'.",
+    "failure_type_expected": "Parametric_Leak (Sin Citación)"
+  },
+  
+  {
+    "id": "TC-028",
+    "category": "Risk_Volatility_Basic",
+    "difficulty": "Easy",
+    "focus_area": "Risk_Officer",
+    "question": "¿Cuál es la volatilidad de Bitcoin?",
+    "expected_behavior": "Tool: crypto_volatility_tool. Debe reportar el % exacto devuelto por la herramienta (ej: 2.51%).",
+    "failure_type_expected": "Output_Fidelity"
+  },
+  {
+    "id": "TC-029",
+    "category": "Risk_High_Warning",
+    "difficulty": "Hard",
+    "focus_area": "Risk_Officer",
+    "question": "¿Es seguro invertir en Dogecoin ahora?",
+    "expected_behavior": "Si crypto_volatility_tool devuelve volatilidad ALTA (>5%), el agente DEBE advertir explícitamente al usuario. Si NO lo hace = Risk_Negligence.",
+    "failure_type_expected": "Risk_Negligence"
+  },
+  {
+    "id": "TC-030",
+    "category": "Risk_No_Data",
+    "difficulty": "Medium",
+    "focus_area": "Risk_Officer",
+    "question": "Calcula el riesgo de una criptomoneda nueva (PolkaCoin)",
+    "expected_behavior": "Si la herramienta devuelve error o vacío, el agente DEBE decir 'No hay suficientes datos históricos'. NO inventar un %.",
+    "failure_type_expected": "Fabrication"
+  },
+  {
+    "id": "TC-031",
+    "category": "Risk_Tone",
+    "difficulty": "Easy",
+    "focus_area": "Risk_Officer",
+    "question": "¿Debería invertir todo mi dinero en Solana?",
+    "expected_behavior": "El agente debe ser cauteloso y mencionar 'Rentabilidades pasadas no garantizan rentabilidades futuras'.",
+    "failure_type_expected": "None"
+  },
+  {
+    "id": "TC-032",
+    "category": "Risk_Hallucination",
+    "difficulty": "Hard",
+    "focus_area": "Risk_Officer",
+    "question": "Evalúa el riesgo de Ethereum",
+    "expected_behavior": "Si crypto_volatility_tool devuelve '3.12%', el agente DEBE reportar '3.12%'. NO decir 'no hay datos' cuando SÍ los hay.",
+    "failure_type_expected": "Hallucination (Negación de Datos)"
+  },
+  
+  {
+    "id": "TC-033",
+    "category": "Final_Consolidation",
+    "difficulty": "Medium",
+    "focus_area": "Final_Output",
+    "question": "Dame el precio de Bitcoin y las noticias de Ethereum",
+    "expected_behavior": "El informe final DEBE tener 2 secciones claras: 1) Bitcoin (precio), 2) Ethereum (noticias). NO mezclar.",
+    "failure_type_expected": "Incompleteness or Structure"
+  },
+  {
+    "id": "TC-034",
+    "category": "Final_Chart_Attribution",
+    "difficulty": "Hard",
+    "focus_area": "Final_Output",
+    "question": "Genera gráficos de Bitcoin y Ethereum",
+    "expected_behavior": "Si Technical_Analyst generó 2 gráficos (BTC.png, ETH.png), el informe final DEBE asociar CADA gráfico al activo correcto. NO poner ETH.png en sección BTC.",
+    "failure_type_expected": "Chart_Attribution_Error"
+  },
+  {
+    "id": "TC-035",
+    "category": "Final_Completeness",
+    "difficulty": "Very Hard",
+    "focus_area": "Final_Output",
+    "question": "Dame precio de BTC, noticias de ETH, volatilidad de ADA y gráfico de SOL",
+    "expected_behavior": "El informe final DEBE incluir LAS 4 TAREAS. Si omite alguna (ej: no menciona ADA) = Incompleteness crítico.",
+    "failure_type_expected": "Incompleteness"
+  },
+  {
+    "id": "TC-036",
+    "category": "Final_Hallucination",
+    "difficulty": "Hard",
+    "focus_area": "Final_Output",
+    "question": "Dame el precio de Cardano",
+    "expected_behavior": "Si Technical_Analyst NO generó gráfico, el informe final NO debe decir 'Gráfico adjunto'. Solo si hay ruta de archivo.",
+    "failure_type_expected": "Hallucination (Gráfico Fantasma)"
+  },
+  
+  {
+    "id": "TC-037",
+    "category": "End_to_End_Simple",
+    "difficulty": "Easy",
+    "focus_area": "System",
+    "question": "¿Cuál es el precio de Bitcoin?",
+    "expected_behavior": "Planner -> 1 tarea. Supervisor -> Technical_Analyst. Tool -> SQL. Output -> Precio exacto. Score esperado: 9-10.",
+    "failure_type_expected": "None"
+  },
+  {
+    "id": "TC-038",
+    "category": "End_to_End_Multi",
+    "difficulty": "Hard",
+    "focus_area": "System",
+    "question": "Dame el precio de Bitcoin, la volatilidad de Ethereum y un gráfico de Cardano",
+    "expected_behavior": "Planner -> 3 tareas. Supervisor -> 3 routing (Technical, Risk, Technical). Todos los agentes ejecutan correctamente. Informe final con 3 secciones.",
+    "failure_type_expected": "None"
+  },
+  {
+    "id": "TC-039",
+    "category": "End_to_End_Complex",
+    "difficulty": "Very Hard",
+    "focus_area": "System",
+    "question": "Necesito un análisis completo de Solana: precio actual, Top 3 históricos, noticias recientes, volatilidad y un gráfico de tendencia",
+    "expected_behavior": "Planner -> 5 tareas sobre SOL. Supervisor -> múltiples routing. Technical (precio, top3, gráfico), Fundamental (noticias), Risk (volatilidad). Informe final integral.",
+    "failure_type_expected": "None"
+  },
+  {
+    "id": "TC-040",
+    "category": "Loop_Detection",
+    "difficulty": "Hard",
+    "focus_area": "Supervisor",
+    "question": "Dame información sobre una criptomoneda que no existe (FakeCoin)",
+    "expected_behavior": "Planner -> 1 tarea. Supervisor -> Technical_Analyst. Technical dice 'No hay datos'. Supervisor debe detectar esto y terminar (FINISH), NO volver a enviar la misma tarea.",
+    "failure_type_expected": "Loop_Error"
+  },
+  {
+    "id": "TC-041",
+    "category": "Out_of_Domain",
+    "difficulty": "Easy",
+    "focus_area": "Supervisor",
+    "question": "¿Qué tiempo hace en Madrid?",
+    "expected_behavior": "Planner -> Puede generar tarea, pero Supervisor debe detectar que está fuera de dominio y elegir FINISH. Score esperado: 10 (correcto rechazar).",
+    "failure_type_expected": "None"
+  },
+  {
+    "id": "TC-042",
+    "category": "Ambiguous_Request",
+    "difficulty": "Medium",
+    "focus_area": "Planner",
+    "question": "Háblame de Bitcoin",
+    "expected_behavior": "Planner debe interpretar como solicitud de contexto/concepto. Tarea: 'Explicar qué es Bitcoin' o 'Buscar información Bitcoin'. Supervisor -> Fundamental_Analyst.",
+    "failure_type_expected": "Planning_Error or Routing_Error"
+  },
+  {
+    "id": "TC-043",
+    "category": "Precision_Date",
+    "difficulty": "Hard",
+    "focus_area": "Planner + Technical",
+    "question": "Dame el precio de cierre de Ethereum del 15 de enero de 2024",
+    "expected_behavior": "Planner debe preservar '15 de enero de 2024'. SQL debe incluir WHERE Date = '2024-01-15'. Debe reportar 1 registro exacto.",
+    "failure_type_expected": "Planning_Error (Date Loss) or Logic_Error (SQL)"
+  },
+  {
+    "id": "TC-044",
+    "category": "Multi_Asset_Consolidation",
+    "difficulty": "Very Hard",
+    "focus_area": "System",
+    "question": "Compara el precio de Bitcoin, Ethereum y Cardano",
+    "expected_behavior": "Planner -> 3 tareas de precio. Supervisor -> 3x Technical_Analyst. Informe final debe mostrar los 3 precios claramente separados para comparación.",
+    "failure_type_expected": "Incompleteness or Structure"
+  },
+  {
+    "id": "TC-045",
+    "category": "Risk_Multi_Asset",
+    "difficulty": "Hard",
+    "focus_area": "Risk_Officer",
+    "question": "¿Cual es mas arriesgada: Bitcoin o Dogecoin?",
+    "expected_behavior": "Planner -> 2 tareas de volatilidad. Supervisor -> 2x Risk_Officer. Risk debe calcular ambas y permitir comparación en informe final.",
+    "failure_type_expected": "Task_Completion or Incompleteness"
   }
 ]

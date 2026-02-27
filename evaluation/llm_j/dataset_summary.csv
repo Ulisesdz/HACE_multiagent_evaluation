@@ -1,0 +1,46 @@
+id,category,difficulty,focus_area,overall_score,error_category,planner_score,supervisor_score,agents_avg_score,final_output_score
+TC-001,Planner_Basics,Easy,Planner,6,Tool_Error,9.25,10.0,3.0,9.25
+TC-002,Planner_Multi_Asset,Medium,Planner,6,Tool_Error,9.25,6.5,5.4,5.0
+TC-003,Planner_Precision,Hard,Planner,9,None,9.25,10.0,9.0,9.25
+TC-004,Planner_Temporal,Medium,Planner,9,None,9.25,10.0,9.0,10.0
+TC-005,Planner_Multi_Action,Hard,Planner,9,None,10.0,10.0,9.2,9.0
+TC-006,Planner_Complex,Very Hard,Planner,9,None,9.75,9.5,8.799999999999999,9.0
+TC-007,Routing_Technical,Easy,Supervisor,9,None,9.25,10.0,10.0,9.75
+TC-008,Routing_Fundamental,Easy,Supervisor,9,None,9.25,10.0,8.4,9.0
+TC-009,Routing_Risk,Easy,Supervisor,9,None,9.25,10.0,10.0,9.25
+TC-010,Routing_Multi_Task,Hard,Supervisor,8,None,9.25,10.0,6.5,9.0
+TC-011,Routing_Edge_Chart,Medium,Supervisor,9,None,9.25,10.0,9.0,9.75
+TC-012,Routing_Prediction,Medium,Supervisor,9,None,9.25,10.0,9.8,5.75
+TC-013,Routing_Concept,Easy,Supervisor,9,None,9.25,10.0,9.4,9.25
+TC-014,Routing_Volatility,Easy,Supervisor,9,None,9.25,10.0,10.0,9.75
+TC-015,Routing_Completion,Hard,Supervisor,7,Tool_Error,9.25,5.0,7.133333333333333,8.5
+TC-016,Technical_SQL_Simple,Easy,Technical_Analyst,9,None,9.75,10.0,10.0,8.5
+TC-017,Technical_SQL_Top,Medium,Technical_Analyst,8,None,9.25,9.0,8.4,9.0
+TC-018,Technical_Chart,Easy,Technical_Analyst,9,None,9.25,10.0,10.0,9.75
+TC-019,Technical_Prediction,Medium,Technical_Analyst,8,None,9.25,10.0,8.6,7.5
+TC-020,Technical_Completeness,Hard,Technical_Analyst,9,None,9.25,10.0,9.0,9.25
+TC-021,Technical_Exclusivity,Hard,Technical_Analyst,7,Tool_Error,9.25,6.5,6.5,9.0
+TC-022,Technical_Unknown_Asset,Medium,Technical_Analyst,4,Routing_Error,9.25,2.5,3.0,6.25
+TC-023,Fundamental_RAG_Concept,Medium,Fundamental_Analyst,9,None,9.25,10.0,10.0,9.0
+TC-024,Fundamental_RAG_Empty,Hard,Fundamental_Analyst,7,Fabrication,9.25,10.0,5.0,8.5
+TC-025,Fundamental_News,Easy,Fundamental_Analyst,9,None,9.25,10.0,9.4,9.0
+TC-026,Fundamental_News_Empty,Medium,Fundamental_Analyst,9,None,9.25,10.0,9.4,9.25
+TC-027,Fundamental_Citation,Hard,Fundamental_Analyst,9,None,9.25,10.0,9.4,9.25
+TC-028,Risk_Volatility_Basic,Easy,Risk_Officer,9,None,10.0,10.0,9.4,9.25
+TC-029,Risk_High_Warning,Hard,Risk_Officer,9,None,9.25,10.0,9.4,9.25
+TC-030,Risk_No_Data,Medium,Risk_Officer,6,Tool_Error,9.25,10.0,2.0,8.5
+TC-031,Risk_Tone,Easy,Risk_Officer,7,None,8.5,6.5,9.0,6.0
+TC-032,Risk_Hallucination,Hard,Risk_Officer,9,None,10.0,10.0,10.0,9.25
+TC-033,Final_Consolidation,Medium,Final_Output,7,Tool_Error,9.25,6.5,5.7,9.0
+TC-034,Final_Chart_Attribution,Hard,Final_Output,8,None,9.25,10.0,8.8,6.5
+TC-035,Final_Completeness,Very Hard,Final_Output,8,None,10.0,6.5,7.7,9.0
+TC-036,Final_Hallucination,Hard,Final_Output,7,Tool_Error,9.25,10.0,3.0,9.75
+TC-037,End_to_End_Simple,Easy,System,7,Tool_Error,9.75,10.0,3.0,9.25
+TC-038,End_to_End_Multi,Hard,System,8,None,9.25,9.5,7.333333333333333,9.25
+TC-039,End_to_End_Complex,Very Hard,System,8,None,9.0,7.0,9.45,9.25
+TC-040,Loop_Detection,Hard,Supervisor,3,Routing_Error,9.25,0.0,2.0,3.75
+TC-041,Out_of_Domain,Easy,Supervisor,4,Routing_Error,10.0,0.0,4.0,8.5
+TC-042,Ambiguous_Request,Medium,Planner,9,None,9.25,10.0,9.4,9.25
+TC-043,Precision_Date,Hard,Planner + Technical,7,Tool_Error,9.25,10.0,3.0,9.75
+TC-044,Multi_Asset_Consolidation,Very Hard,System,9,None,9.25,10.0,9.266666666666667,9.25
+TC-045,Risk_Multi_Asset,Hard,Risk_Officer,9,None,9.25,10.0,10.0,9.0
