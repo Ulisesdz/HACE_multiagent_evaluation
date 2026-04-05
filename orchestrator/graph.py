@@ -1,12 +1,13 @@
 from langgraph.graph import StateGraph, END, START
 from orchestrator.state import AgentState
 from orchestrator.agents import (
-    supervisor_node, 
-    technical_node, 
-    fundamental_node, 
+    supervisor_node,
+    technical_node,
+    fundamental_node,
     risk_node,
-    planner_node
+    planner_node,
 )
+
 
 def build_graph():
     workflow = StateGraph(AgentState)

@@ -12,7 +12,7 @@ def download_and_save():
         "BNB-USD",  # Exchange Token
         "XRP-USD",  # Banca / Pagos
         "ADA-USD",  # Académico / Peer Review
-        "DOGE-USD"  # Meme / Alta Volatilidad
+        "DOGE-USD",  # Meme / Alta Volatilidad
     ]
 
     # 1. Carpeta 'crypto'

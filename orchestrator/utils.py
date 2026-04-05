@@ -4,6 +4,7 @@ import sqlite3
 from typing import List
 from langchain_core.messages import AIMessage, HumanMessage, BaseMessage
 
+
 def log_execution(func):
     """Decorador para imprimir inputs y outputs de las herramientas (Tools)."""
 
@@ -78,20 +79,19 @@ def get_available_entities(db_path):
         return tables
     except Exception:
         return []
-    
 
 
 # FUNCIONES AUXILIARES DE FILTRADO DE MENSAJES
 def extract_asset_from_task(task: str) -> str:
     """
     Extrae el nombre del activo (criptomoneda) de una tarea.
-    
+
     Busca nombres de criptomonedas conocidas en la tarea y devuelve el primero
     que encuentre. Si no encuentra ninguno, devuelve "Activo no especificado".
-    
+
     Args:
         task: String con la descripción de la tarea.
-        
+
     Returns:
         Nombre del activo encontrado o "Activo no especificado".
     """
@@ -99,7 +99,7 @@ def extract_asset_from_task(task: str) -> str:
     crypto_names = {
         "bitcoin": "Bitcoin",
         "btc": "Bitcoin",
-        "ethereum": "Ethereum", 
+        "ethereum": "Ethereum",
         "eth": "Ethereum",
         "cardano": "Cardano",
         "ada": "Cardano",
@@ -112,30 +112,30 @@ def extract_asset_from_task(task: str) -> str:
         "polkadot": "Polkadot",
         "dot": "Polkadot",
         "binance": "Binance Coin",
-        "bnb": "Binance Coin"
+        "bnb": "Binance Coin",
     }
-    
+
     task_lower = task.lower()
-    
+
     # Buscar coincidencias en el diccionario
     for alias, full_name in crypto_names.items():
         if alias in task_lower:
             return full_name
-    
+
     return "Activo no especificado"
 
 
 def get_current_turn_messages(messages: List[BaseMessage]) -> List[BaseMessage]:
     """
     Filtra el historial de mensajes para obtener solo los del turno actual.
-    
+
     Retrocede desde el final hasta encontrar el primer mensaje humano que no sea
     una instrucción interna del supervisor, y devuelve todos los mensajes desde
     ese punto hacia adelante.
-    
+
     Args:
         messages: Lista completa de mensajes del historial.
-        
+
     Returns:
         Lista de mensajes correspondientes al turno actual.
     """
@@ -152,10 +152,10 @@ def get_current_turn_messages(messages: List[BaseMessage]) -> List[BaseMessage]:
 def get_last_user_message(messages: List[BaseMessage]) -> BaseMessage:
     """
     Extrae el último mensaje del usuario del historial.
-    
+
     Args:
         messages: Lista de mensajes del historial.
-        
+
     Returns:
         El último mensaje de tipo HumanMessage encontrado, o el último mensaje
         de la lista si no se encuentra ninguno humano.
@@ -169,13 +169,13 @@ def get_last_user_message(messages: List[BaseMessage]) -> BaseMessage:
 def extract_reports(messages: List[BaseMessage]) -> List[BaseMessage]:
     """
     Extrae y consolida los reportes generados por los agentes especialistas.
-    
+
     Busca mensajes que contengan la marca "### REPORTE" y los agrupa en un único
     mensaje consolidado con metadata sobre qué agentes participaron.
-    
+
     Args:
         messages: Lista de mensajes del turno actual.
-        
+
     Returns:
         Lista con un único mensaje consolidado que contiene todos los reportes,
         o lista vacía si no se encontraron reportes.
@@ -187,7 +187,7 @@ def extract_reports(messages: List[BaseMessage]) -> List[BaseMessage]:
     for m in messages:
         if isinstance(m, AIMessage) and "### REPORTE" in m.content:
             reports_text.append(m.content)
-            
+
             # Identificar qué agente generó el reporte
             if "TECHNICAL_ANALYST" in m.content:
                 participating_agents.add("Technical Analyst")
@@ -205,15 +205,15 @@ def extract_reports(messages: List[BaseMessage]) -> List[BaseMessage]:
     agents_list = ", ".join(participating_agents)
 
     return [
-    HumanMessage(
-        content=(
-            f"--- METADATA: AGENTES PARTICIPANTES ---\n"
-            f"Los siguientes agentes han completado su análisis: {agents_list}\n\n"
-            f"--- REPORTES TÉCNICOS: ---\n"
-            f"{joined}\n\n"
-            f"INSTRUCCIÓN: Genera un informe ejecutivo consolidado en español para el usuario final. "
-            f"Usa ÚNICAMENTE los datos de los reportes anteriores. "
-            f"Organiza la información por activo (Bitcoin, Dogecoin, etc.) de forma clara y profesional."
+        HumanMessage(
+            content=(
+                f"--- METADATA: AGENTES PARTICIPANTES ---\n"
+                f"Los siguientes agentes han completado su análisis: {agents_list}\n\n"
+                f"--- REPORTES TÉCNICOS: ---\n"
+                f"{joined}\n\n"
+                f"INSTRUCCIÓN: Genera un informe ejecutivo consolidado en español para el usuario final. "
+                f"Usa ÚNICAMENTE los datos de los reportes anteriores. "
+                f"Organiza la información por activo (Bitcoin, Dogecoin, etc.) de forma clara y profesional."
+            )
         )
-    )
-]
+    ]

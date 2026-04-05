@@ -6,12 +6,13 @@ import joblib
 import uuid
 
 import matplotlib
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from langchain_core.tools import tool
 from langchain_chroma import Chroma
-from langchain_community.tools import DuckDuckGoSearchRun # Para búsqueda web
+from langchain_community.tools import DuckDuckGoSearchRun  # Para búsqueda web
 
 from orchestrator.utils import log_execution, get_table_columns, get_available_entities
 from orchestrator.prompts import get_sql_generation_prompt
@@ -33,6 +34,7 @@ search = DuckDuckGoSearchRun()
 # ==========================================
 # 1. HERRAMIENTAS DE DATOS (SQL)
 # ==========================================
+
 
 @tool
 @log_execution
@@ -82,6 +84,7 @@ def crypto_history_tool(query: str):
 # 2. HERRAMIENTAS DE PREDICCIÓN (ML)
 # ==========================================
 
+
 @tool
 @log_execution
 def crypto_prediction_tool(coin: str):
@@ -110,20 +113,22 @@ def crypto_prediction_tool(coin: str):
         # 2. OBTENER DATOS RECIENTES (LAGS)
         # últimos 3 precios para alimentar el modelo (t-1, t-2, t-3)
         conn = sqlite3.connect(CRYPTO_DB)
-        
+
         # Columna de fecha para ordenar
         cols = get_table_columns(CRYPTO_DB, clean_coin)
         date_col = next((c for c in cols if "date" in c.lower()), "Date")
         price_col = next((c for c in cols if "close" in c.lower()), "Close")
 
-        query = f'SELECT "{price_col}" FROM {clean_coin} ORDER BY "{date_col}" DESC LIMIT 3'
+        query = (
+            f'SELECT "{price_col}" FROM {clean_coin} ORDER BY "{date_col}" DESC LIMIT 3'
+        )
         df = pd.read_sql_query(query, conn)
         conn.close()
 
         if len(df) < 3:
             return f"No hay suficientes datos históricos recientes para hacer una predicción."
 
-        last_prices = df[price_col].values # [t-1, t-2, t-3]
+        last_prices = df[price_col].values  # [t-1, t-2, t-3]
 
         # 3. CARGAR MODELO Y PREDECIR
         model_path = os.path.join(models_folder, f"model_{clean_coin}.joblib")
@@ -135,9 +140,11 @@ def crypto_prediction_tool(coin: str):
         input_df = pd.DataFrame([last_prices], columns=["d-1", "d-2", "d-3"])
         prediction = model.predict(input_df)[0]
 
-        return (f"PREDICCIÓN ML para {clean_coin}:\n"
-                f"Basado en los últimos cierres ({last_prices}), "
-                f"el modelo estima un precio futuro de: ${prediction:.2f}")
+        return (
+            f"PREDICCIÓN ML para {clean_coin}:\n"
+            f"Basado en los últimos cierres ({last_prices}), "
+            f"el modelo estima un precio futuro de: ${prediction:.2f}"
+        )
 
     except Exception as e:
         return f"Error generando predicción de Crypto: {str(e)}"
@@ -147,32 +154,33 @@ def crypto_prediction_tool(coin: str):
 # 3. HERRAMIENTAS DE RIESGO
 # ==========================================
 
+
 @tool
 @log_execution
 def crypto_volatility_tool(coin: str):
     """
     Calcula el RIESGO y la VOLATILIDAD de un activo basado en sus últimos 30 días.
     Útil para el Agente de Riesgos.
-    
+
     Args:
         coin: El ticker del activo (ej: 'BTC_USD', 'ETH_USD').
     """
     try:
         clean_coin = coin.replace("-", "_").upper()
-        
+
         # Conexión DB
         conn = sqlite3.connect(CRYPTO_DB)
         cols = get_table_columns(CRYPTO_DB, clean_coin)
-        
+
         # Fallback si no encuentra la tabla exacta
         if not cols:
-             all_tables = get_available_entities(CRYPTO_DB)
-             match = next((t for t in all_tables if clean_coin in t), None)
-             if match: 
-                 clean_coin = match
-                 cols = get_table_columns(CRYPTO_DB, clean_coin)
-             else:
-                 return f"Error: No encuentro datos para {clean_coin}"
+            all_tables = get_available_entities(CRYPTO_DB)
+            match = next((t for t in all_tables if clean_coin in t), None)
+            if match:
+                clean_coin = match
+                cols = get_table_columns(CRYPTO_DB, clean_coin)
+            else:
+                return f"Error: No encuentro datos para {clean_coin}"
 
         date_col = next((c for c in cols if "date" in c.lower()), "Date")
         price_col = next((c for c in cols if "close" in c.lower()), "Close")
@@ -187,23 +195,28 @@ def crypto_volatility_tool(coin: str):
 
         # CÁLCULO DE VOLATILIDAD
         # 1. Retornos diarios porcentuales
-        df['returns'] = df[price_col].pct_change()
+        df["returns"] = df[price_col].pct_change()
         # 2. Desviación estándar de los retornos
-        std_dev = df['returns'].std()
+        std_dev = df["returns"].std()
         # 3. Volatilidad anualizada (aprox) o mensual
         # Devuelve la desviación como indicador de volatilidad reciente
-        volatility_score = std_dev * 100 
+        volatility_score = std_dev * 100
 
         # Interpretación básica
         risk_label = "BAJO"
-        if volatility_score > 2: risk_label = "MEDIO"
-        if volatility_score > 5: risk_label = "ALTO"
-        if volatility_score > 10: risk_label = "EXTREMO"
+        if volatility_score > 2:
+            risk_label = "MEDIO"
+        if volatility_score > 5:
+            risk_label = "ALTO"
+        if volatility_score > 10:
+            risk_label = "EXTREMO"
 
-        return (f"REPORTE DE RIESGO para {clean_coin}:\n"
-                f"- Volatilidad (StdDev 30d): {volatility_score:.2f}%\n"
-                f"- Nivel de Riesgo: {risk_label}\n"
-                f"- Datos analizados: Últimos {len(df)} registros.")
+        return (
+            f"REPORTE DE RIESGO para {clean_coin}:\n"
+            f"- Volatilidad (StdDev 30d): {volatility_score:.2f}%\n"
+            f"- Nivel de Riesgo: {risk_label}\n"
+            f"- Datos analizados: Últimos {len(df)} registros."
+        )
 
     except Exception as e:
         return f"Error calculando volatilidad: {e}"
@@ -212,6 +225,7 @@ def crypto_volatility_tool(coin: str):
 # ==========================================
 # 4. HERRAMIENTAS DE CONTEXTO (RAG + WEB)
 # ==========================================
+
 
 @tool
 @log_execution
@@ -234,6 +248,7 @@ def crypto_rag_tool(query: str):
     except Exception as e:
         return f"Error en RAG: {e}"
 
+
 @tool
 @log_execution
 def crypto_news_tool(query: str):
@@ -253,6 +268,7 @@ def crypto_news_tool(query: str):
 # 5. HERRAMIENTA DE VISUALIZACIÓN
 # ==========================================
 
+
 @tool
 @log_execution
 def crypto_chart_tool(coin: str):
@@ -263,13 +279,13 @@ def crypto_chart_tool(coin: str):
     try:
         clean_coin = coin.replace("-", "_").upper()
         conn = sqlite3.connect(CRYPTO_DB)
-        
+
         # Intentar encontrar tabla
         cols = get_table_columns(CRYPTO_DB, clean_coin)
         if not cols:
-             all_tables = get_available_entities(CRYPTO_DB)
-             clean_coin = next((t for t in all_tables if clean_coin in t), clean_coin)
-        
+            all_tables = get_available_entities(CRYPTO_DB)
+            clean_coin = next((t for t in all_tables if clean_coin in t), clean_coin)
+
         date_col = next((c for c in cols if "date" in c.lower()), "Date")
         price_col = next((c for c in cols if "close" in c.lower()), "Close")
 
@@ -287,10 +303,10 @@ def crypto_chart_tool(coin: str):
 
         # Generar Plot
         plt.figure(figsize=(10, 5))
-        plt.plot(df[date_col], df[price_col], label=f'{clean_coin} Price', color='blue')
-        plt.title(f'Tendencia de Precios: {clean_coin}')
-        plt.xlabel('Fecha')
-        plt.ylabel('Precio (USD)')
+        plt.plot(df[date_col], df[price_col], label=f"{clean_coin} Price", color="blue")
+        plt.title(f"Tendencia de Precios: {clean_coin}")
+        plt.xlabel("Fecha")
+        plt.ylabel("Precio (USD)")
         plt.legend()
         plt.grid(True)
         plt.xticks(rotation=45)
@@ -301,7 +317,7 @@ def crypto_chart_tool(coin: str):
         plot_dir = "plots_temp"
         os.makedirs(plot_dir, exist_ok=True)
         filename = f"{plot_dir}/{clean_coin}_chart_{uuid.uuid4().hex[:6]}.png"
-        
+
         plt.savefig(filename)
         plt.close()
 

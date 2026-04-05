@@ -75,3 +75,5 @@ tfg_plot_output.html
 tfg_visualizacion.html
 mlruns/
 *.png
+
+.VSCodeCounter/

@@ -24,12 +24,11 @@ CRYPTO_DB = os.path.join(BASE_DIR, "crypto", "crypto_data.db")
 CRYPTO_RAG_TXT = os.path.join(BASE_DIR, "crypto", "RAG_KNOWLEDGE.txt")
 CRYPTO_VECTOR_DB = os.path.join(BASE_DIR, "crypto", "chroma_db")
 
+
 def get_llm():
     """Devuelve la instancia del LLM local (Ollama)."""
     return ChatOllama(
-        model=LLM_MODEL,
-        temperature=TEMPERATURE,
-        base_url="http://localhost:11434"
+        model=LLM_MODEL, temperature=TEMPERATURE, base_url="http://localhost:11434"
     )
 
 
