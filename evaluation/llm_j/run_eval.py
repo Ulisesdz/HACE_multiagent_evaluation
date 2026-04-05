@@ -1,8 +1,10 @@
 import sys
 import json
+import time
 import pandas as pd
 from langchain_core.messages import ToolMessage, AIMessage
 from orchestrator.graph import build_graph
+from evaluation.metrics_accumulator.logger import MetricsLogger
 from evaluation.llm_j.judge import (
     evaluate_planner,
     evaluate_supervisor,
@@ -11,6 +13,7 @@ from evaluation.llm_j.judge import (
     evaluate_comprehensive
 )
 
+DATASET_PATH = "evaluation/metrics_accumulator/dataset.json"
 FILE_PATH = "evaluation/llm_j/dataset"
 
 class TraceCollector:
@@ -96,27 +99,25 @@ class TraceCollector:
 
 def run_comprehensive_evaluation():
     """
-    Sistema de evaluación comprehensivo que evalúa:
-    1. Planner
-    2. Supervisor (Routing)
-    3. Cada Agente Especializado
-    4. Informe Final
-    5. Score Global del Sistema
+    Sistema de evaluación comprehensivo (escala 1-4)
     """
     app = build_graph()
     
+    # Inicializar MetricsLogger
+    metrics_logger = MetricsLogger()
+    
     # Cargar Dataset
     try:
-        with open(f"{FILE_PATH}.json", "r", encoding="utf-8") as f:
+        with open(DATASET_PATH, "r", encoding="utf-8") as f:
             dataset = json.load(f)
     except FileNotFoundError:
-        print(f" El archivo {FILE_PATH}.json no existe.")
+        print(f"El archivo {DATASET_PATH} no existe.")
         return
     
     all_results = []
     
     print("=" * 80)
-    print(" INICIANDO EVALUACIÓN COMPREHENSIVA DEL SISTEMA MULTI-AGENTE")
+    print("INICIANDO EVALUACIÓN COMPREHENSIVA DEL SISTEMA MULTI-AGENTE")
     print("=" * 80)
     print()
     
@@ -129,9 +130,9 @@ def run_comprehensive_evaluation():
         focus_area = case.get("focus_area", "General")
         
         print(f"\n{'='*80}")
-        print(f" CASO {idx}/{len(dataset)}: {qid} | {category} | Dificultad: {difficulty}")
-        print(f" Pregunta: {question}")
-        print(f" Área de Enfoque: {focus_area}")
+        print(f"CASO {idx}/{len(dataset)}: {qid} | {category} | Dificultad: {difficulty}")
+        print(f"   Pregunta: {question}")
+        print(f"   Área de Enfoque: {focus_area}")
         print(f"{'='*80}\n")
         
         try:
@@ -140,7 +141,7 @@ def run_comprehensive_evaluation():
             final_state = None
             
             # PASO 1: EJECUCIÓN Y CAPTURA DE TRAZAS
-            print(" Ejecutando el sistema...")
+            print("Ejecutando el sistema...")
             
             for event in app.stream(initial_state):
                 for node_name, node_output in event.items():
@@ -177,8 +178,10 @@ def run_comprehensive_evaluation():
             print(f"  • Decisiones de routing: {len(trace.routing_trace)}")
             print(f"  • Agentes ejecutados: {len(trace.agent_executions)}")
             
-            # PASO 2: EVALUACIÓN MODULAR   
+            # PASO 2: EVALUACIÓN MODULAR (escala 1-4)
             print(f"\nIniciando evaluación por módulos...\n")
+            
+            eval_start_time = time.perf_counter()
             
             # 2.1 Evaluar Planner
             print("  [1/4] Evaluando Planner...")
@@ -193,7 +196,7 @@ def run_comprehensive_evaluation():
                 planner_eval.precision +
                 planner_eval.task_decomposition
             ) / 4
-            print(f"        Score: {planner_score:.1f}/10")
+            print(f"        Score: {planner_score:.1f}/4")
             
             # 2.2 Evaluar Supervisor
             print("  [2/4] Evaluando Supervisor...")
@@ -206,7 +209,7 @@ def run_comprehensive_evaluation():
                 supervisor_eval.routing_accuracy +
                 supervisor_eval.task_completion
             ) / 2
-            print(f"        Score: {supervisor_score:.1f}/10")
+            print(f"        Score: {supervisor_score:.1f}/4")
             
             # 2.3 Evaluar cada Agente
             print("  [3/4] Evaluando Agentes Especializados...")
@@ -239,7 +242,7 @@ def run_comprehensive_evaluation():
                     agent_eval.output_completeness +
                     agent_eval.hallucination_check
                 ) / 5
-                print(f"        • {agent_name}: {agent_score:.1f}/10")
+                print(f"        • {agent_name}: {agent_score:.1f}/4")
             
             # 2.4 Evaluar Informe Final
             print("  [4/4] Evaluando Informe Final...")
@@ -255,10 +258,10 @@ def run_comprehensive_evaluation():
                 final_eval.structure +
                 final_eval.chart_attribution
             ) / 4
-            print(f"        Score: {final_score:.1f}/10")
+            print(f"        Score: {final_score:.1f}/4")
             
             # PASO 3: EVALUACIÓN COMPREHENSIVA
-            print(f"\n Generando evaluación comprehensiva...")
+            print(f"\nGenerando evaluación comprehensiva...")
             comprehensive_eval = evaluate_comprehensive(
                 planner_eval=planner_eval,
                 supervisor_eval=supervisor_eval,
@@ -266,18 +269,56 @@ def run_comprehensive_evaluation():
                 final_eval=final_eval
             )
             
+            eval_elapsed_time = time.perf_counter() - eval_start_time
+            
             print(f"\n{'─'*80}")
-            print(f" RESULTADO FINAL: {comprehensive_eval.overall_score}/10")
-            print(f"  Categoría de Error: {comprehensive_eval.error_category}")
+            print(f"RESULTADO FINAL: {comprehensive_eval.overall_score}/4")
+            print(f"   Categoría de Error: {comprehensive_eval.error_category}")
             if comprehensive_eval.critical_failures:
-                print(f" Fallos Críticos:")
+                print(f"Fallos Críticos:")
                 for failure in comprehensive_eval.critical_failures:
                     print(f"   • {failure}")
-            print(f"\n Resumen Ejecutivo:")
+            print(f"\nResumen Ejecutivo:")
             print(f"   {comprehensive_eval.executive_summary}")
             print(f"{'─'*80}\n")
             
-            # PASO 4: ALMACENAR RESULTADOS
+            # GUARDAR EN METRICS ACCUMULATOR
+            trace_data = {
+                'user_question': question,
+                'planner_tasks': trace.planner_tasks,
+                'routing_trace': trace.routing_trace,
+                'agent_executions': trace.agent_executions,
+                'sql_queries': [],
+                'final_answer': trace.final_answer
+            }
+            
+            llm_judge_data = {
+                'comprehensive_eval': comprehensive_eval,
+                'planner_score': planner_score,
+                'supervisor_score': supervisor_score,
+                'agents_avg_score': sum(
+                    (a.tool_selection + a.tool_execution + a.output_fidelity + 
+                     a.output_completeness + a.hallucination_check) / 5
+                    for a in agents_eval
+                ) / len(agents_eval) if agents_eval else 0,
+                'final_output_score': final_score,
+                'elapsed_time': eval_elapsed_time
+            }
+            
+            metrics_logger.log_offline_evaluation(
+                test_case={
+                    'id': qid,
+                    'query': question,
+                    'difficulty': difficulty,
+                    'category': category,
+                    'expected_tasks': case.get('expected_tasks', [])
+                },
+                trace_data=trace_data,
+                baseline_eval=None,  # Solo LLM-Judge
+                llm_judge_data=llm_judge_data
+            )
+            
+            # PASO 4: ALMACENAR RESULTADOS (para CSV legacy)
             result = {
                 # Metadata
                 "id": qid,
@@ -292,7 +333,7 @@ def run_comprehensive_evaluation():
                 "routing_decisions": len(trace.routing_trace),
                 "agents_invoked": "; ".join([e["agent"] for e in trace.agent_executions]),
                 
-                # Scores por Módulo
+                # Scores por Módulo (escala 1-4)
                 "planner_score": planner_score,
                 "planner_correctness": planner_eval.correctness,
                 "planner_completeness": planner_eval.completeness,
@@ -305,22 +346,19 @@ def run_comprehensive_evaluation():
                 "supervisor_errors": "; ".join(supervisor_eval.errors),
                 
                 "agents_count": len(agents_eval),
-                "agents_avg_score": sum(
-                    (a.tool_selection + a.tool_execution + a.output_fidelity + 
-                     a.output_completeness + a.hallucination_check) / 5
-                    for a in agents_eval
-                ) / len(agents_eval) if agents_eval else 0,
+                "agents_avg_score": llm_judge_data['agents_avg_score'],
                 
                 "final_output_score": final_score,
                 "final_completeness": final_eval.completeness,
                 "final_accuracy": final_eval.accuracy,
                 "final_errors": "; ".join(final_eval.errors),
                 
-                # Evaluación Global
+                # Evaluación Global (escala 1-4)
                 "overall_score": comprehensive_eval.overall_score,
                 "error_category": comprehensive_eval.error_category,
                 "critical_failures": "; ".join(comprehensive_eval.critical_failures),
                 "executive_summary": comprehensive_eval.executive_summary,
+                "evaluation_time": eval_elapsed_time,
                 
                 # Outputs
                 "final_answer": trace.final_answer[:500],
@@ -335,13 +373,13 @@ def run_comprehensive_evaluation():
                     f"{prefix}_tool_execution": agent_eval.tool_execution,
                     f"{prefix}_output_fidelity": agent_eval.output_fidelity,
                     f"{prefix}_hallucination_check": agent_eval.hallucination_check,
-                    f"{prefix}_errors": "; ".join(agent_eval.errors[:3])  # Top 3 errores
+                    f"{prefix}_errors": "; ".join(agent_eval.errors[:3])
                 })
             
             all_results.append(result)
             
         except Exception as e:
-            print(f"\n ERROR CRÍTICO en {qid}: {str(e)}\n")
+            print(f"\nERROR CRÍTICO en {qid}: {str(e)}\n")
             all_results.append({
                 "id": qid,
                 "category": category,
@@ -352,16 +390,16 @@ def run_comprehensive_evaluation():
                 "executive_summary": f"Fallo del sistema: {str(e)}"
             })
 
-    # EXPORTAR RESULTAD
+    # EXPORTAR RESULTADOS
     print(f"\n{'='*80}")
-    print(" Exportando resultados...")
+    print("Exportando resultados...")
     print(f"{'='*80}\n")
     
     df = pd.DataFrame(all_results)
     
     # Guardar CSV completo
     df.to_csv(f"{FILE_PATH}_results.csv", index=False)
-    print(f" Resultados completos guardados en: {FILE_PATH}_results.csv")
+    print(f"Resultados completos guardados en: {FILE_PATH}_results.csv")
     
     # Guardar resumen ejecutivo
     summary = df[[
@@ -370,19 +408,23 @@ def run_comprehensive_evaluation():
         "planner_score", "supervisor_score", "agents_avg_score", "final_output_score"
     ]].copy()
     summary.to_csv(f"{FILE_PATH}_summary.csv", index=False)
-    print(f" Resumen ejecutivo guardado en: {FILE_PATH}_summary.csv")
+    print(f"Resumen ejecutivo guardado en: {FILE_PATH}_summary.csv")
     
-    # Estadísticas globales
+    # Info del accumulator
+    print(f"\nMétricas acumuladas guardadas en:")
+    print(f"   evaluation/accumulated_data/offline_metrics.csv")
+    
+    # Estadísticas globales (escala 1-4)
     print(f"\n{'='*80}")
-    print(" ESTADÍSTICAS GLOBALES")
+    print("ESTADÍSTICAS GLOBALES")
     print(f"{'='*80}\n")
     print(f"Total de casos evaluados: {len(df)}")
-    print(f"Score promedio global: {df['overall_score'].mean():.2f}/10")
+    print(f"Score promedio global: {df['overall_score'].mean():.2f}/4")
     print(f"\nScore promedio por módulo:")
-    print(f"  • Planner: {df['planner_score'].mean():.2f}/10")
-    print(f"  • Supervisor: {df['supervisor_score'].mean():.2f}/10")
-    print(f"  • Agentes: {df['agents_avg_score'].mean():.2f}/10")
-    print(f"  • Output Final: {df['final_output_score'].mean():.2f}/10")
+    print(f"  • Planner: {df['planner_score'].mean():.2f}/4")
+    print(f"  • Supervisor: {df['supervisor_score'].mean():.2f}/4")
+    print(f"  • Agentes: {df['agents_avg_score'].mean():.2f}/4")
+    print(f"  • Output Final: {df['final_output_score'].mean():.2f}/4")
     
     print(f"\nCategorías de error:")
     error_counts = df['error_category'].value_counts()
@@ -392,10 +434,10 @@ def run_comprehensive_evaluation():
     print(f"\nCasos por dificultad:")
     diff_scores = df.groupby('difficulty')['overall_score'].agg(['mean', 'count'])
     for diff, row in diff_scores.iterrows():
-        print(f"  • {diff}: {row['mean']:.2f}/10 (n={int(row['count'])})")
+        print(f"  • {diff}: {row['mean']:.2f}/4 (n={int(row['count'])})")
     
     print(f"\n{'='*80}")
-    print(" EVALUACIÓN COMPLETADA")
+    print("EVALUACIÓN COMPLETADA")
     print(f"{'='*80}\n")
 
 

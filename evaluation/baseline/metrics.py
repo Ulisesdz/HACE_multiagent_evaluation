@@ -1,5 +1,5 @@
 import re
-from typing import List, Dict, Tuple
+from typing import List, Dict
 
 class BaselineMetricsCalculator:
     """
@@ -11,10 +11,7 @@ class BaselineMetricsCalculator:
     - Pattern Matching para validación SQL
     """
     
-    # =========================================================================
     # MÉTRICA 1: Routing Accuracy
-    # =========================================================================
-    
     def evaluate_routing_accuracy(
         self, 
         routing_trace: List[Dict]
@@ -122,7 +119,7 @@ class BaselineMetricsCalculator:
         return 'Technical_Analyst'  # Default
     
     def _empty_routing_metrics(self) -> Dict:
-        """Retorna métricas vacías si no hay datos"""
+        """Devuelve métricas vacías si no hay datos"""
         return {
             'accuracy': 0.0,
             'precision': 0.0,
@@ -132,10 +129,7 @@ class BaselineMetricsCalculator:
             'confusion_matrix': {}
         }
     
-    # =========================================================================
     # MÉTRICA 2: Numeric Accuracy (Hallucination Detection)
-    # =========================================================================
-    
     def evaluate_numeric_accuracy(
         self,
         tool_outputs: List[str],
@@ -229,10 +223,7 @@ class BaselineMetricsCalculator:
                 return True
         return False
     
-    # =========================================================================
     # MÉTRICA 3: Task Coverage
-    # =========================================================================
-    
     def evaluate_task_coverage(
         self,
         planned_tasks: List[str],
@@ -295,10 +286,7 @@ class BaselineMetricsCalculator:
         similarity = intersection / union if union > 0 else 0
         return similarity >= threshold
     
-    # =========================================================================
     # MÉTRICA 4: SQL Correctness
-    # =========================================================================
-    
     def evaluate_sql_correctness(
         self,
         sql_queries: List[Dict[str, str]]
@@ -331,9 +319,7 @@ class BaselineMetricsCalculator:
             task = query_entry.get('task', '')
             sql = query_entry.get('sql', '')
             
-            # ========================================
             # Validación de tipo de SQL
-            # ========================================
             # Caso 1: sql es None
             if sql is None:
                 violations.append(f"[{task}] SQL is None (tool error or not captured)")
@@ -349,9 +335,7 @@ class BaselineMetricsCalculator:
                 violations.append(f"[{task}] SQL is empty string")
                 continue
             
-            # ========================================
             # Validación normal (solo si sql es string válido)
-            # ========================================
             query_violations = self._validate_sql_patterns(task, sql)
             
             if query_violations:

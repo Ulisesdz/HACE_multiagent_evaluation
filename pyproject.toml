@@ -31,6 +31,7 @@ dependencies = [
     "seaborn>=0.13.2",
     "sentence-transformers>=5.2.0",
     "sqlalchemy>=2.0.45",
+    "statsmodels>=0.14.6",
     "streamlit>=1.52.2",
     "yfinance>=1.0",
 ]

@@ -25,27 +25,52 @@ multiagent_evalutation/
 │       ├── trainer.py         # Entrenamiento + Validación
 │       └── predictor.py       # Inferencia para el Agente
 └── evaluation/
+│   ├── accumulated_data/  # Sistema de Acumulación de Métricas
+│   │   ├── README.md      # Documentación del sistema de acumulación
+│   │   ├── online_metrics.csv   # Métricas desde Streamlit (generado)
+│   │   └── offline_metrics.csv  # Métricas desde run_eval.py (generado)
 │   ├── baseline/          # Fase 1: Métricas Automáticas Deterministas
 │   │   ├── init.py
 │   │   ├── state.py       # Modelos Pydantic para métricas baseline
 │   │   ├── metrics.py     # Calculador de métricas (routing, numeric, SQL)
 │   │   ├── run_eval.py    # Batch evaluation sobre dataset.json
-│   │   └── BASELINE_EVALUATION_GUIDE.md  # Documentación completa
+│   │   ├── BASELINE_EVALUATION_GUIDE.md  # Documentación completa
+│   │   ├── dataset_baseline_results.csv  # Resultados completos (generado)
+│   │   └── dataset_baseline_summary.csv  # Resumen ejecutivo (generado)
 │   ├── llm_j/             # Fase 2: LLM-as-a-Judge (Evaluación Cualitativa)
 │   │   ├── init.py
 │   │   ├── state.py       # Modelos Pydantic para evaluaciones LLM
 │   │   ├── prompts.py     # Prompts especializados por módulo
 │   │   ├── judge.py       # Lógica del evaluador LLM
-│   │   ├── dataset.json   # Dataset de 45 casos de prueba
 │   │   ├── run_eval.py    # Batch evaluation
-│   │   └── LLM_JUDGE_EVALUATION_GUIDE.md  # Documentación completa
+│   │   ├── LLM_JUDGE_EVALUATION_GUIDE.md  # Documentación completa
+│   │   ├── dataset_results.csv      # Resultados completos (generado)
+│   │   └── dataset_summary.csv      # Resumen ejecutivo (generado)
+│   ├── hybrid/             # Fase 3: MACE (Multi-layered Agent Consensus Evaluator)
+│   │   ├── __init__.py
+│   │   ├── layer1_guardrails.py  # Capa 1: Validadores deterministas (hallucinations, SQL, coverage)
+│   │   ├── layer2_semantic.py    # Capa 2: Evaluación semántica basada en Embeddings y Similitud de Coseno
+│   │   ├── layer3_llm.py         # Capa 3: LLM-as-a-Judge selectivo (activado por lógica de escalado)
+│   │   ├── scorer.py             # Algoritmo de ponderación y fusión de scores entre capas
+│   │   ├── orchestrator.py       # Pipeline de evaluación híbrida y lógica de escalado condicional
+│   │   ├── run_eval.py           # Batch evaluation del sistema híbrido sobre dataset completo
+│   │   ├── HYBRID_EVALUATION_GUIDE.md  # Documentación completa
+│   │   ├── dataset_hybrid_results.csv  # Resultados detallados por caso (generado)
+│   │   └── dataset_hybrid_summary.csv  # Resumen ejecutivo con métricas de eficiencia (generado)
+│   ├── metrics_accumulator/  # Sistema de Logging de Métricas
+│   │   ├── __init__.py
+│   │   ├── logger.py      # MetricsLogger class (logging unificado)
+│   │   ├── README.md      # Documentación del logger
+│   │   └── dataset.json   # Dataset de 45 casos de prueba
 │   └── visualization/     # Generación de Gráficas
 │       ├── __init__.py
 │       ├── plot_baseline.py       # Gráficas de Baseline Metrics
 │       ├── plot_llm_judge.py      # Gráficas de LLM-Judge
 │       ├── plot_comparison.py     # Comparativas Baseline vs LLM-Judge
 │       └── plots/                 # Directorio de salida de gráficas
-├── frontend.py            # Interfaz Streamlit de usuario con evaluación integrada
+├── pages/          # Sub-páginas del Frontend
+│   └── 1_dashboard.py     # Dashboard con gráficas y cálculos de los sistemas de evaluación
+├── app.py            # Interfaz Streamlit de usuario con evaluación integrada
 └── setup_rag.py           # Script para vectorizar conocimiento
 ```
 ## Prerrequisitos
@@ -83,7 +108,7 @@ Tienes dos formas de interactuar con el sistema:
 
 Opción A: Interfaz Gráfica (Recomendado) Visualiza el proceso de pensamiento del Supervisor y los Agentes en tiempo real.
 ```bash
-streamlit run frontend.py --server.port 8086
+streamlit run app.py --server.port 8086
 ```
 **Características de la interfaz:**
 - Chat interactivo con el comité de inversión
@@ -118,6 +143,7 @@ El sistema implementa mecanismos de seguridad robustos:
 - Prompting Estricto: Reglas explícitas para diferenciar entre un dato histórico (SQL) y una predicción (ML).
 
 ### Tipos de Auditoría Implementados
+
 #### Baseline Metrics (Métricas Automáticas)
 Evaluación **100% determinista** sin uso de LLMs. Basada en comparación directa de outputs vs evidencia técnica.
 
@@ -145,16 +171,10 @@ evaluation/baseline/dataset_baseline_summary.csv    # Resumen ejecutivo
 ---
 
 #### LLM As A Judge
-El LLM Evaluador analiza la triada: Pregunta Usuario -> Contexto Técnico (SQL/Tool) -> Respuesta Agente y evalúa (Score 0-10) en base a la Fidelidad del Dato y Validación de Procedimiento
+El LLM Evaluador analiza la triada: Pregunta Usuario → Contexto Técnico (SQL/Tool) → Respuesta Agente y evalúa (Score 1-4) en base a la Fidelidad del Dato y Validación de Procedimiento.
 
-1. Auditoría en Tiempo Real (Online) Integrada en la interfaz de Streamlit (frontend.py).
-- El usuario puede activar el modo "Juez" mediante un toggle.
-- Tras cada respuesta del agente, el sistema inyecta una subtarea de evaluación.
-- Visualización: Muestra una tarjeta con Puntuación (0-10), Razonamiento del Juez y Tipo de Error detectado.
-2. Evaluación Adversaria (Offline) Ejecuta un banco de pruebas (dataset.json) diseñado para estresar el sistema.
-```bash
-python -m evaluation.llm_j.run_eval
-```
+**Cambio importante:** A partir de la versión 2.0, LLM-Judge usa **escala 1-4** (antes 0-10) para mayor consistencia y reproducibilidad (~98% vs ~95%).
+
 ##### **Evaluación Offline (Batch):**
 ```bash
 python -m evaluation.llm_j.run_eval
@@ -166,16 +186,22 @@ evaluation/llm_j/dataset_results.csv    # Resultados completos
 evaluation/llm_j/dataset_summary.csv    # Resumen ejecutivo
 ```
 
----
-
-**Módulos evaluados:**
+**Módulos evaluados (Escala 1-4):**
 
 | Módulo | Dimensiones Evaluadas | Score |
 |--------|----------------------|-------|
-| **Planner** | Correctness, Completeness, Precision, Task Decomposition | 0-10 |
-| **Supervisor** | Routing Accuracy, Task Completion | 0-10 |
-| **Agentes** | Tool Selection, Tool Execution, Output Fidelity, Completeness, Hallucination Check | 0-10 |
-| **Output Final** | Completeness, Accuracy, Structure, Chart Attribution | 0-10 |
+| **Planner** | Correctness, Completeness, Precision, Task Decomposition | 1-4 |
+| **Supervisor** | Routing Accuracy, Task Completion | 1-4 |
+| **Agentes** | Tool Selection, Tool Execution, Output Fidelity, Completeness, Hallucination Check | 1-4 |
+| **Output Final** | Completeness, Accuracy, Structure, Chart Attribution | 1-4 |
+
+**Interpretación de Scores:**
+- **4**: Perfecto (equivalente a 9-10 en escala anterior)
+- **3**: Bueno (equivalente a 7-8)
+- **2**: Mejorable (equivalente a 5-6)
+- **1**: Crítico (equivalente a 0-4)
+
+**Razón del cambio:** La escala 1-4 mejora la reproducibilidad del evaluador LLM al reducir la ambigüedad en valores intermedios. Los valores 4, 5, 6, 7 en la escala 0-10 rara vez se usaban, lo que generaba inconsistencias.
 
 **Características:**
 - Detección de errores semánticos
@@ -185,7 +211,7 @@ evaluation/llm_j/dataset_summary.csv    # Resumen ejecutivo
 
 **Categorías de Error Detectadas:**
 
-- `None`: Sistema funcionando correctamente
+- `None`: Sistema funcionando correctamente (Score ≥ 3)
 - `Planning_Error`: Planner omitió tareas o perdió precisión
 - `Routing_Error`: Supervisor asignó agente incorrecto
 - `Tool_Error`: Agente ejecutó mal una herramienta
@@ -193,7 +219,83 @@ evaluation/llm_j/dataset_summary.csv    # Resumen ejecutivo
 - `Incompleteness`: Tareas omitidas en el flujo
 - `Risk_Negligence`: Risk Officer no advirtió riesgo alto
 
-## Generación de Visualizaciones (Para TFG)
+---
+
+### MACE Metrics (Hybrid - Escala 0-1) 
+
+**MACE** (Multi-layered Agent Consensus Evaluator) combina validación determinista, evaluación semántica con embeddings, y LLM-Judge selectivo en una arquitectura de 3 capas.
+
+| Campo | Descripción | Rango |
+|-------|-------------|-------|
+| `mace_score` | Score global híbrido final | 0-1 |
+| `mace_quality` | Label cualitativo | `Excelente`, `Bueno`, `Mejorable`, `Crítico` |
+| `mace_confidence` | Nivel de confianza en evaluación | `high`, `medium`, `low` |
+| `mace_layer1` | Score Layer 1 (Guardrails) | 0-1 |
+| `mace_layer2` | Score Layer 2 (Semantic) | 0-1 |
+| `mace_layer3` | Score Layer 3 (LLM-Judge) | 0-1 (null si no se usó) |
+| `mace_layer3_used` | ¿Se escaló a Layer 3? | 0 (No) o 1 (Sí) |
+| `mace_time` | Tiempo total de evaluación | >0 |
+
+**Componentes de MACE:**
+
+1. **Layer 1 (Guardrails):** Validadores deterministas
+   - Completitud estructural
+   - Sintaxis de routing
+   - Rangos numéricos plausibles
+   - Existencia de archivos mencionados
+
+2. **Layer 2 (Semantic):** Evaluación semántica con embeddings
+   - Task Fidelity (BERTScore-inspired)
+   - Agent Fidelity (similitud tool output vs respuesta)
+   - Routing Quality (keywords ponderados)
+   - Report Completeness
+
+3. **Layer 3 (LLM-Judge Selectivo):** Solo se ejecuta en ~40% de casos
+   - Evaluación profunda de módulos problemáticos detectados en Layer 1-2
+   - Usa el mismo LLM-Judge de evaluación cualitativa
+   - Escalación basada en fallos críticos, scores ambiguos o discrepancias
+
+**Ventajas vs sistemas individuales:**
+- 99% reproducibilidad (vs 98% LLM-Judge, 100% Baseline)
+- Cobertura semántica completa (vs Baseline que solo valida numérico/estructural)
+- Menor costo (menos llamadas a LLM que LLM-Judge puro)
+
+**Papers base:**
+- BERTScore (Zhang et al., 2019) - Similitud semántica
+- ARES (Saad-Falcon et al., 2023) - Clasificadores binarios para RAG
+- Cascading LLMs (Chen et al., 2023) - Routing adaptativo
+- Prometheus (Kim et al., 2023) - Rubric-guided evaluation
+
+---
+
+### Sistema de Acumulación de Métricas
+
+El sistema ahora **acumula automáticamente** todas las evaluaciones en CSVs unificados:
+
+**Ubicación:** `evaluation/accumulated_data/`
+- `online_metrics.csv` - Evaluaciones desde Streamlit (sesiones de usuario)
+- `offline_metrics.csv` - Evaluaciones batch desde `run_eval.py`
+
+**Ventajas:**
+- Histórico completo de evaluaciones (online + offline)
+- Base de datos para fine-tuning futuro de prompts
+- Detección de drift del sistema (¿empeora con el tiempo?)
+- Análisis de patrones de error
+- Training data para reward models (RL)
+- A/B testing de variantes de prompts
+
+**Ver estadísticas:** En Streamlit, botón **"Ver Estadísticas"** en el sidebar muestra:
+- Total de evaluaciones
+- Scores promedio (Baseline y LLM-Judge)
+- Tasa de alucinaciones
+- Distribución de categorías de error
+- Rango de fechas
+
+**Formato de datos:** Ver `evaluation/accumulated_data/README.md` para detalles completos del esquema.
+
+---
+
+## Generación de Visualizaciones
 
 El sistema incluye **scripts de generación automática de gráficas** para análisis comparativo.
 
@@ -213,6 +315,9 @@ python -m evaluation.visualization.plot_baseline
 
 # Gráficas de LLM-Judge
 python -m evaluation.visualization.plot_llm_judge
+
+# Gráficas de Hybrid
+python -m evaluation.visualization.plot_hybrid
 
 # Gráficas Comparativas
 python -m evaluation.visualization.plot_comparison

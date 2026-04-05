@@ -26,11 +26,27 @@ Usuario → Planner → Supervisor → Agente → Supervisor → ... → Informe
 - Generar lista de tareas con precisión literal
 - Separar acciones en tareas independientes
 
-**Métricas Evaluadas:**
-- `correctness` (0-10): ¿Identificó las tareas correctas?
-- `completeness` (0-10): ¿Capturó TODAS las solicitudes?
-- `precision` (0-10): ¿Mantuvo adjetivos, cantidades, fechas?
-- `task_decomposition` (0-10): ¿Separó bien las acciones?
+**Métricas Evaluadas (Escala 1-4):**
+- `correctness` (1-4): ¿Identificó las tareas correctas?
+  - **4**: Perfecto - Identificó todas las tareas correctamente
+  - **3**: Bueno - Correcto con pequeñas imprecisiones
+  - **2**: Mejorable - Errores significativos en identificación
+  - **1**: Crítico - Falló completamente en identificar tareas
+- `completeness` (1-4): ¿Capturó TODAS las solicitudes?
+  - **4**: Perfecto - Capturó el 100% de las solicitudes
+  - **3**: Bueno - Capturó >80% de las solicitudes
+  - **2**: Mejorable - Capturó 50-80% de las solicitudes
+  - **1**: Crítico - Omitió >50% de las solicitudes
+- `precision` (1-4): ¿Mantuvo adjetivos, cantidades, fechas?
+  - **4**: Perfecto - Preservó todos los detalles literalmente
+  - **3**: Bueno - Preservó la mayoría de detalles importantes
+  - **2**: Mejorable - Perdió algunos detalles importantes
+  - **1**: Crítico - Generalizó o distorsionó los detalles
+- `task_decomposition` (1-4): ¿Separó bien las acciones?
+  - **4**: Perfecto - Separó correctamente todas las acciones
+  - **3**: Bueno - Separación correcta con mínimas mezclas
+  - **2**: Mejorable - Mezcló algunas tareas que deberían estar separadas
+  - **1**: Crítico - Mezcló la mayoría de tareas
 
 **Errores Detectables:**
 - Omisión de tareas (incompleteness)
@@ -48,8 +64,16 @@ Usuario → Planner → Supervisor → Agente → Supervisor → ... → Informe
 - Detectar loops (misma tarea → mismo agente sin resolver)
 
 **Métricas Evaluadas:**
-- `routing_accuracy` (0-10): % de decisiones correctas
-- `task_completion` (0-10): ¿Procesó todas las tareas?
+- `routing_accuracy` (1-4): Precisión de las decisiones de routing
+  - **4**: Perfecto - 100% de decisiones correctas
+  - **3**: Bueno - >80% de decisiones correctas
+  - **2**: Mejorable - 50-80% de decisiones correctas
+  - **1**: Crítico - <50% de decisiones correctas
+- `task_completion` (1-4): ¿Procesó todas las tareas?
+  - **4**: Perfecto - Procesó el 100% de las tareas
+  - **3**: Bueno - Procesó >80% de las tareas
+  - **2**: Mejorable - Procesó 50-80% de las tareas
+  - **1**: Crítico - Omitió >50% de las tareas
 - `routing_decisions`: Lista detallada de cada decisión
 
 **Errores Detectables:**
@@ -75,12 +99,32 @@ Usuario → Planner → Supervisor → Agente → Supervisor → ... → Informe
 - `crypto_prediction_tool` (ML): Predicciones numéricas
 - `crypto_chart_tool` (Matplotlib): Generación de gráficos
 
-**Métricas:**
-- `tool_selection` (0-10): ¿Eligió la herramienta correcta?
-- `tool_execution` (0-10): ¿SQL correcto, parámetros válidos?
-- `output_fidelity` (0-10): ¿Respuesta fiel a la evidencia técnica?
-- `output_completeness` (0-10): ¿Reportó TODOS los datos? (Top 3 = 3 items)
-- `hallucination_check` (0-10): ¿Inventó datos?
+**Métricas (Escala 1-4):**
+- `tool_selection` (1-4): ¿Eligió la herramienta correcta?
+  - **4**: Perfecto - Herramienta ideal para la tarea
+  - **3**: Bueno - Herramienta funciona pero hay alternativa mejor
+  - **2**: Mejorable - Herramienta subóptima pero funcionó
+  - **1**: Crítico - Herramienta incorrecta o no usó ninguna
+- `tool_execution` (1-4): ¿SQL correcto, parámetros válidos?
+  - **4**: Perfecto - Ejecución impecable
+  - **3**: Bueno - Ejecución correcta con pequeñas ineficiencias
+  - **2**: Mejorable - Errores en parámetros pero obtuvo resultado
+  - **1**: Crítico - Falló la ejecución o errores graves
+- `output_fidelity` (1-4): ¿Respuesta fiel a la evidencia técnica?
+  - **4**: Perfecto - 100% basado en tool output
+  - **3**: Bueno - Mayormente fiel con mínima interpretación
+  - **2**: Mejorable - Agregó información no verificable
+  - **1**: Crítico - Contradice o ignora tool output
+- `output_completeness` (1-4): ¿Reportó TODOS los datos? (Top 3 = 3 items)
+  - **4**: Perfecto - Reportó todos los datos solicitados
+  - **3**: Bueno - Reportó >80% de los datos
+  - **2**: Mejorable - Reportó 50-80% de los datos
+  - **1**: Crítico - Omitió >50% de los datos o resumió incorrectamente
+- `hallucination_check` (1-4): ¿Inventó datos?
+  - **4**: Perfecto - Cero invención, todo verificable
+  - **3**: Bueno - Mínima interpretación razonable
+  - **2**: Mejorable - Algunos datos no verificables
+  - **1**: Crítico - Inventó datos numéricos o hechos
 
 **Reglas Críticas:**
 - PRINCIPIO DE EXCLUSIVIDAD: Si ejecuta SQL, solo reporta SQL. Si ejecuta Gráfico, solo reporta gráfico.
@@ -118,11 +162,27 @@ Usuario → Planner → Supervisor → Agente → Supervisor → ... → Informe
 - Asociar gráficos al activo correcto
 - Incluir disclaimer legal
 
-**Métricas:**
-- `completeness` (0-10): ¿Incluye TODAS las tareas?
-- `accuracy` (0-10): ¿Datos verificables vs outputs de agentes?
-- `structure` (0-10): ¿Bien organizado?
-- `chart_attribution` (0-10): ¿Gráficos en sección correcta?
+**Métricas (Escala 1-4):**
+- `completeness` (1-4): ¿Incluye TODAS las tareas?
+  - **4**: Perfecto - Incluye 100% de las tareas completadas
+  - **3**: Bueno - Incluye >80% de las tareas
+  - **2**: Mejorable - Incluye 50-80% de las tareas
+  - **1**: Crítico - Omitió >50% de las tareas
+- `accuracy` (1-4): ¿Datos verificables vs outputs de agentes?
+  - **4**: Perfecto - Todos los datos coinciden exactamente
+  - **3**: Bueno - Datos mayormente correctos con mínimas variaciones
+  - **2**: Mejorable - Algunos datos no coinciden
+  - **1**: Crítico - Datos contradicen outputs de agentes
+- `structure` (1-4): ¿Bien organizado?
+  - **4**: Perfecto - Estructura clara y lógica
+  - **3**: Bueno - Estructura adecuada con pequeñas mejoras posibles
+  - **2**: Mejorable - Estructura confusa o desorganizada
+  - **1**: Crítico - Sin estructura aparente
+- `chart_attribution` (1-4): ¿Gráficos en sección correcta?
+  - **4**: Perfecto - Todos los gráficos correctamente atribuidos
+  - **3**: Bueno - Mayoría correctos con mínimos errores
+  - **2**: Mejorable - Varios gráficos mal atribuidos
+  - **1**: Crítico - Gráficos incorrectamente atribuidos o mencionados sin existir
 
 **Errores Detectables:**
 - Omisión de tareas completadas
@@ -280,16 +340,21 @@ Donde:
 - `Agents_Avg = AVG[(tool_selection + tool_execution + output_fidelity + output_completeness + hallucination_check) / 5]` para cada agente
 - `Final_Output_Avg = (completeness + accuracy + structure + chart_attribution) / 4`
 
+**Normalización para comparación:** Para comparar con Baseline (escala 0-1), dividir entre 4:
+```python
+llm_judge_normalized = overall_score / 4
+```
+
 ### 4.2 Categorías de Error
 
 | Categoría | Condición | Severidad |
 |-----------|-----------|-----------|
-| None | Overall Score ≥ 9 | - |
-| Planning_Error | Planner Score < 5 | Media |
-| Routing_Error | Supervisor Score < 5 | Alta |
-| Tool_Error | Cualquier Agente (tool_execution < 5) | Media |
-| Fabrication | Cualquier Agente (hallucination_check < 3) | CRÍTICA |
-| Incompleteness | Completeness < 5 (Planner o Final) | Alta |
+| None | Overall Score ≥ 3 | - |
+| Planning_Error | Planner Score ≤ 2 | Media |
+| Routing_Error | Supervisor Score ≤ 2 | Alta |
+| Tool_Error | Cualquier Agente (tool_execution ≤ 2) | Media |
+| Fabrication | Cualquier Agente (hallucination_check = 1) | CRÍTICA |
+| Incompleteness | Completeness ≤ 2 (Planner o Final) | Alta |
 | Risk_Negligence | Risk Officer omitió advertencia de riesgo alto | CRÍTICA |
 | Parametric_Leak | Fundamental usó conocimiento externo | Media |
 | Loop_Error | Supervisor repitió tarea sin resolver | Alta |
@@ -297,10 +362,10 @@ Donde:
 ### 4.3 Fallos Críticos
 
 Se considera fallo crítico si:
-1. Fabricación de datos (score 0 en hallucination_check)
-2. Routing incorrecto en >50% de tareas
+1. Fabricación de datos (score 1 en hallucination_check)
+2. Routing incorrecto en >50% de tareas (routing_accuracy ≤ 2)
 3. Omisión de advertencia de riesgo crítico
-4. Incompletitud mayor (omitir >30% de tareas solicitadas)
+4. Incompletitud mayor (completeness = 1, omitir >50% de tareas)
 
 ---
 
@@ -310,30 +375,36 @@ Se considera fallo crítico si:
 
 | Score | Calificación | Descripción |
 |-------|--------------|-------------|
-| 9-10 | Excelente | Sistema funcionando óptimamente |
-| 7-8.9 | Bueno | Errores menores, no críticos |
-| 5-6.9 | Mejorable | Errores procedimentales, requiere atención |
-| 3-4.9 | Deficiente | Múltiples fallos, sistema inestable |
-| 0-2.9 | Crítico | Fallos graves, sistema no funcional |
+| 4 | Excelente | Sistema funcionando óptimamente |
+| 3 | Bueno | Funcionamiento correcto con pequeñas áreas de mejora |
+| 2 | Mejorable | Errores moderados que requieren atención |
+| 1 | Crítico | Errores graves que afectan funcionalidad core |
+
+**Equivalencia con escala anterior (0-10):**
+- **4** ≈ 9-10 (Excelente)
+- **3** ≈ 7-8 (Bueno)
+- **2** ≈ 5-6 (Mejorable)
+- **1** ≈ 0-4 (Crítico)
 
 ### 5.2 Análisis por Módulo
 
-**Si Planner Score < 6:**
-- Revisar PLANNER_SYSTEM_PROMPT
+**Si Planner Score ≤ 2:**
+- Revisar PLANNER_JUDGE_PROMPT
+- Verificar que el LLM comprende la escala 1-4
 - Añadir más ejemplos de preservación de precisión
 - Verificar que el LLM entienda "literalidad"
 
-**Si Supervisor Score < 6:**
+**Si Supervisor Score ≤ 2:**
 - Revisar lógica de routing en SUPERVISOR_ROUTER_PROMPT
 - Verificar que el estado `next` se actualice correctamente
 - Revisar condición de terminación (task_completion)
 
-**Si Agents Score < 6:**
+**Si Agents Score ≤ 2:**
 - Identificar qué agente falla más (Technical/Fundamental/Risk)
 - Revisar prompts específicos del agente
 - Verificar herramientas: ¿devuelven el formato esperado?
 
-**Si Final Output Score < 6:**
+**Si Final Output Score ≤ 2:**
 - Revisar SUPERVISOR_SUMMARY_PROMPT
 - Verificar que completed_outputs se acumulen bien
 - Revisar lógica de consolidación del Supervisor
@@ -355,3 +426,26 @@ Se considera fallo crítico si:
 **Patrón 4: Score bajo generalizado**
 - **Causa**: Problema sistémico (LLM base débil, contexto insuficiente)
 - **Solución**: Considerar cambiar modelo base o reestructurar arquitectura
+
+
+## 6. Sistema de Acumulación de Métricas {#acumulacion}
+
+### 6.1 MetricsLogger
+
+El sistema **acumula automáticamente** todas las métricas de evaluación (online y offline) en CSVs unificados.
+
+**Ubicación:** `evaluation/accumulated_data/`
+
+**Archivos generados:**
+- `online_metrics.csv` - Evaluaciones desde Streamlit (sesiones de usuario)
+- `offline_metrics.csv` - Evaluaciones batch desde `run_eval.py`
+
+**Campos almacenados:**
+```csv
+timestamp,source,query_id,user_query,num_tasks,difficulty,category,
+baseline_score,baseline_routing_f1,baseline_numeric_f1,baseline_hallucination_rate,
+baseline_task_coverage,baseline_sql_correctness,baseline_time,
+llm_judge_overall,llm_judge_planner,llm_judge_supervisor,llm_judge_agents,
+llm_judge_final,llm_judge_error_category,llm_judge_time,
+critical_failures,raw_trace
+```

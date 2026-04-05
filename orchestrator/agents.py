@@ -209,7 +209,7 @@ def planner_node(state):
             user_msg = m
             break
     
-    # Fallback: retornar lista vacía si no hay mensaje de usuario
+    # Fallback: Devuelver lista vacía si no hay mensaje de usuario
     if not user_msg:
         return {
             "pending_tasks": [],

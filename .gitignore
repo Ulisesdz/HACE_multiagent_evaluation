@@ -67,6 +67,7 @@ chroma_db/
 .idea/
 *.swp
 .DS_Store
+old_files/
 
 # --- VISUALIZACIÓN / LOGS / MLFLOW ---
 *.log

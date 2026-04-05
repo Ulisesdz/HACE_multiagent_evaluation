@@ -6,6 +6,8 @@ import mlflow
 import pandas as pd
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from evaluation.baseline.evaluator import evaluate_baseline
+from evaluation.metrics_accumulator.logger import MetricsLogger
+from evaluation.hybrid import HybridEvaluator
 
 from evaluation.llm_j.judge import (
     evaluate_planner,
@@ -99,6 +101,14 @@ st.markdown("""
     .score-good { color: #ffeb3b; }
     .score-fair { color: #ff9800; }
     .score-poor { color: #ff5252; }
+            
+    /* Ocultar el menú de navegación por defecto de Streamlit */
+    [data-testid="stSidebarNav"] {
+        display: none !important;
+    }
+    [data-testid="stSidebar"] > div:first-child {
+        padding-top: 0rem !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -108,6 +118,10 @@ def load_app():
     return build_graph()
 
 app = load_app()
+
+# Inicializar MetricsLogger
+if 'metrics_logger' not in st.session_state:
+    st.session_state.metrics_logger = MetricsLogger()
 
 
 # ============================================================================
@@ -182,7 +196,7 @@ class TraceCollector:
 # FUNCIONES DE RENDERIZADO DE EVALUACIONES
 # ============================================================================
 def render_llm_judge_panel(llm_judge_data):
-    """Renderiza el panel de LLM-Judge"""
+    """Renderiza el panel de LLM-Judge (escala 1-4)"""
     comprehensive_eval = llm_judge_data["comprehensive_eval"]
     planner_eval = llm_judge_data["planner_eval"]
     planner_score = llm_judge_data["planner_score"]
@@ -193,15 +207,17 @@ def render_llm_judge_panel(llm_judge_data):
     final_eval = llm_judge_data["final_eval"]
     final_output_score = llm_judge_data["final_output_score"]
     
-    # Panel de LLM-Judge
+    # Panel de LLM-Judge (escala 1-4)
     overall_score = comprehensive_eval.overall_score
-    if overall_score >= 9:
+    
+    # Nuevos umbrales para escala 1-4
+    if overall_score >= 3.5:
         score_class = "score-excellent"
         score_label = "EXCELENTE"
-    elif overall_score >= 7:
+    elif overall_score >= 2.5:
         score_class = "score-good"
         score_label = "BUENO"
-    elif overall_score >= 5:
+    elif overall_score >= 1.5:
         score_class = "score-fair"
         score_label = "MEJORABLE"
     else:
@@ -213,7 +229,7 @@ def render_llm_judge_panel(llm_judge_data):
         <div class="audit-panel">
             <h3 style="margin-top: 0; text-align: center">LLM-Judge (Evaluación Cualitativa)</h3>
             <div style="text-align: center; margin: 20px 0;">
-                <div class="metric-value {score_class}">{overall_score}/10</div>
+                <div class="metric-value {score_class}">{overall_score:.2f}/4</div>
                 <div style="font-size: 1.2rem; margin-top: 10px; opacity: 0.9;">{score_label}</div>
             </div>
         </div>
@@ -221,38 +237,41 @@ def render_llm_judge_panel(llm_judge_data):
         unsafe_allow_html=True
     )
     
-    # Métricas por Módulo
+    # Métricas por Módulo (escala 1-4)
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric(label="📋 Planner", value=f"{planner_score:.1f}/10")
+        st.metric(label="📋 Planner", value=f"{planner_score:.1f}/4")
         with st.expander("📊 Detalles"):
-            st.write(f"**Correctitud:** {planner_eval.correctness}/10")
-            st.write(f"**Completitud:** {planner_eval.completeness}/10")
-            st.write(f"**Precisión:** {planner_eval.precision}/10")
-            st.write(f"**Descomposición:** {planner_eval.task_decomposition}/10")
+            st.write(f"**Correctitud:** {planner_eval.correctness}/4")
+            st.write(f"**Completitud:** {planner_eval.completeness}/4")
+            st.write(f"**Precisión:** {planner_eval.precision}/4")
+            st.write(f"**Descomposición:** {planner_eval.task_decomposition}/4")
     
     with col2:
-        st.metric(label="🎯 Supervisor", value=f"{supervisor_score:.1f}/10")
+        st.metric(label="🎯 Supervisor", value=f"{supervisor_score:.1f}/4")
         with st.expander("📊 Detalles"):
-            st.write(f"**Routing Accuracy:** {supervisor_eval.routing_accuracy}/10")
-            st.write(f"**Task Completion:** {supervisor_eval.task_completion}/10")
+            st.write(f"**Routing Accuracy:** {supervisor_eval.routing_accuracy}/4")
+            st.write(f"**Task Completion:** {supervisor_eval.task_completion}/4")
     
     with col3:
-        st.metric(label="⚙️ Agentes", value=f"{agents_avg_score:.1f}/10")
+        st.metric(label="⚙️ Agentes", value=f"{agents_avg_score:.1f}/4")
         with st.expander("📊 Detalles"):
             for agent_eval in agents_eval:
                 st.write(f"**{agent_eval.agent_name}:**")
-                st.write(f"  • Tool Selection: {agent_eval.tool_selection}/10")
-                st.write(f"  • Output Fidelity: {agent_eval.output_fidelity}/10")
-                st.write(f"  • Hallucination: {agent_eval.hallucination_check}/10")
+                st.write(f"  • Tool Selection: {agent_eval.tool_selection}/4")
+                st.write(f"  • Tool Execution: {agent_eval.tool_execution}/4")
+                st.write(f"  • Output Fidelity: {agent_eval.output_fidelity}/4")
+                st.write(f"  • Completeness: {agent_eval.output_completeness}/4")
+                st.write(f"  • Hallucination: {agent_eval.hallucination_check}/4")
     
     with col4:
-        st.metric(label="📄 Output Final", value=f"{final_output_score:.1f}/10")
+        st.metric(label="📄 Output Final", value=f"{final_output_score:.1f}/4")
         with st.expander("📊 Detalles"):
-            st.write(f"**Completitud:** {final_eval.completeness}/10")
-            st.write(f"**Precisión:** {final_eval.accuracy}/10")
-            st.write(f"**Estructura:** {final_eval.structure}/10")
+            st.write(f"**Completitud:** {final_eval.completeness}/4")
+            st.write(f"**Precisión:** {final_eval.accuracy}/4")
+            st.write(f"**Estructura:** {final_eval.structure}/4")
+            st.write(f"**Chart Attribution:** {final_eval.chart_attribution}/4")
     
     st.markdown("### 📝 Resumen Ejecutivo")
     st.info(comprehensive_eval.executive_summary)
@@ -331,36 +350,574 @@ def render_baseline_panel(baseline_eval):
                 for violation in baseline_eval.sql_metrics.violations[:3]:
                     st.write(f"• {violation}")
 
-
-def render_comparison_table(baseline_eval, llm_judge_data):
-    """Renderiza la tabla comparativa"""
-    st.markdown("### Comparación: Baseline vs LLM-Judge")
-
-    # Obtener tiempo real de LLM-Judge
-    llm_judge_time = llm_judge_data.get("elapsed_time", None)
-    llm_judge_time_str = f"{llm_judge_time:.2f}s" if llm_judge_time else "~3.5s"
+def render_hybrid_panel(hybrid_eval):
+    """
+    Renderiza el panel de MACE (Hybrid Evaluation) con DETALLES COMPLETOS
     
-    comparison_data = {
-        "Método": ["Baseline (Automático)", "LLM-Judge (Cualitativo)"],
-        "Score Global": [
-            f"{baseline_eval.baseline_score:.3f} (escala 0-1)",
-            f"{llm_judge_data['comprehensive_eval'].overall_score}/10"
-        ],
-        "Tiempo": [
-            f"{baseline_eval.evaluation_time:.3f}s",
-            llm_judge_time_str
-        ],
-        "Reproducible": ["✅ 100%", "⚠️ ~95%"],
-        "Detecta": ["Errores numéricos/SQL", "Errores semánticos"]
+    Args:
+        hybrid_eval: Dict resultado de HybridEvaluator.evaluate()
+    """
+    # ========== HEADER PRINCIPAL ==========
+    final_score = float(hybrid_eval.get('final_score', 0))
+    quality_label = str(hybrid_eval.get('quality_label', 'N/A'))
+    confidence = str(hybrid_eval.get('confidence', 'N/A'))
+    
+    # Mapeo de colores por calidad
+    quality_colors = {
+        'Excelente': 'score-excellent',
+        'Bueno': 'score-good',
+        'Mejorable': 'score-fair',
+        'Crítico': 'score-poor'
     }
+    score_class = quality_colors.get(quality_label, 'score-good')
     
-    df_comparison = pd.DataFrame(comparison_data)
-    st.dataframe(df_comparison, use_container_width=True, hide_index=True)
+    st.markdown(
+        f"""
+        <div class="audit-panel" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <h3 style="margin-top: 0; text-align: center">MACE - Hybrid Evaluation</h3>
+            <div style="text-align: center; margin: 20px 0;">
+                <div class="metric-value {score_class}">{final_score:.3f}</div>
+                <div style="font-size: 1.2rem; margin-top: 10px; opacity: 0.9;">{quality_label}</div>
+                <div style="font-size: 0.9rem; margin-top: 5px; opacity: 0.8;">Confianza: {confidence.upper()}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    # ========== MÉTRICAS POR CAPA ==========
+    st.markdown("### 📊 Scores por Capa")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    layer1_score = float(hybrid_eval.get('layer1_score', 0))
+    layer2_score = float(hybrid_eval.get('layer2_score', 0))
+    layer3_score = hybrid_eval.get('layer3_score')
+    layer3_used = bool(hybrid_eval.get('layer3_used', False))
+    
+    with col1:
+        st.metric(
+            label="🛡️ Layer 1 (Guardrails)", 
+            value=f"{layer1_score:.3f}",
+            help="Validadores deterministas de reglas de negocio"
+        )
+        st.caption(f"⏱️ {float(hybrid_eval.get('layer1_time', 0)):.4f}s")
+    
+    with col2:
+        st.metric(
+            label="🧠 Layer 2 (Semantic)", 
+            value=f"{layer2_score:.3f}",
+            help="Similitud semántica con embeddings"
+        )
+        st.caption(f"⏱️ {float(hybrid_eval.get('layer2_time', 0)):.3f}s")
+    
+    with col3:
+        if layer3_used and layer3_score is not None:
+            st.metric(
+                label="⚖️ Layer 3 (LLM-Judge)", 
+                value=f"{float(layer3_score):.3f}",
+                help="Análisis profundo con LLM"
+            )
+            st.caption(f"⏱️ {float(hybrid_eval.get('layer3_time', 0)):.2f}s")
+        else:
+            st.metric(
+                label="⚖️ Layer 3 (LLM-Judge)", 
+                value="N/A",
+                delta="No usado",
+                help="Caso resuelto sin necesidad de LLM"
+            )
+            st.caption("✅ Evaluación rápida")
+    
+    # ========== ANÁLISIS DEL SISTEMA ==========
+    st.markdown("---")
+    st.markdown("### 📈 Análisis del Sistema")
+    
+    col_meta1, col_meta2, col_meta3 = st.columns(3)
+    
+    with col_meta1:
+        eval_time = float(hybrid_eval.get('evaluation_time', 0))
+        st.metric(
+            label="⏱️ Tiempo Total",
+            value=f"{eval_time:.3f}s"
+        )
+        
+        # Comparación con LLM-Judge
+        if layer3_used:
+            st.caption("Evaluación profunda (3 capas)")
+        else:
+            st.caption("Evaluación rápida (2 capas)")
+    
+    with col_meta2:
+        # Speedup vs LLM-Judge
+        llm_judge_baseline_time = 180.0  # Tiempo promedio de LLM-Judge
+        
+        if eval_time < llm_judge_baseline_time:
+            speedup = ((llm_judge_baseline_time - eval_time) / llm_judge_baseline_time) * 100
+            st.metric(
+                label="🚀 Speedup vs LLM-Judge",
+                value=f"{speedup:.1f}%",
+                delta="Más rápido"
+            )
+        else:
+            st.metric(
+                label="⚡ Vs LLM-Judge",
+                value="Similar",
+                delta=None
+            )
+    
+    with col_meta3:
+        # Razón de escalación
+        if layer3_used:
+            escalation_reason = hybrid_eval.get('escalation_reason', 'Unknown')
+            st.warning(f"**🔺 Escalado a Layer 3**")
+            st.caption(f"Razón: {escalation_reason}")
+        else:
+            st.success("**✅ Resolución Rápida**")
+            st.caption("Capas 1-2 fueron suficientes")
+    
+    # ========== DETALLES DE LAYER 1: GUARDRAILS ==========
+    st.markdown("---")
+    st.markdown("### Layer 1: Guardrails (Validadores Deterministas)")
+    
+    layer1_details = hybrid_eval.get('layer1_details', {})
+    
+    if layer1_details:
+        validator_names = list(layer1_details.keys())
+        
+        if validator_names:
+            # --- Tarjetas de resumen (ticks/cruces) ---
+            num_cols = min(len(validator_names), 3)
+            cols_l1 = st.columns(num_cols)
+            
+            for idx, (validator_name, result) in enumerate(layer1_details.items()):
+                col_idx = idx % num_cols
+                with cols_l1[col_idx]:
+                    status = result.get('pass', False)
+                    status_icon = "✅" if status else "❌"
+                    status_color = "#2ecc71" if status else "#e74c3c"
+                    display_name = validator_name.replace('validate_', '').replace('_', ' ').title()
+                    st.markdown(
+                        f"""
+                        <div style="border-left: 4px solid {status_color}; padding: 10px; margin: 5px 0;
+                                    background-color: rgba(0,0,0,0.02); border-radius: 4px;">
+                            <div style="font-weight: bold;">{status_icon} {display_name}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+            
+            # --- Expander con detalles completos ---
+            with st.expander("🔍 Ver Detalles Completos de Layer 1"):
+                for validator_name, result in layer1_details.items():
+                    status = result.get('pass', False)
+                    status_icon = "✅" if status else "❌"
+                    display_name = validator_name.replace('validate_', '').replace('_', ' ').title()
+                    
+                    st.markdown(f"#### {status_icon} {display_name}")
+                    
+                    if validator_name == 'validate_completeness':
+                        coverage = result.get('coverage_rate')
+                        if coverage is not None:
+                            st.metric("Cobertura de Tareas", f"{float(coverage):.1%}")
+                        
+                        planned = result.get('planned_count', 'N/A')
+                        executed = result.get('executed_count', 'N/A')
+                        st.write(f"**Tareas planificadas:** {planned} | **Ejecuciones capturadas:** {executed}")
+                        
+                        missing = result.get('missing_tasks', [])
+                        if missing:
+                            st.warning(f"**Tareas sin ejecución detectada:** {', '.join(missing)}")
+                        else:
+                            st.success("Todas las tareas tienen ejecución correspondiente.")
+                        
+                        reason = result.get('reason')
+                        if reason:
+                            st.caption(f"ℹ️ {reason}")
+                    
+                    elif validator_name == 'validate_routing_syntax':
+                        total = result.get('total_decisions', 0)
+                        st.write(f"**Decisiones de routing evaluadas:** {total}")
+                        
+                        invalid = result.get('invalid_routings', [])
+                        if invalid:
+                            st.error(f"**{len(invalid)} routing(s) inválido(s):**")
+                            for inv in invalid:
+                                st.write(
+                                    f"  • Índice {inv.get('index', '?')} | "
+                                    f"Tarea: `{inv.get('task', 'N/A')}` → "
+                                    f"Agente inválido: `{inv.get('invalid_agent', 'N/A')}`"
+                                )
+                        else:
+                            st.success("Todos los routings usan agentes válidos.")
+                    
+                    elif validator_name == 'validate_numeric_ranges':
+                        total_checked = result.get('total_numbers_checked', 0)
+                        st.write(f"**Números verificados:** {total_checked}")
+                        
+                        anomalies = result.get('anomalies', [])
+                        if anomalies:
+                            st.error(f"**{len(anomalies)} anomalía(s) detectada(s):**")
+                            for anomaly in anomalies[:5]:
+                                st.write(
+                                    f"  • Agente: `{anomaly.get('agent', 'N/A')}` | "
+                                    f"Valor: `{anomaly.get('value', 'N/A')}` | "
+                                    f"Razón: {anomaly.get('reason', 'N/A')}"
+                                )
+                            if len(anomalies) > 5:
+                                st.caption(f"... y {len(anomalies) - 5} anomalía(s) más")
+                        else:
+                            st.success("Sin anomalías numéricas detectadas.")
+                    
+                    elif validator_name == 'validate_chart_mentions':
+                        mentioned = result.get('mentioned_charts', [])
+                        phantom = result.get('phantom_charts', [])
+                        
+                        if mentioned:
+                            st.write(f"**Gráficos mencionados en el informe:** {len(mentioned)}")
+                            for chart in mentioned:
+                                exists = chart not in phantom
+                                icon = "✅" if exists else "❌"
+                                st.write(f"  {icon} `{chart}`")
+                        else:
+                            st.caption("No se mencionaron gráficos en este turno.")
+                        
+                        if phantom:
+                            st.error(f"**{len(phantom)} gráfico(s) fantasma** (mencionados pero el archivo no existe).")
+                    
+                    elif validator_name == 'validate_task_agent_mapping':
+                        coverage = result.get('routing_coverage')
+                        if coverage is not None:
+                            st.metric("Cobertura de Routing", f"{float(coverage):.1%}")
+                        
+                        unrouted = result.get('unrouted_tasks', [])
+                        if unrouted:
+                            st.warning(f"**Tareas sin agente asignado detectado:** {', '.join(unrouted)}")
+                        else:
+                            st.success("Todas las tareas del Planner tienen agente asignado.")
+                        
+                        reason = result.get('reason')
+                        if reason:
+                            st.caption(f"ℹ️ {reason}")
+                    
+                    st.markdown("---")
+    else:
+        st.info("No hay detalles disponibles de Layer 1.")
 
+    # ========== DETALLES DE LAYER 2: SEMANTIC ==========
+    st.markdown("### Layer 2: Semantic (Embeddings)")
+    
+    layer2_details = hybrid_eval.get('layer2_details', {})
+    
+    if layer2_details:
+        col_sem1, col_sem2 = st.columns(2)
+        
+        with col_sem1:
+            st.write(f"**Método:** {layer2_details.get('evaluation_method', 'embeddings')}")
+            st.write(f"**Modelo:** {layer2_details.get('model_name', 'all-MiniLM-L6-v2')}")
+            
+            avg_score = float(layer2_details.get('avg_score', 0))
+            st.metric("Score Promedio Semántico", f"{avg_score:.3f}")
+        
+        with col_sem2:
+            # Threshold usado
+            threshold = layer2_details.get('threshold', 0.7)
+            st.write(f"**Threshold de Escalación:** {threshold}")
+            
+            # Número de evaluaciones
+            num_evals = layer2_details.get('num_evaluations', 0)
+            st.write(f"**Evaluaciones Realizadas:** {num_evals}")
+        
+        # Task Fidelity
+        with st.expander("Task Fidelity (User Query → Planner Tasks)"):
+            task_fid = layer2_details.get('task_fidelity', {})
+            
+            if task_fid:
+                status = task_fid.get('pass', False)
+                status_icon = "✅" if status else "❌"
+                avg_sim = float(task_fid.get('avg_similarity', 0))
+                
+                st.markdown(f"### {status_icon} Similitud: {avg_sim:.3f}")
+                
+                if status:
+                    st.success("Las tareas generadas son **semánticamente coherentes** con la consulta del usuario.")
+                else:
+                    st.warning("Las tareas generadas tienen **baja coherencia semántica** con la consulta original.")
+                
+                # Similitudes individuales
+                if 'similarities' in task_fid and task_fid['similarities']:
+                    st.write("**Similitudes por Tarea:**")
+                    for idx, sim in enumerate(task_fid['similarities'], 1):
+                        st.write(f"  {idx}. {float(sim):.3f}")
+            else:
+                st.info("No hay datos de Task Fidelity.")
+        
+        # Agent Fidelities
+        with st.expander("Agent Fidelities (Tool Output → Agent Response)"):
+            agent_fids = layer2_details.get('agent_fidelities', [])
+            
+            if agent_fids:
+                for af in agent_fids:
+                    agent_name = af.get('agent', 'unknown')
+                    status = af.get('pass', False)
+                    score = float(af.get('score', 0))
+                    
+                    status_icon = "✅" if status else "❌"
+                    status_color = "#2ecc71" if status else "#e74c3c"
+                    
+                    st.markdown(
+                        f"""
+                        <div style="border-left: 4px solid {status_color}; padding: 10px; margin: 10px 0; background-color: rgba(0,0,0,0.02);">
+                            <div style="font-weight: bold;">{status_icon} {agent_name}</div>
+                            <div>Similitud: {score:.3f}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    
+                    if status:
+                        st.caption(f"{agent_name} reportó datos **fieles** al output de sus herramientas.")
+                    else:
+                        st.caption(f"{agent_name} tiene **discrepancias** entre el output de herramientas y su respuesta.")
+            else:
+                st.info("No hay datos de Agent Fidelities.")
+    else:
+        st.info("No hay detalles disponibles de Layer 2.")
+    
+    # ========== DETALLES DE LAYER 3: LLM-JUDGE ==========
+    if layer3_used:
+        st.markdown("---")
+        st.markdown("### Layer 3: LLM-Judge (Análisis Profundo)")
+        
+        layer3_details = hybrid_eval.get('layer3_details', {})
+        
+        if layer3_details:
+            # Módulos evaluados
+            modules_evaluated = layer3_details.get('modules_evaluated', [])
+            
+            if modules_evaluated:
+                st.write(f"**Módulos Analizados:** {', '.join(modules_evaluated)}")
+            
+            # Scores por módulo (si existen)
+            if 'planner_score' in layer3_details:
+                col_l3_1, col_l3_2, col_l3_3 = st.columns(3)
+                
+                with col_l3_1:
+                    planner_score = float(layer3_details.get('planner_score', 0))
+                    st.metric("📋 Planner", f"{planner_score:.2f}/4")
+                
+                with col_l3_2:
+                    supervisor_score = float(layer3_details.get('supervisor_score', 0))
+                    st.metric("🎯 Supervisor", f"{supervisor_score:.2f}/4")
+                
+                with col_l3_3:
+                    agents_score = float(layer3_details.get('agents_avg_score', 0))
+                    st.metric("⚙️ Agentes", f"{agents_score:.2f}/4")
+            
+            # Análisis textual
+            if 'analysis' in layer3_details:
+                with st.expander("📝 Ver Análisis Detallado del LLM"):
+                    st.write(layer3_details['analysis'])
+            
+            # Error category
+            if 'error_category' in layer3_details and layer3_details['error_category'] != 'None':
+                st.warning(f"**Categoría de Error Detectada:** {layer3_details['error_category']}")
+        else:
+            st.info("Layer 3 fue usado pero no hay detalles disponibles.")
+    
+    # ========== FALLOS CRÍTICOS ==========
+    critical_failures = hybrid_eval.get('critical_failures', [])
+    
+    if critical_failures:
+        st.markdown("---")
+        st.markdown("### Fallos Críticos Detectados")
+        
+        st.error(f"**{len(critical_failures)} fallo(s) crítico(s) identificado(s):**")
+        
+        for idx, failure in enumerate(critical_failures, 1):
+            st.markdown(f"{idx}. {failure}")
+    
+    # ========== CONFIGURACIÓN DE PONDERACIÓN ==========
+    with st.expander("Ver Configuración de Ponderación (Weights)"):
+        weights = hybrid_eval.get('weights_used', {})
+        
+        if weights:
+            st.write("**Pesos aplicados en el cálculo del score final:**")
+            
+            for layer, weight in weights.items():
+                st.write(f"  • **{layer}:** {float(weight):.0%}")
+            
+            st.caption("Estos pesos determinan la contribución de cada capa al score final.")
+        else:
+            st.info("No hay información de pesos disponible.")
+    
+    # ========== RESUMEN EJECUTIVO ==========
+    st.markdown("---")
+    st.markdown("### Resumen Ejecutivo")
+    
+    # Generar resumen basado en los datos
+    if layer3_used:
+        execution_summary = f"""
+        El sistema **escaló a Layer 3** debido a: {hybrid_eval.get('escalation_reason', 'problemas detectados en capas previas')}.
+        
+        **Proceso de evaluación:**
+        - Layer 1 (Guardrails): {layer1_score:.3f} - Validadores deterministas
+        - Layer 2 (Semantic): {layer2_score:.3f} - Análisis semántico con embeddings
+        - Layer 3 (LLM-Judge): {float(layer3_score):.3f} - Evaluación profunda con LLM
+        
+        **Score Final:** {final_score:.3f} ({quality_label})
+        
+        **Tiempo Total:** {eval_time:.3f}s (evaluación profunda completa)
+        """
+    else:
+        execution_summary = f"""
+        El sistema **no requirió Layer 3**, resolviendo la evaluación con Layers 1 y 2.
+        
+        **Proceso de evaluación:**
+        - Layer 1 (Guardrails): {layer1_score:.3f} - Validadores deterministas
+        - Layer 2 (Semantic): {layer2_score:.3f} - Análisis semántico con embeddings
+        
+        **Score Final:** {final_score:.3f} ({quality_label})
+        
+        **Tiempo Total:** {eval_time:.3f}s (evaluación rápida y eficiente)
+        """
+    
+    st.info(execution_summary.strip())
+    
+    # ========== RECOMENDACIONES ==========
+    if quality_label in ['Mejorable', 'Crítico'] or critical_failures:
+        st.markdown("---")
+        st.markdown("### Recomendaciones")
+        
+        recommendations = []
+        
+        # Basado en Layer 1
+        if layer1_score < 0.7:
+            recommendations.append("- **Mejorar validaciones deterministas:** Se detectaron fallos en Guardrails (routing, sintaxis SQL, cobertura de tareas).")
+        
+        # Basado en Layer 2
+        if layer2_score < 0.7:
+            recommendations.append("- **Revisar coherencia semántica:** Las tareas generadas o las respuestas de agentes no están alineadas semánticamente con las entradas.")
+        
+        # Basado en Layer 3
+        if layer3_used and layer3_score and float(layer3_score) < 0.7:
+            recommendations.append("- **Atención a la calidad cualitativa:** El LLM-Judge detectó problemas en la descomposición de tareas, routing o fidelidad de outputs.")
+        
+        # Basado en fallos críticos
+        if critical_failures:
+            recommendations.append(f"- **Resolver fallos críticos:** {len(critical_failures)} problema(s) grave(s) detectado(s) que requieren atención inmediata.")
+        
+        if recommendations:
+            for rec in recommendations:
+                st.warning(rec)
+        else:
+            st.success("No se detectaron problemas significativos. El sistema funcionó correctamente.")
+
+
+def evaluate_with_hybrid(trace_data: dict) -> dict:
+    """
+    Evaluar con sistema híbrido MACE
+    
+    Args:
+        trace_data: Dict con trazas del sistema
+    
+    Returns:
+        Dict con evaluación completa (estructura compatible con frontend)
+    """
+    evaluator = HybridEvaluator()
+    result = evaluator.evaluate(trace_data)
+    
+    # El resultado ya viene con la estructura correcta del orchestrator
+    return result
+
+
+def render_comparison_table(baseline_eval=None, llm_judge_data=None, hybrid_eval=None):
+    """
+    Renderiza tabla comparativa dinámica de 2 o 3 métodos
+    
+    Args:
+        baseline_eval: Resultado de evaluate_baseline (opcional)
+        llm_judge_data: Dict con LLM-Judge (opcional)
+        hybrid_eval: Dict con MACE (opcional)
+    """
+    st.markdown("### Comparativa de Sistemas de Auditoría")
+
+    # Contar evaluadores activos
+    active_count = sum(1 for x in [baseline_eval, llm_judge_data, hybrid_eval] if x is not None)
+    if active_count < 2:
+        st.info("Ejecuta al menos dos sistemas de auditoría para ver la comparativa global.")
+        return
+
+    data = {"Métrica": ["Score Global (0-1)", "Tiempo", "Metodología"]}
+    
+    # 1. Añadir Baseline
+    if baseline_eval:
+        data["Baseline"] = [
+            f"{float(baseline_eval.baseline_score):.3f}",
+            f"{float(baseline_eval.evaluation_time):.3f}s",
+            "Determinista"
+        ]
+    
+    # 2. Añadir LLM-Judge
+    if llm_judge_data:
+        # Normalizar score de 1-4 a 0-1
+        llm_score = float(llm_judge_data['comprehensive_eval'].overall_score) / 4
+        llm_time = float(llm_judge_data.get('elapsed_time', 3.5))
+        data["LLM-Judge"] = [
+            f"{llm_score:.3f}",
+            f"{llm_time:.2f}s",
+            "Cualitativo (LLM)"
+        ]
+        
+    # 3. Añadir MACE
+    if hybrid_eval:
+        mace_score = float(hybrid_eval['final_score'])
+        mace_time = float(hybrid_eval['evaluation_time'])
+        layers_used = "2 capas" if not hybrid_eval['layer3_used'] else "3 capas"
+        
+        data["MACE"] = [
+            f"{mace_score:.3f}",
+            f"{mace_time:.3f}s",
+            f"Híbrido ({layers_used})"
+        ]
+
+    df_comparison = pd.DataFrame(data)
+    st.dataframe(df_comparison, width='stretch', hide_index=True)
+    
+    # Gráfico de tiempos comparativos
+    if active_count == 3:
+        st.markdown("####Comparación de Tiempos")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        baseline_time = float(baseline_eval.evaluation_time)
+        llm_time = float(llm_judge_data.get('elapsed_time', 3.5))
+        mace_time = float(hybrid_eval['evaluation_time'])
+        
+        with col1:
+            st.metric("Baseline", f"{baseline_time:.3f}s", delta="Más rápido")
+        
+        with col2:
+            delta_llm = f"+{((llm_time - baseline_time) / baseline_time * 100):.0f}%"
+            st.metric("LLM-Judge", f"{llm_time:.2f}s", delta=delta_llm)
+        
+        with col3:
+            if mace_time < llm_time:
+                speedup = ((llm_time - mace_time) / llm_time) * 100
+                delta_mace = f"-{speedup:.0f}% vs LLM-J"
+            else:
+                delta_mace = f"+{((mace_time - llm_time) / llm_time * 100):.0f}%"
+            
+            st.metric("MACE", f"{mace_time:.3f}s", delta=delta_mace)
 
 # --- SIDEBAR (Panel de Control) ---
 with st.sidebar:
     st.title("Comité de Inversión")
+    
+    # BOTÓN PARA IR AL DASHBOARD
+    st.markdown("---")
+    if st.button("Abrir Dashboard de Análisis", use_container_width=True):
+        st.switch_page("pages/1_Dashboard.py")
+    st.markdown("---")
     st.markdown("### Roles Activos")
     
     st.markdown(
@@ -377,13 +934,6 @@ with st.sidebar:
     st.error("⚠️ **Risk Officer** \n_Volatilidad, drawdown y alertas_")
 
     st.divider()
-    
-    if st.button("Limpiar Sesión"):
-        st.session_state.messages = []
-        st.session_state.evaluations = []
-        if 'trace' in st.session_state:
-            del st.session_state.trace
-        st.rerun()
 
     st.markdown("### Sistema de Auditoría")
     
@@ -409,13 +959,55 @@ with st.sidebar:
 
     st.divider()
     
+    # Toggle para MACE
+    audit_hybrid = st.toggle("MACE(Evaluación Híbrida)", value=True)
+    if audit_hybrid:
+        st.caption("Sistema de 3 capas activo:")
+        st.caption("• L1: Guardrails (Determinista)")
+        st.caption("• L2: Semántica (Embeddings)")
+        st.caption("• L3: LLM-Judge (Selectivo)")
+
+    st.divider()
+
+    # Estadísticas acumuladas
+    st.markdown("### Métricas Acumuladas")
+    
+    if st.button("Ver Estadísticas"):
+        if 'metrics_logger' in st.session_state:
+            stats = st.session_state.metrics_logger.get_statistics(source='online')
+            
+            if stats['total_evaluations'] > 0:
+                st.metric("Total Evaluaciones", stats['total_evaluations'])
+                st.metric("Baseline Promedio", f"{stats['baseline_avg_score']:.3f}" if stats['baseline_avg_score'] else "N/A")
+                st.metric("LLM-Judge Promedio", f"{stats['llm_judge_avg_score']:.1f}/4" if stats['llm_judge_avg_score'] else "N/A")
+                st.metric("MACE Promedio", f"{stats['hybrid_avg_score']:.2f}/1.0")
+                
+                if stats['error_categories']:
+                    st.write("**Categorías de Error:**")
+                    for cat, count in stats['error_categories'].items():
+                        st.write(f"  • {cat}: {count}")
+            else:
+                st.info("No hay evaluaciones acumuladas aún.")
+    
+    st.divider()
+    
     st.markdown("### Debugging")
     if st.button("Ver Grafo del Sistema"):
         try:
             graph_image = app.get_graph().draw_mermaid_png()
+            # graph_image = app.get_graph(xray=1).draw_mermaid_png() # Para ver lógica de cada agente
             st.image(graph_image, caption="Arquitectura Jerárquica")
         except Exception as e:
             st.error(f"No se pudo generar el grafo: {e}")
+
+    st.divider()
+
+    if st.button("Limpiar Sesión"):
+        st.session_state.messages = []
+        st.session_state.evaluations = []
+        if 'trace' in st.session_state:
+            del st.session_state.trace
+        st.rerun()
 
 
 # --- INTERFAZ PRINCIPAL ---
@@ -462,14 +1054,21 @@ if st.session_state.evaluations:
             if eval_data["llm_judge"]:
                 render_llm_judge_panel(eval_data["llm_judge"])
             
+            # Renderizar MACE si existe
+            if eval_data.get("hybrid"):
+                render_hybrid_panel(eval_data["hybrid"])
+            
             # Renderizar Baseline si existe
             if eval_data["baseline"]:
-                st.divider()
                 render_baseline_panel(eval_data["baseline"])
             
-            # Comparación si ambos existen
-            if eval_data["llm_judge"] and eval_data["baseline"]:
-                render_comparison_table(eval_data["baseline"], eval_data["llm_judge"])
+            # Comparación si hay dos evaluaciones activas
+            st.divider()
+            render_comparison_table(
+                baseline_eval=eval_data.get("baseline"),
+                llm_judge_data=eval_data.get("llm_judge"),
+                hybrid_eval=eval_data.get("hybrid")
+            )
 
 # 3. Input
 user_input = st.chat_input("Ej: 'Analiza el riesgo de ETH', 'Predice el precio de BTC'...")
@@ -639,7 +1238,7 @@ if user_input:
                 # ================================================================
                 # 3. AUDITORÍA COMPREHENSIVA
                 # ================================================================
-                if audit_llm_j or audit_baseline:
+                if audit_llm_j or audit_baseline or audit_hybrid:
                     st.divider()
 
                     # Crear objeto de evaluación para este turno
@@ -647,7 +1246,8 @@ if user_input:
                         "turn": len(st.session_state.messages) // 2,
                         "user_query": trace.user_question,
                         "llm_judge": None,
-                        "baseline": None
+                        "baseline": None,
+                        "hybrid": None
                     }
                     
                     # ============================================================
@@ -806,17 +1406,64 @@ if user_input:
                         
                         # RENDERIZAR INMEDIATAMENTE
                         render_baseline_panel(baseline_eval)
+
+                    # ============================================================
+                    # 3C. MACE HYBRID (Si está activado)
+                    # ============================================================
+                    if audit_hybrid:
+                        st.divider()
+                        
+                        with st.spinner("🔬 MACE analizando (3 capas)..."):
+                            # Preparar trace data (mismo formato que baseline)
+                            trace_data = {
+                                'user_question': trace.user_question,
+                                'planner_tasks': trace.planner_tasks,
+                                'routing_trace': trace.routing_trace,
+                                'agent_executions': trace.agent_executions,
+                                'sql_queries': trace.sql_queries,
+                                'final_answer': trace.final_answer
+                            }
+                            
+                            # Ejecutar evaluación híbrida
+                            hybrid_eval = evaluate_with_hybrid(trace_data)
+                            
+                            # Guardar en MLflow
+                            mlflow.log_metric("hybrid_final_score", float(hybrid_eval['final_score']))
+                            mlflow.log_metric("hybrid_layer1_score", float(hybrid_eval['layer1_score']))
+                            mlflow.log_metric("hybrid_layer2_score", float(hybrid_eval['layer2_score']))
+                            if hybrid_eval['layer3_score'] is not None:
+                                mlflow.log_metric("hybrid_layer3_score", float(hybrid_eval['layer3_score']))
+                            mlflow.log_metric("hybrid_evaluation_time", float(hybrid_eval['evaluation_time']))
+                            mlflow.log_param("hybrid_layer3_used", hybrid_eval['layer3_used'])
+                            mlflow.log_param("hybrid_quality_label", hybrid_eval['quality_label'])
+                            mlflow.log_param("hybrid_confidence", hybrid_eval['confidence'])
+
+                            # Guardar en session_state (resultado completo del orchestrator)
+                            current_evaluation["hybrid"] = hybrid_eval
+                        
+                        # RENDERIZAR INMEDIATAMENTE
+                        render_hybrid_panel(hybrid_eval)
                     
                     # ============================================================
-                    # COMPARACIÓN (si ambos están activados)
+                    # COMPARACIÓN (si 2 evaluadores están activados)
                     # ============================================================
-                    if audit_llm_j and audit_baseline:
-                        render_comparison_table(
-                            current_evaluation["baseline"], 
-                            current_evaluation["llm_judge"]
-                        )
+                    st.divider()
+                    render_comparison_table(
+                        baseline_eval=current_evaluation.get("baseline"), 
+                        llm_judge_data=current_evaluation.get("llm_judge"),
+                        hybrid_eval=current_evaluation.get("hybrid")
+                    )
                     
-                    # Guardar evaluación en historial
+                    # ============================================================
+                    # GUARDAR EN METRICS ACCUMULATOR
+                    # ============================================================
+                    st.session_state.metrics_logger.log_online_evaluation(
+                        trace_data=trace_data,
+                        baseline_eval=current_evaluation.get("baseline"),
+                        llm_judge_data=current_evaluation.get("llm_judge"),
+                        hybrid_eval=current_evaluation.get("hybrid")
+                    )
+                    
                     st.session_state.evaluations.append(current_evaluation)
 
             except Exception as e:

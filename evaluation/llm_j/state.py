@@ -3,128 +3,58 @@ from pydantic.types import StringConstraints
 from typing_extensions import Annotated
 from typing import List
 
-# MODELOS DE EVALUACIÓN GRANULAR
 class PlannerEvaluation(BaseModel):
-    """Evaluación específica del Planner"""
-    correctness: int = Field(
-        description="¿Identificó correctamente las tareas del mensaje? 0-10"
-    )
-    completeness: int = Field(
-        description="¿Capturó TODAS las solicitudes sin omitir ninguna? 0-10"
-    )
-    precision: int = Field(
-        description="¿Mantuvo adjetivos, cantidades y fechas exactas? 0-10"
-    )
-    task_decomposition: int = Field(
-        description="¿Separó correctamente en tareas independientes? 0-10"
-    )
-    errors: List[str] = Field(
-        description="Lista de errores específicos del Planner",
-        default_factory=list
-    )
-    analysis: str = Field(
-        description="Análisis detallado de la planificación"
-    )
+    """Evaluación del Planner (escala 1-4)"""
+    correctness: int = Field(ge=1, le=4, description="¿Identificó correctamente las tareas? 1-4")
+    completeness: int = Field(ge=1, le=4, description="¿Capturó TODAS las solicitudes? 1-4")
+    precision: int = Field(ge=1, le=4, description="¿Mantuvo detalles importantes? 1-4")
+    task_decomposition: int = Field(ge=1, le=4, description="¿Separó correctamente en tareas independientes? 1-4")
+    errors: List[str] = Field(default_factory=list, description="Lista de errores específicos")
+    analysis: str = Field(description="Análisis detallado de la planificación (2-3 oraciones)")
 
 
 class SupervisorEvaluation(BaseModel):
-    """Evaluación específica del Supervisor (Routing)"""
-    routing_accuracy: int = Field(
-        description="¿Eligió al agente correcto para cada tarea? 0-10"
-    )
-    task_completion: int = Field(
-        description="¿Completó todas las tareas o terminó prematuramente? 0-10"
-    )
-    routing_decisions: List[dict] = Field(
-        description="Lista de decisiones: [{'task': '...', 'agent': '...', 'correct': bool}]",
-        default_factory=list
-    )
-    errors: List[str] = Field(
-        description="Errores de enrutamiento específicos",
-        default_factory=list
-    )
-    analysis: str = Field(
-        description="Análisis del comportamiento del Supervisor"
-    )
+    """Evaluación del Supervisor (escala 1-4)"""
+    routing_accuracy: int = Field(ge=1, le=4, description="¿Eligió al agente correcto? 1-4")
+    task_completion: int = Field(ge=1, le=4, description="¿Completó todas las tareas? 1-4")
+    routing_decisions: List[dict] = Field(default_factory=list)
+    errors: List[str] = Field(default_factory=list)
+    analysis: str = Field(description="Análisis del comportamiento del Supervisor")
 
 
 class AgentEvaluation(BaseModel):
-    """Evaluación específica de un Agente"""
-    agent_name: str = Field(
-        description="Nombre del agente evaluado"
-    )
-    tool_selection: int = Field(
-        description="¿Eligió las herramientas correctas? 0-10"
-    )
-    tool_execution: int = Field(
-        description="¿Usó las herramientas correctamente (parámetros, SQL)? 0-10"
-    )
-    output_fidelity: int = Field(
-        description="¿La respuesta es fiel a los datos de las herramientas? 0-10"
-    )
-    output_completeness: int = Field(
-        description="¿Reportó TODOS los datos (Top 3 = 3 items, no resumen)? 0-10"
-    )
-    hallucination_check: int = Field(
-        description="¿Inventó datos no presentes en las herramientas? 0=Inventó, 10=Fiel"
-    )
-    errors: List[str] = Field(
-        description="Lista de errores específicos del agente",
-        default_factory=list
-    )
-    analysis: str = Field(
-        description="Análisis del desempeño del agente"
-    )
+    """Evaluación de un Agente (escala 1-4)"""
+    agent_name: str
+    tool_selection: int = Field(ge=1, le=4, description="¿Eligió las herramientas correctas? 1-4")
+    tool_execution: int = Field(ge=1, le=4, description="¿Las usó correctamente? 1-4")
+    output_fidelity: int = Field(ge=1, le=4, description="¿La respuesta es fiel a los datos? 1-4")
+    output_completeness: int = Field(ge=1, le=4, description="¿Reportó TODOS los datos? 1-4")
+    hallucination_check: int = Field(ge=1, le=4, description="¿Inventó datos? 1=sí, 4=no")
+    errors: List[str] = Field(default_factory=list)
+    analysis: str = Field(description="Análisis del desempeño del agente")
 
 
 class FinalOutputEvaluation(BaseModel):
-    """Evaluación del informe final consolidado"""
-    completeness: int = Field(
-        description="¿Incluye TODAS las tareas solicitadas? 0-10"
-    )
-    accuracy: int = Field(
-        description="¿Los datos son correctos y verificables? 0-10"
-    )
-    structure: int = Field(
-        description="¿Está bien organizado por activos/tareas? 0-10"
-    )
-    chart_attribution: int = Field(
-        description="¿Los gráficos están asociados al activo correcto? 0-10"
-    )
-    errors: List[str] = Field(
-        description="Errores en el consolidado final",
-        default_factory=list
-    )
-    analysis: str = Field(
-        description="Análisis del informe final"
-    )
+    """Evaluación del informe final (escala 1-4)"""
+    completeness: int = Field(ge=1, le=4, description="¿Incluye TODAS las tareas? 1-4")
+    accuracy: int = Field(ge=1, le=4, description="¿Los datos son correctos? 1-4")
+    structure: int = Field(ge=1, le=4, description="¿Está bien organizado? 1-4")
+    chart_attribution: int = Field(ge=1, le=4, description="¿Gráficos correctos? 1-4")
+    errors: List[str] = Field(default_factory=list)
+    analysis: str = Field(description="Análisis del informe final")
 
 
 class ComprehensiveEvaluation(BaseModel):
-    """Evaluación completa del sistema end-to-end"""
-    # Evaluaciones por etapa
+    """Evaluación completa del sistema (escala 1-4)"""
     planner: PlannerEvaluation
     supervisor: SupervisorEvaluation
-    agents: List[AgentEvaluation] = Field(
-        description="Evaluación de cada agente que participó"
-    )
+    agents: List[AgentEvaluation]
     final_output: FinalOutputEvaluation
     
-    # Métricas globales
-    overall_score: int = Field(
-        description="Score global del sistema (0-10), promedio ponderado"
-    )
-    critical_failures: List[str] = Field(
-        description="Lista de fallos críticos que rompen el sistema",
-        default_factory=list
-    )
+    overall_score: int = Field(ge=1, le=4, description="Score global (1-4)")
+    critical_failures: List[str] = Field(default_factory=list)
     error_category: str = Field(
-        description=(
-            "Categoría principal del error: "
-            "'None', 'Planning_Error', 'Routing_Error', 'Tool_Error', "
-            "'Fabrication', 'Incompleteness', 'Logic_Error', 'Loop_Error', "
-            "'Risk_Negligence', 'Parametric_Leak'"
-        )
+        description="None/Planning_Error/Routing_Error/Tool_Error/Fabrication/Incompleteness"
     )
     
     # Análisis ejecutivo

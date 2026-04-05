@@ -1,10 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict
 
-# ============================================================================
 # MODELOS DE EVALUACIÓN BASELINE
-# ============================================================================
-
 class RoutingMetrics(BaseModel):
     """Métricas de precisión de routing"""
     accuracy: float = Field(description="Precisión global del routing (0-1)")

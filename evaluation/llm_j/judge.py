@@ -33,10 +33,10 @@ def evaluate_planner(user_message: str, generated_tasks: list, expected_behavior
         return result
     except Exception as e:
         return PlannerEvaluation(
-            correctness=0,
-            completeness=0,
-            precision=0,
-            task_decomposition=0,
+            correctness=1,
+            completeness=1,
+            precision=1,
+            task_decomposition=1,
             errors=[f"Error de evaluación: {str(e)}"],
             analysis=f"Fallo crítico en evaluación del Planner: {str(e)}"
         )
@@ -57,8 +57,8 @@ def evaluate_supervisor(pending_tasks: list, routing_trace: list, expected_behav
         return result
     except Exception as e:
         return SupervisorEvaluation(
-            routing_accuracy=0,
-            task_completion=0,
+            routing_accuracy=1,
+            task_completion=1,
             routing_decisions=[],
             errors=[f"Error de evaluación: {str(e)}"],
             analysis=f"Fallo crítico en evaluación del Supervisor: {str(e)}"
@@ -93,11 +93,11 @@ def evaluate_agent(
     except Exception as e:
         return AgentEvaluation(
             agent_name=agent_name,
-            tool_selection=0,
-            tool_execution=0,
-            output_fidelity=0,
-            output_completeness=0,
-            hallucination_check=0,
+            tool_selection=1,
+            tool_execution=1,
+            output_fidelity=1,
+            output_completeness=1,
+            hallucination_check=1,
             errors=[f"Error de evaluación: {str(e)}"],
             analysis=f"Fallo crítico en evaluación del agente: {str(e)}"
         )
@@ -124,10 +124,10 @@ def evaluate_final_output(
         return result
     except Exception as e:
         return FinalOutputEvaluation(
-            completeness=0,
-            accuracy=0,
-            structure=0,
-            chart_attribution=0,
+            completeness=1,
+            accuracy=1,
+            structure=1,
+            chart_attribution=1,
             errors=[f"Error de evaluación: {str(e)}"],
             analysis=f"Fallo crítico en evaluación del output final: {str(e)}"
         )
@@ -140,10 +140,10 @@ def evaluate_comprehensive(
     final_eval: FinalOutputEvaluation
 ) -> ComprehensiveEvaluation:
     """
-    Evaluación comprehensiva del sistema completo sin dependencia de cálculo de LLM
+    Evaluación comprehensiva con escala 1-4
     """
     
-    # Calcular scores promedio de cada módulo
+    # Calcular promedios (escala 1-4)
     planner_avg = (
         planner_eval.correctness + 
         planner_eval.completeness + 
@@ -160,7 +160,7 @@ def evaluate_comprehensive(
         (a.tool_selection + a.tool_execution + a.output_fidelity + 
          a.output_completeness + a.hallucination_check) / 5
         for a in agents_eval
-    ) / len(agents_eval) if agents_eval else 0
+    ) / len(agents_eval) if agents_eval else 1
     
     final_avg = (
         final_eval.completeness + 
@@ -169,53 +169,48 @@ def evaluate_comprehensive(
         final_eval.chart_attribution
     ) / 4
     
-    # Calcular overall score con ponderación
-    overall_score_calculated = int(
+    # Calcular overall score con ponderación (resultado 1-4)
+    overall_score_float = (
         planner_avg * 0.20 +
         supervisor_avg * 0.25 +
         agents_avg * 0.40 +
         final_avg * 0.15
     )
+    overall_score_calculated = overall_score_float
     
-    # Determinar error category basado en scores
-    if overall_score_calculated >= 8:
+    # Determinar error category (adaptado a escala 1-4)
+    if overall_score_calculated >= 3.5:
         error_category = "None"
-    elif planner_avg < 5:
+    elif planner_avg <= 2:
         error_category = "Planning_Error"
-    elif supervisor_avg < 5:
+    elif supervisor_eval.routing_accuracy <= 2:
         error_category = "Routing_Error"
-    elif any(a.tool_execution < 5 for a in agents_eval):
+    elif any(a.tool_execution <= 2 for a in agents_eval):
         error_category = "Tool_Error"
-    elif any(a.hallucination_check < 3 for a in agents_eval):
+    elif any(a.hallucination_check == 1 for a in agents_eval):
         error_category = "Fabrication"
-    elif planner_eval.completeness < 5 or final_eval.completeness < 5:
+    elif planner_eval.completeness <= 2 or final_eval.completeness <= 2:
         error_category = "Incompleteness"
     else:
         error_category = "None"
     
-    # Identificar critical failures (solo los realmente críticos)
+    # Identificar critical failures
     critical_failures = []
     
-    if any(a.hallucination_check < 3 for a in agents_eval):
+    if any(a.hallucination_check == 1 for a in agents_eval):
         critical_failures.append("Fabricación de datos detectada")
     
-    if supervisor_avg < 5 and len(agents_eval) > 1:
+    if supervisor_eval.routing_accuracy <= 2 and len(agents_eval) > 1:
         critical_failures.append("Routing incorrecto en múltiples tareas")
     
-    # Buscar omisión de advertencias de riesgo ALTO
-    for agent in agents_eval:
-        if agent.agent_name == "Risk_Officer":
-            if "ALTO" in str(agent.errors) or "HIGH" in str(agent.errors):
-                critical_failures.append("Omisión de advertencia de riesgo alto")
-    
     # Generar executive summary
-    if overall_score_calculated >= 9:
+    if overall_score_calculated >= 3.5:
         estado = "EXCELENTE"
         descripcion = "Todos los módulos funcionan óptimamente."
-    elif overall_score_calculated >= 7:
+    elif overall_score_calculated >= 2.5:
         estado = "BUENO"
         descripcion = "Funcionamiento correcto con pequeñas áreas de mejora."
-    elif overall_score_calculated >= 5:
+    elif overall_score_calculated >= 1.5:
         estado = "MEJORABLE"
         descripcion = "Errores moderados detectados que requieren atención."
     else:
@@ -231,13 +226,13 @@ def evaluate_comprehensive(
     ]
     peor_modulo, peor_score = min(scores_modulos, key=lambda x: x[1])
     
-    if peor_score < 8:
+    if peor_score < 3:
         summary = (
-            f"Sistema en estado {estado} (score: {overall_score_calculated}/10). "
-            f"{descripcion} Módulo con menor desempeño: {peor_modulo} ({peor_score:.1f}/10)."
+            f"Sistema en estado {estado} (score: {overall_score_calculated}/4). "
+            f"{descripcion} Módulo con menor desempeño: {peor_modulo} ({peor_score:.1f}/4)."
         )
     else:
-        summary = f"Sistema en estado {estado} (score: {overall_score_calculated}/10). {descripcion}"
+        summary = f"Sistema en estado {estado} (score: {overall_score_calculated}/4). {descripcion}"
     
     # Intentar obtener un resumen narrativo del LLM
     try:
