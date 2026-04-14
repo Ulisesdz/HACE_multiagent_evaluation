@@ -22,7 +22,7 @@ def predict_price(symbol, p1, p2, p3):
     if not os.path.exists(model_path):
         return f"Error: No he encontrado el modelo en {model_path}"
 
-    # Cargo el modelo guardado con joblib
+    # Cargo el modelo
     model = joblib.load(model_path)
 
     # Preparo los datos en el formato 2D que requiere sklearn
@@ -45,7 +45,6 @@ if __name__ == "__main__":
     # Ejecuto la funcion de prediccion
     resultado = predict_price(moneda, precio_ayer, precio_anteayer, precio_hace_3_dias)
 
-    # Muestro el resultado por pantalla
     if isinstance(resultado, (float, np.float64)):
         print(f"Prediccion para el proximo cierre de {moneda}: {resultado:.2f}")
     else:

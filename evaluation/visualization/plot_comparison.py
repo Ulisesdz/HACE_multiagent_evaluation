@@ -1,8 +1,3 @@
-"""
-Comparación de 3 métodos: Baseline, LLM-Judge, y MACE
-CORREGIDO: Maneja correctamente los merges de los 3 evaluadores
-"""
-
 import os
 import pandas as pd
 import matplotlib.pyplot as plt

@@ -1,8 +1,3 @@
-"""
-Layer 3: LLM-Judge Selectivo - Análisis profundo solo cuando necesario
-Propósito: Evaluación profunda de módulos problemáticos
-"""
-
 from typing import Dict, List, Any
 from evaluation.llm_j.judge import (
     evaluate_planner,

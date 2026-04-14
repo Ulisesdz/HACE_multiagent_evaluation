@@ -1,8 +1,3 @@
-"""
-Layer 2: Semantic Evaluators - Evaluación semántica rápida
-Propósito: Evaluación semántica sin LLM completo
-"""
-
 import numpy as np
 from typing import Dict, List, Any
 import re

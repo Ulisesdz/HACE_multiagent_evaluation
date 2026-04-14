@@ -1,8 +1,3 @@
-"""
-Script de evaluación offline para MACE
-Ejecuta evaluación híbrida sobre dataset completo
-"""
-
 import sys
 import json
 import pandas as pd

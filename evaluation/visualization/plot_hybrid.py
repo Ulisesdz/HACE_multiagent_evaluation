@@ -1,8 +1,3 @@
-"""
-Visualizaciones para MACE (Hybrid Evaluation)
-Genera gráficas específicas del sistema híbrido de 3 capas
-"""
-
 import os
 import pandas as pd
 import matplotlib.pyplot as plt

@@ -31,11 +31,10 @@ embeddings = get_embeddings()
 # Búsqueda web
 search = DuckDuckGoSearchRun()
 
+
 # ==========================================
 # 1. HERRAMIENTAS DE DATOS (SQL)
 # ==========================================
-
-
 @tool
 @log_execution
 def crypto_history_tool(query: str):
@@ -83,8 +82,6 @@ def crypto_history_tool(query: str):
 # ==========================================
 # 2. HERRAMIENTAS DE PREDICCIÓN (ML)
 # ==========================================
-
-
 @tool
 @log_execution
 def crypto_prediction_tool(coin: str):
@@ -153,8 +150,6 @@ def crypto_prediction_tool(coin: str):
 # ==========================================
 # 3. HERRAMIENTAS DE RIESGO
 # ==========================================
-
-
 @tool
 @log_execution
 def crypto_volatility_tool(coin: str):
@@ -225,8 +220,6 @@ def crypto_volatility_tool(coin: str):
 # ==========================================
 # 4. HERRAMIENTAS DE CONTEXTO (RAG + WEB)
 # ==========================================
-
-
 @tool
 @log_execution
 def crypto_rag_tool(query: str):
@@ -267,8 +260,6 @@ def crypto_news_tool(query: str):
 # ==========================================
 # 5. HERRAMIENTA DE VISUALIZACIÓN
 # ==========================================
-
-
 @tool
 @log_execution
 def crypto_chart_tool(coin: str):

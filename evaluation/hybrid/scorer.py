@@ -1,8 +1,3 @@
-"""
-Hybrid Scorer - Fusión de scores de múltiples capas
-Combina resultados deterministas, semánticos y generativos
-"""
-
 import numpy as np
 from typing import Dict, Any, Optional
 

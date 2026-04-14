@@ -1,8 +1,3 @@
-"""
-Orchestrator - Coordinador del sistema de evaluación híbrida
-Pipeline de 3 capas con escalación condicional
-"""
-
 import time
 from typing import Dict, Any
 from evaluation.hybrid.layer1_guardrails import GuardrailsValidator

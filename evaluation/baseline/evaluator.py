@@ -32,9 +32,7 @@ def evaluate_baseline(trace_data: Dict) -> BaselineEvaluation:
 
     calculator = BaselineMetricsCalculator()
 
-    # =========================================================================
     # 1. Routing Metrics
-    # =========================================================================
     routing_data = calculator.evaluate_routing_accuracy(
         routing_trace=trace_data.get("routing_trace", [])
     )
@@ -48,9 +46,7 @@ def evaluate_baseline(trace_data: Dict) -> BaselineEvaluation:
         confusion_matrix=routing_data["confusion_matrix"],
     )
 
-    # =========================================================================
     # 2. Numeric Metrics
-    # =========================================================================
     tool_outputs = []
     agent_responses = []
 
@@ -69,9 +65,7 @@ def evaluate_baseline(trace_data: Dict) -> BaselineEvaluation:
         hallucination_rate=numeric_data["hallucination_rate"],
     )
 
-    # =========================================================================
     # 3. Task Coverage Metrics
-    # =========================================================================
     completed_tasks = [
         exec["task"]
         for exec in trace_data.get("agent_executions", [])
@@ -90,9 +84,7 @@ def evaluate_baseline(trace_data: Dict) -> BaselineEvaluation:
         completed_tasks=coverage_data["completed_tasks"],
     )
 
-    # =========================================================================
     # 4. SQL Metrics
-    # =========================================================================
     sql_data = calculator.evaluate_sql_correctness(
         sql_queries=trace_data.get("sql_queries", [])
     )
@@ -104,9 +96,7 @@ def evaluate_baseline(trace_data: Dict) -> BaselineEvaluation:
         correct_queries=sql_data["correct_queries"],
     )
 
-    # =========================================================================
     # 5. Baseline Score Agregado
-    # =========================================================================
     baseline_score = (
         routing_metrics.f1 * 0.30
         + numeric_metrics.f1 * 0.30

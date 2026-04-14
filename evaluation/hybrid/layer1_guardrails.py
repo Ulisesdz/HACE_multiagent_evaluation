@@ -1,8 +1,3 @@
-"""
-Layer 1: Guardrails - Validadores Deterministas
-Propósito: Detectar fallos obvios sin procesamiento semántico
-"""
-
 import os
 import re
 from typing import Dict, List, Any

@@ -289,7 +289,6 @@ def evaluate_comprehensive(
     except Exception as e:
 
         # FALLBACK COMPLETO: Crear el objeto manualmente
-
         print(f"[JUDGE WARNING] LLM falló, usando fallback manual: {str(e)}")
 
         return ComprehensiveEvaluation(

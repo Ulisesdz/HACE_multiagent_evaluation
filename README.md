@@ -28,7 +28,6 @@ multiagent_evalutation/
 │       └── predictor.py       # Inferencia para el Agente
 └── evaluation/
 │   ├── accumulated_data/  # Sistema de Acumulación de Métricas
-│   │   ├── README.md      # Documentación del sistema de acumulación
 │   │   ├── online_metrics.csv   # Métricas desde Streamlit (generado)
 │   │   └── offline_metrics.csv  # Métricas desde run_eval.py (generado)
 │   ├── baseline/          # Fase 1: Métricas Automáticas Deterministas
@@ -62,13 +61,14 @@ multiagent_evalutation/
 │   ├── metrics_accumulator/  # Sistema de Logging de Métricas
 │   │   ├── __init__.py
 │   │   ├── logger.py      # MetricsLogger class (logging unificado)
-│   │   ├── README.md      # Documentación del logger
+│   │   ├── METRICS_ACCUMULATOR.md      # Documentación del logger
 │   │   └── dataset.json   # Dataset de 45 casos de prueba
 │   └── visualization/     # Generación de Gráficas
 │       ├── __init__.py
 │       ├── plot_baseline.py       # Gráficas de Baseline Metrics
+│       ├── plot_hybrid.py         # Gráficas de MACE
 │       ├── plot_llm_judge.py      # Gráficas de LLM-Judge
-│       ├── plot_comparison.py     # Comparativas Baseline vs LLM-Judge
+│       ├── plot_comparison.py     # Comparativas Baseline, LLM-Judge y MACE
 │       └── plots/                 # Directorio de salida de gráficas
 ├── pages/          # Sub-páginas del Frontend
 │   └── 1_dashboard.py     # Dashboard con gráficas y cálculos de los sistemas de evaluación
