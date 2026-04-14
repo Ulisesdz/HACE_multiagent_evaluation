@@ -511,7 +511,6 @@ def plot_summary_table_triple():
         "Score Promedio": [],
         "Desv. Estándar": [],
         "Tiempo Promedio": [],
-        "Reproducibilidad": [],
         "Características": [],
     }
 
@@ -532,8 +531,6 @@ def plot_summary_table_triple():
             )
         else:
             summary_data["Tiempo Promedio"].append("~0.023s")
-
-        summary_data["Reproducibilidad"].append("100%")
         summary_data["Características"].append("Determinista, numérico/SQL")
 
     # LLM-Judge
@@ -559,8 +556,6 @@ def plot_summary_table_triple():
             )
         else:
             summary_data["Tiempo Promedio"].append("~180.5s")
-
-        summary_data["Reproducibilidad"].append("~98%")
         summary_data["Características"].append("Cualitativo, semántico")
 
     # MACE
@@ -577,8 +572,6 @@ def plot_summary_table_triple():
             )
         else:
             summary_data["Tiempo Promedio"].append("~1.9s")
-
-        summary_data["Reproducibilidad"].append("~99%")
 
         # Calcular % Layer 3
         if "mace_layer3_used" in df.columns:

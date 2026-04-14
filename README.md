@@ -3,6 +3,8 @@ Este proyecto implementa una **Firma de Inversión basada en Agentes de IA**. Si
 
 El sistema combina Modelos de Machine Learning (Random Forest para predicción numérica), Búsqueda en Internet (Datos en vivo), RAG (Conocimiento técnico) y Análisis de Riesgos (Cálculo de volatilidad).
 
+![Arquitectura Conceptual del Sistema](grafo_arquitectura.png)
+
 ## Estructura del Proyecto
 
 ```plaintext
@@ -173,7 +175,7 @@ evaluation/baseline/dataset_baseline_summary.csv    # Resumen ejecutivo
 #### LLM As A Judge
 El LLM Evaluador analiza la triada: Pregunta Usuario → Contexto Técnico (SQL/Tool) → Respuesta Agente y evalúa (Score 1-4) en base a la Fidelidad del Dato y Validación de Procedimiento.
 
-**Cambio importante:** A partir de la versión 2.0, LLM-Judge usa **escala 1-4** (antes 0-10) para mayor consistencia y reproducibilidad (~98% vs ~95%).
+**Cambio importante:** A partir de la versión 2.0, LLM-Judge usa **escala 1-4** (antes 0-10) para mayor consistencia y reproducibilidad.
 
 ##### **Evaluación Offline (Batch):**
 ```bash
@@ -256,7 +258,7 @@ evaluation/llm_j/dataset_summary.csv    # Resumen ejecutivo
    - Escalación basada en fallos críticos, scores ambiguos o discrepancias
 
 **Ventajas vs sistemas individuales:**
-- 99% reproducibilidad (vs 98% LLM-Judge, 100% Baseline)
+- Mejor reproducibilidad
 - Cobertura semántica completa (vs Baseline que solo valida numérico/estructural)
 - Menor costo (menos llamadas a LLM que LLM-Judge puro)
 

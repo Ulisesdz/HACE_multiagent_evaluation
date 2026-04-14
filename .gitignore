@@ -74,6 +74,7 @@ old_files/
 tfg_plot_output.html
 tfg_visualizacion.html
 mlruns/
-*.png
+plots_temp/
+evaluation/visualization/plots/
 
 .VSCodeCounter/

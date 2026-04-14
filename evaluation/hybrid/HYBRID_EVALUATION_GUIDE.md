@@ -6,7 +6,6 @@ Sistema de evaluación híbrida de 3 capas para sistemas multi-agente. Combina v
 
 **Ventajas:**
 - ~46% más rápido que LLM-Judge puro
-- 99% reproducibilidad (vs 98% LLM-Judge)
 - Cobertura semántica completa
 - Menor costo (menos llamadas a LLM)
 
@@ -112,9 +111,8 @@ Coordinador del pipeline:
 ### Reproducibilidad
 
 - Layer 1: 100%
-- Layer 2: ~95% (determinista dado mismo input)
-- Layer 3: ~98% (igual que LLM-Judge)
-- **Overall:** ~99%
+- Layer 2: determinista dado mismo input
+- Layer 3: igual que LLM-Judge
 
 ### Distribución de Carga
 
@@ -127,9 +125,9 @@ Coordinador del pipeline:
 
 | Método | Latencia | Reproducibilidad | Semántico | Numérico | Estructural |
 |--------|----------|------------------|-----------|----------|-------------|
-| Baseline | 0.02s | 100% | ❌ | ✅ | ✅ |
-| LLM-Judge | 3.5s | 98% | ✅ | ✅ | ✅ |
-| **MACE** | **~1.9s** | **99%** | **✅** | **✅** | **✅** |
+| Baseline | 0.02s | Total | ❌ | ✅ | ✅ |
+| LLM-Judge | 3.5s | Parcial | ✅ | ✅ | ✅ |
+| **MACE** | **~1.9s** | Equilibrio | **✅** | **✅** | **✅** |
 
 ---
 

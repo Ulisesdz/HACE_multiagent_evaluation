@@ -32,7 +32,6 @@ st.markdown(
         font-size: 1.2rem;
         font-weight: 600;
     }
-    /* Ocultar el menú de navegación por defecto de Streamlit */
     [data-testid="stSidebarNav"] {
         display: none !important;
     }
@@ -44,23 +43,48 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
 # ========== DATA LOADING ==========
+@st.cache_data(ttl=60)
+def load_data(source: str = "offline") -> pd.DataFrame:
+    """
+    Carga datos de evaluaciones.
 
+    Args:
+        source: 'offline' (dataset), 'online' (chat), o 'both' (combinados)
+    """
+    offline_path = Path("evaluation/accumulated_data/offline_metrics.csv")
+    online_path = Path("evaluation/accumulated_data/online_metrics.csv")
 
-@st.cache_data(ttl=60)  # Cache de 60 segundos para refrescar automáticamente
-def load_data():
-    """Carga datos de evaluaciones offline"""
-    csv_path = Path("evaluation/accumulated_data/offline_metrics.csv")
+    frames = []
 
-    if not csv_path.exists():
-        st.error(f"No se encontró {csv_path}")
-        st.info("Ejecuta primero: `python -m evaluation.baseline.run_eval`")
+    if source in ("offline", "both"):
+        if offline_path.exists():
+            df_off = pd.read_csv(offline_path)
+            df_off = df_off[df_off["source"] == "offline"].copy()
+            frames.append(df_off)
+        elif source == "offline":
+            st.warning(
+                "No se encontró `offline_metrics.csv`. "
+                "Ejecuta primero: `python -m evaluation.baseline.run_eval`"
+            )
+
+    if source in ("online", "both"):
+        if online_path.exists():
+            df_on = pd.read_csv(online_path)
+            df_on = df_on[df_on["source"] == "online"].copy()
+            frames.append(df_on)
+        elif source == "online":
+            st.warning(
+                "No se encontró `online_metrics.csv`. "
+                "Evalúa algunas consultas desde la interfaz del chat primero."
+            )
+
+    if not frames:
         return pd.DataFrame()
 
-    df = pd.read_csv(csv_path)
-    df_offline = df[df["source"] == "offline"].copy()
+    df = pd.concat(frames, ignore_index=True)
 
-    # Convertir columnas numéricas
     numeric_cols = [
         "baseline_score",
         "baseline_time",
@@ -73,57 +97,82 @@ def load_data():
         "mace_layer2",
         "mace_layer3",
     ]
-
     for col in numeric_cols:
-        if col in df_offline.columns:
-            df_offline[col] = pd.to_numeric(df_offline[col], errors="coerce")
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    return df_offline
+    return df
 
 
 # ========== HEADER ==========
-
 st.markdown('<h1 class="main-header">MACE Dashboard</h1>', unsafe_allow_html=True)
 st.markdown(
     "**Multi-layered Agent Consensus Evaluator** - Sistema Híbrido de Evaluación"
 )
 
-# ========== LOAD DATA ==========
-
-df = load_data()
-
-if df.empty:
-    st.stop()
-
-# ========== SIDEBAR FILTERS ==========
-
+# ========== SIDEBAR ==========
 with st.sidebar:
     st.title("Comité de Inversión")
 
-    # Botón la app principal
     st.markdown("---")
     if st.button("Volver al Asesor Financiero", use_container_width=True):
         st.switch_page("app.py")
 
     st.markdown("---")
+    st.header("Fuente de Datos")
+
+    data_source = st.radio(
+        "Mostrar evaluaciones:",
+        options=["offline", "online", "both"],
+        format_func=lambda x: {
+            "offline": "Offline (dataset)",
+            "online": "Online (chat)",
+            "both": "Ambas",
+        }[x],
+        index=0,
+        help=(
+            "**Offline:** casos del dataset de evaluación sistemática.\n\n"
+            "**Online:** evaluaciones generadas durante conversaciones en la interfaz.\n\n"
+            "**Ambas:** combina las dos fuentes."
+        ),
+    )
+
+    st.markdown("---")
     st.header("Filtros")
 
-# Filtro de dificultad
+# ========== LOAD DATA ==========
+df = load_data(source=data_source)
+
+if df.empty:
+    st.stop()
+
+# Badge de fuente activa
+source_labels = {
+    "offline": ("Dataset Offline", "#3498db"),
+    "online": ("Evaluaciones Online", "#2ecc71"),
+    "both": ("Offline + Online", "#9b59b6"),
+}
+label, color = source_labels[data_source]
+st.markdown(
+    f'<span style="background:{color};color:white;padding:4px 12px;'
+    f'border-radius:12px;font-size:0.85rem;">{label} — {len(df)} casos</span>',
+    unsafe_allow_html=True,
+)
+st.markdown("")
+
+# ========== FILTROS ==========
 difficulties = ["All"] + sorted(df["difficulty"].dropna().unique().tolist())
 selected_difficulty = st.sidebar.selectbox("Dificultad", difficulties)
 
-# Filtro de categoría
 categories = ["All"] + sorted(df["category"].dropna().unique().tolist())
 selected_category = st.sidebar.selectbox("Categoría", categories)
 
-# Filtro de método
 method_filter = st.sidebar.multiselect(
     "Métodos a mostrar",
     ["Baseline", "LLM-Judge", "MACE"],
     default=["Baseline", "LLM-Judge", "MACE"],
 )
 
-# Aplicar filtros
 df_filtered = df.copy()
 
 if selected_difficulty != "All":
@@ -133,12 +182,10 @@ if selected_category != "All":
     df_filtered = df_filtered[df_filtered["category"] == selected_category]
 
 # ========== MÉTRICAS PRINCIPALES ==========
-
 st.header("Métricas Globales")
 
 col1, col2, col3, col4 = st.columns(4)
 
-# Contar casos por método
 baseline_count = df_filtered["baseline_score"].notna().sum()
 llm_count = df_filtered["llm_judge_overall"].notna().sum()
 mace_count = df_filtered["mace_score"].notna().sum()
@@ -161,12 +208,18 @@ with col2:
 with col3:
     llm_avg = df_filtered["llm_judge_overall"].mean() / 4 if llm_count > 0 else 0
     st.metric(
-        label="LLM-Judge (Avg)", value=f"{llm_avg:.3f}", delta=f"{llm_count} casos"
+        label="LLM-Judge (Avg)",
+        value=f"{llm_avg:.3f}",
+        delta=f"{llm_count} casos",
     )
 
 with col4:
     mace_avg = df_filtered["mace_score"].mean() if mace_count > 0 else 0
-    st.metric(label="MACE (Avg)", value=f"{mace_avg:.3f}", delta=f"{mace_count} casos")
+    st.metric(
+        label="MACE (Avg)",
+        value=f"{mace_avg:.3f}",
+        delta=f"{mace_count} casos",
+    )
 
 # ========== TABS ==========
 tab1, tab2, tab3, tab4, tab5 = st.tabs(
@@ -183,7 +236,6 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(
 with tab1:
     st.subheader("Comparación de Scores (3 Métodos)")
 
-    # Preparar datos para gráfica
     comparison_data = []
 
     if "Baseline" in method_filter and baseline_count > 0:
@@ -216,7 +268,6 @@ with tab1:
         col1, col2 = st.columns(2)
 
         with col1:
-            # Histogram
             fig_hist = px.histogram(
                 df_comparison,
                 x="Score",
@@ -232,10 +283,9 @@ with tab1:
                 },
             )
             fig_hist.update_layout(height=400)
-            st.plotly_chart(fig_hist, width="stretch")
+            st.plotly_chart(fig_hist, use_container_width=True)
 
         with col2:
-            # Box plot
             fig_box = px.box(
                 df_comparison,
                 x="Método",
@@ -249,7 +299,7 @@ with tab1:
                 },
             )
             fig_box.update_layout(height=400, showlegend=False)
-            st.plotly_chart(fig_box, width="stretch")
+            st.plotly_chart(fig_box, use_container_width=True)
     else:
         st.warning("No hay datos disponibles con los filtros actuales.")
 
@@ -262,7 +312,6 @@ with tab2:
     else:
         df_mace = df_filtered[df_filtered["mace_score"].notna()].copy()
 
-        # Métricas MACE
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
@@ -295,21 +344,16 @@ with tab2:
                 delta=f"{excellent} casos",
             )
 
-        # Gráficas de capas
         col1, col2 = st.columns(2)
 
         with col1:
-            # Distribución de scores por capa
             fig_layers = go.Figure()
-
             fig_layers.add_trace(
                 go.Box(y=df_mace["mace_layer1"], name="Layer 1", marker_color="#3498db")
             )
-
             fig_layers.add_trace(
                 go.Box(y=df_mace["mace_layer2"], name="Layer 2", marker_color="#e74c3c")
             )
-
             if df_mace["mace_layer3"].notna().any():
                 fig_layers.add_trace(
                     go.Box(
@@ -318,19 +362,15 @@ with tab2:
                         marker_color="#f39c12",
                     )
                 )
-
             fig_layers.update_layout(
                 title="Distribución de Scores por Capa",
                 yaxis_title="Score (0-1)",
                 height=400,
             )
-
-            st.plotly_chart(fig_layers, width="stretch")
+            st.plotly_chart(fig_layers, use_container_width=True)
 
         with col2:
-            # Uso de Layer 3
             layer3_counts = df_mace["mace_layer3_used"].value_counts()
-
             fig_pie = go.Figure(
                 data=[
                     go.Pie(
@@ -341,16 +381,12 @@ with tab2:
                     )
                 ]
             )
-
             fig_pie.update_layout(title="Distribución de Uso de Layer 3", height=400)
+            st.plotly_chart(fig_pie, use_container_width=True)
 
-            st.plotly_chart(fig_pie, width="stretch")
-
-        # Quality labels
         st.subheader("Distribución de Calidad")
 
         quality_counts = df_mace["mace_quality"].value_counts()
-
         fig_quality = px.bar(
             x=quality_counts.index,
             y=quality_counts.values,
@@ -364,27 +400,15 @@ with tab2:
                 "Crítico": "#e74c3c",
             },
         )
-
         fig_quality.update_layout(showlegend=False)
-        st.plotly_chart(fig_quality, width="stretch")
+        st.plotly_chart(fig_quality, use_container_width=True)
 
-        # 🆕 SECCIÓN: ANÁLISIS DE EMBEDDINGS
         st.markdown("---")
-        st.subheader("🧠 Análisis de Embeddings (Layer 2)")
-
-        # Verificar si hay datos de similitud en el CSV
-        similarity_cols = [
-            "mace_layer2_task_fidelity",
-            "mace_layer2_agent_fidelity_avg",
-        ]
-
-        # Como el CSV actual no tiene columnas de similitud detallada,
-        # vamos a usar los datos que SÍ tenemos: layer2_score
+        st.subheader("Análisis de Embeddings (Layer 2)")
 
         if "mace_layer2" in df_mace.columns:
-            st.markdown("#### 📊 Distribución de Scores Semánticos")
+            st.markdown("#### Distribución de Scores Semánticos")
 
-            # Histograma de Layer 2 scores
             fig_sem_dist = px.histogram(
                 df_mace,
                 x="mace_layer2",
@@ -393,39 +417,32 @@ with tab2:
                 labels={"mace_layer2": "Score Semántico"},
                 color_discrete_sequence=["#e74c3c"],
             )
-
             fig_sem_dist.add_vline(
                 x=df_mace["mace_layer2"].mean(),
                 line_dash="dash",
                 line_color="red",
                 annotation_text=f"Media: {df_mace['mace_layer2'].mean():.3f}",
             )
-
             fig_sem_dist.update_layout(height=400)
             st.plotly_chart(fig_sem_dist, use_container_width=True)
 
-            # Estadísticas
             col_stat1, col_stat2, col_stat3 = st.columns(3)
-
             with col_stat1:
                 st.metric("Media", f"{df_mace['mace_layer2'].mean():.3f}")
-
             with col_stat2:
                 st.metric("Desv. Estándar", f"{df_mace['mace_layer2'].std():.3f}")
-
             with col_stat3:
-                threshold = 0.7  # Threshold típico
+                threshold = 0.7
                 below_threshold = (df_mace["mace_layer2"] < threshold).sum()
                 pct_below = (below_threshold / len(df_mace)) * 100
                 st.metric(
                     f"Casos < {threshold}",
                     f"{pct_below:.1f}%",
-                    help=f"Casos que escalaron a Layer 3 por baja similitud",
+                    help="Casos que escalaron a Layer 3 por baja similitud",
                 )
 
-        # Correlación Layer 2 vs Layer 3
         if df_mace["mace_layer3"].notna().any():
-            st.markdown("#### 🔗 Correlación Layer 2 (Embeddings) vs Layer 3 (LLM)")
+            st.markdown("#### Correlación Layer 2 (Embeddings) vs Layer 3 (LLM)")
 
             df_with_l3 = df_mace[df_mace["mace_layer3"].notna()].copy()
 
@@ -441,7 +458,6 @@ with tab2:
                 trendline="ols",
                 color_discrete_sequence=["#9b59b6"],
             )
-
             fig_corr.add_shape(
                 type="line",
                 x0=0,
@@ -449,38 +465,31 @@ with tab2:
                 x1=1,
                 y1=1,
                 line=dict(color="gray", dash="dash"),
-                name="y=x",
             )
-
             fig_corr.update_layout(height=400)
             st.plotly_chart(fig_corr, use_container_width=True)
 
-            # Calcular correlación
             correlation = df_with_l3[["mace_layer2", "mace_layer3"]].corr().iloc[0, 1]
-
             if correlation > 0.7:
                 st.success(
-                    f"✅ Alta correlación ({correlation:.3f}): Los embeddings predicen bien el score LLM"
+                    f"Alta correlación ({correlation:.3f}): Los embeddings predicen bien el score LLM"
                 )
             elif correlation > 0.4:
                 st.info(
-                    f"ℹ️ Correlación moderada ({correlation:.3f}): Algunas discrepancias entre Layer 2 y 3"
+                    f"Correlación moderada ({correlation:.3f}): Algunas discrepancias entre Layer 2 y 3"
                 )
             else:
                 st.warning(
-                    f"⚠️ Baja correlación ({correlation:.3f}): Embeddings y LLM discrepan frecuentemente"
+                    f"Baja correlación ({correlation:.3f}): Embeddings y LLM discrepan frecuentemente"
                 )
 
-        # Heatmap de escalación
-        st.markdown("#### 🔺 Patrón de Escalación a Layer 3")
+        st.markdown("#### Patrón de Escalación a Layer 3")
 
-        # Crear bins para Layer 2
         df_mace["layer2_bin"] = pd.cut(
             df_mace["mace_layer2"],
             bins=[0, 0.5, 0.6, 0.7, 0.8, 1.0],
             labels=["0.0-0.5", "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-1.0"],
         )
-
         escalation_pivot = df_mace.groupby("layer2_bin")["mace_layer3_used"].agg(
             ["sum", "count"]
         )
@@ -500,32 +509,27 @@ with tab2:
             color="escalation_rate",
             color_continuous_scale="Reds",
         )
-
         fig_escalation.update_layout(height=400)
         st.plotly_chart(fig_escalation, use_container_width=True)
-
         st.caption(
-            "💡 **Insight:** Scores bajos en Layer 2 deberían correlacionar con mayor escalación a Layer 3"
+            "Scores bajos en Layer 2 deberían correlacionar con mayor escalación a Layer 3"
         )
 
 # ========== TAB 3: ANÁLISIS DE TIEMPOS ==========
 with tab3:
     st.subheader("Comparación de Tiempos de Evaluación")
 
-    # Calcular tiempos promedio
     times = []
-
     if baseline_count > 0:
-        baseline_time = df_filtered["baseline_time"].mean()
-        times.append({"Método": "Baseline", "Tiempo (s)": baseline_time})
-
+        times.append(
+            {"Método": "Baseline", "Tiempo (s)": df_filtered["baseline_time"].mean()}
+        )
     if llm_count > 0:
-        llm_time = df_filtered["llm_judge_time"].mean()
-        times.append({"Método": "LLM-Judge", "Tiempo (s)": llm_time})
-
+        times.append(
+            {"Método": "LLM-Judge", "Tiempo (s)": df_filtered["llm_judge_time"].mean()}
+        )
     if mace_count > 0:
-        mace_time = df_filtered["mace_time"].mean()
-        times.append({"Método": "MACE", "Tiempo (s)": mace_time})
+        times.append({"Método": "MACE", "Tiempo (s)": df_filtered["mace_time"].mean()})
 
     if times:
         df_times = pd.DataFrame(times)
@@ -545,114 +549,116 @@ with tab3:
                     "MACE": "#9b59b6",
                 },
             )
-
             fig_time.update_layout(showlegend=False)
-            st.plotly_chart(fig_time, width="stretch")
+            st.plotly_chart(fig_time, use_container_width=True)
 
         with col2:
-            # Speedup calculation
-            if len(times) >= 2:
-                baseline_t = next(
-                    (t["Tiempo (s)"] for t in times if t["Método"] == "Baseline"), None
-                )
-                llm_t = next(
-                    (t["Tiempo (s)"] for t in times if t["Método"] == "LLM-Judge"), None
-                )
-                mace_t = next(
-                    (t["Tiempo (s)"] for t in times if t["Método"] == "MACE"), None
-                )
+            llm_t = next(
+                (t["Tiempo (s)"] for t in times if t["Método"] == "LLM-Judge"), None
+            )
+            mace_t = next(
+                (t["Tiempo (s)"] for t in times if t["Método"] == "MACE"), None
+            )
+            base_t = next(
+                (t["Tiempo (s)"] for t in times if t["Método"] == "Baseline"), None
+            )
 
-                st.markdown("### Speedup Comparativo")
+            st.markdown("### Comparación LLM-Judge vs MACE")
+            st.caption(
+                "La comparación relativa se hace solo entre LLM-Judge y MACE. "
+                "Baseline (~0.001s) tiene una diferencia de magnitud tan grande "
+                "que los multiplicadores perderían sentido informativo."
+            )
 
-                if mace_t and llm_t:
-                    speedup_llm = ((llm_t - mace_t) / llm_t) * 100
-                    st.success(
-                        f"✅ MACE es **{speedup_llm:.1f}%** más rápido que LLM-Judge"
-                    )
-
-                if mace_t and baseline_t:
-                    slowdown = ((mace_t - baseline_t) / baseline_t) * 100
-                    if slowdown > 0:
-                        if slowdown > 100:
-                            multiplier = mace_t / baseline_t
-                            st.info(
-                                f"ℹ️ MACE es **×{multiplier:.0f} más lento** que Baseline (esperado: Baseline es puramente determinista)"
-                            )
-                        else:
-                            st.info(
-                                f"ℹ️ MACE es **{slowdown:.1f}% más lento** que Baseline"
-                            )
+            if llm_t and mace_t:
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    st.metric("LLM-Judge", f"{llm_t:.2f}s")
+                with col_b:
+                    if mace_t < llm_t:
+                        ratio = llm_t / mace_t
+                        delta_value = -1.0  # negativo → verde con inverse
+                        caption = f"×{ratio:.1f} más rápido"
                     else:
-                        st.success(
-                            f"✅ MACE es **{abs(slowdown):.1f}% más rápido** que Baseline"
-                        )
+                        ratio = mace_t / llm_t
+                        delta_value = 1.0  # positivo → rojo con inverse
+                        caption = f"×{ratio:.1f} más lento"
 
-        # Comparación Layer 3 vs No Layer 3
-        if mace_count > 0:
-            st.markdown("---")
-            st.subheader("Impacto de Layer 3 en Latencia")
+                    st.metric(
+                        label="MACE",
+                        value=f"{mace_t:.2f}s",
+                        delta=delta_value,
+                        delta_color="inverse",
+                    )
+                    st.caption(caption)
 
-            df_mace = df_filtered[df_filtered["mace_score"].notna()].copy()
-
-            no_layer3 = df_mace[df_mace["mace_layer3_used"] == 0]["mace_time"]
-            with_layer3 = df_mace[df_mace["mace_layer3_used"] == 1]["mace_time"]
-
-            if len(no_layer3) > 0 and len(with_layer3) > 0:
-                fig_layer3_time = go.Figure()
-
-                fig_layer3_time.add_trace(
-                    go.Box(y=no_layer3, name="Sin Layer 3", marker_color="#2ecc71")
+            if base_t:
+                st.markdown("---")
+                st.markdown("**Baseline (referencia):**")
+                st.metric(
+                    label="Baseline",
+                    value=f"{base_t:.4f}s",
+                    help="Puramente determinista. Se muestra para contexto, no como comparación directa.",
                 )
 
-                fig_layer3_time.add_trace(
-                    go.Box(y=with_layer3, name="Con Layer 3", marker_color="#e74c3c")
-                )
+    if mace_count > 0:
+        st.markdown("---")
+        st.subheader("Impacto de Layer 3 en Latencia MACE")
 
-                fig_layer3_time.update_layout(
-                    title="Comparación de Tiempos: Con vs Sin Layer 3",
-                    yaxis_title="Tiempo (segundos)",
-                    height=400,
-                )
+        df_mace_t = df_filtered[df_filtered["mace_score"].notna()].copy()
+        no_layer3 = df_mace_t[df_mace_t["mace_layer3_used"] == 0]["mace_time"]
+        with_layer3 = df_mace_t[df_mace_t["mace_layer3_used"] == 1]["mace_time"]
 
-                st.plotly_chart(fig_layer3_time, width="stretch")
+        if len(no_layer3) > 0 and len(with_layer3) > 0:
+            fig_layer3_time = go.Figure()
+            fig_layer3_time.add_trace(
+                go.Box(y=no_layer3, name="Sin Layer 3", marker_color="#2ecc71")
+            )
+            fig_layer3_time.add_trace(
+                go.Box(y=with_layer3, name="Con Layer 3", marker_color="#e74c3c")
+            )
+            fig_layer3_time.update_layout(
+                title="Tiempos MACE: Con vs Sin Layer 3",
+                yaxis_title="Tiempo (segundos)",
+                height=400,
+            )
+            st.plotly_chart(fig_layer3_time, use_container_width=True)
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.metric("⚡ Promedio Sin Layer 3", f"{no_layer3.mean():.3f}s")
-                with col2:
-                    st.metric("🔺 Promedio Con Layer 3", f"{with_layer3.mean():.3f}s")
+            c1, c2 = st.columns(2)
+            with c1:
+                st.metric("Sin Layer 3 (promedio)", f"{no_layer3.mean():.3f}s")
+            with c2:
+                st.metric("Con Layer 3 (promedio)", f"{with_layer3.mean():.1f}s")
 
 # ========== TAB 4: ANÁLISIS POR DIFICULTAD ==========
 with tab4:
     st.subheader("Desempeño por Nivel de Dificultad")
 
     difficulty_order = ["Easy", "Medium", "Hard", "Very Hard"]
-
-    # Preparar datos
     difficulty_data = []
 
     for diff in difficulty_order:
         df_diff = df_filtered[df_filtered["difficulty"] == diff]
 
         if "Baseline" in method_filter:
-            baseline_avg = df_diff["baseline_score"].mean()
-            if not pd.isna(baseline_avg):
+            v = df_diff["baseline_score"].mean()
+            if not pd.isna(v):
                 difficulty_data.append(
-                    {"Dificultad": diff, "Método": "Baseline", "Score": baseline_avg}
+                    {"Dificultad": diff, "Método": "Baseline", "Score": v}
                 )
 
         if "LLM-Judge" in method_filter:
-            llm_avg = df_diff["llm_judge_overall"].mean() / 4
-            if not pd.isna(llm_avg):
+            v = df_diff["llm_judge_overall"].mean() / 4
+            if not pd.isna(v):
                 difficulty_data.append(
-                    {"Dificultad": diff, "Método": "LLM-Judge", "Score": llm_avg}
+                    {"Dificultad": diff, "Método": "LLM-Judge", "Score": v}
                 )
 
         if "MACE" in method_filter:
-            mace_avg = df_diff["mace_score"].mean()
-            if not pd.isna(mace_avg):
+            v = df_diff["mace_score"].mean()
+            if not pd.isna(v):
                 difficulty_data.append(
-                    {"Dificultad": diff, "Método": "MACE", "Score": mace_avg}
+                    {"Dificultad": diff, "Método": "MACE", "Score": v}
                 )
 
     if difficulty_data:
@@ -672,17 +678,13 @@ with tab4:
             },
             category_orders={"Dificultad": difficulty_order},
         )
-
         fig_difficulty.update_layout(height=500)
-        st.plotly_chart(fig_difficulty, width="stretch")
+        st.plotly_chart(fig_difficulty, use_container_width=True)
 
-        # Tabla de estadísticas
         st.subheader("Tabla de Estadísticas")
-
         pivot_table = df_difficulty.pivot(
             index="Dificultad", columns="Método", values="Score"
         ).reindex(difficulty_order)
-
         st.dataframe(
             pivot_table.style.format("{:.3f}").background_gradient(
                 cmap="RdYlGn", axis=None
@@ -693,7 +695,6 @@ with tab4:
 with tab5:
     st.subheader("Explorador de Datos Raw")
 
-    # Selección de columnas
     all_columns = df_filtered.columns.tolist()
 
     default_columns = [
@@ -708,7 +709,6 @@ with tab5:
         "mace_confidence",
         "mace_layer3_used",
     ]
-
     available_defaults = [col for col in default_columns if col in all_columns]
 
     selected_columns = st.multiselect(
@@ -716,9 +716,10 @@ with tab5:
     )
 
     if selected_columns:
-        st.dataframe(df_filtered[selected_columns], width="stretch", height=400)
+        st.dataframe(
+            df_filtered[selected_columns], use_container_width=True, height=400
+        )
 
-        # Download button
         csv = df_filtered[selected_columns].to_csv(index=False)
         st.download_button(
             label="Descargar CSV",

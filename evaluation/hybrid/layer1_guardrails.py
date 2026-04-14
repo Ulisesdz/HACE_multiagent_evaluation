@@ -142,13 +142,13 @@ class GuardrailsValidator:
     # NUMERIC VALIDATORS
     def validate_numeric_ranges(self, trace_data: Dict) -> Dict:
         """
-        Validación: ¿Todas las decisiones de routing son válidas?
+        Validación: ¿Los valores numéricos en las respuestas de los agentes son plausibles?
 
         Args:
             trace_data: Trazas del sistema
 
         Returns:
-            Dict con 'pass' (bool), 'invalid_routings' (list)
+            Dict con 'pass' (bool), 'anomalies' (list)
         """
         agent_executions = trace_data.get("agent_executions", [])
 
@@ -162,29 +162,34 @@ class GuardrailsValidator:
             numbers = self._extract_numbers(response)
 
             if agent == "Technical_Analyst":
-                # Validar precios
                 for num in numbers:
-                    if num > 200_000:  # BTC no puede costar >$200K (hoy)
+                    # Ignorar ceros y valores < 0.01
+                    # Son coordenadas, timestamps, etc.
+                    if num == 0.0 or abs(num) < 0.01:
+                        continue
+                    if num > 200_000:
                         anomalies.append(
                             {
                                 "agent": agent,
                                 "value": num,
-                                "reason": "Price exceeds maximum plausible value",
+                                "reason": "Price exceeds maximum plausible value ($200k)",
                             }
                         )
-                    elif num < 0.000001:  # Ninguna crypto vale menos de esto
+                    elif num < 0:
+                        # Solo marcar negativos, no los cercanos a cero
                         anomalies.append(
                             {
                                 "agent": agent,
                                 "value": num,
-                                "reason": "Price below minimum plausible value",
+                                "reason": "Price cannot be negative",
                             }
                         )
 
             elif agent == "Risk_Officer":
-                # Validar volatilidad (%)
                 for num in numbers:
-                    if num > 100:  # Volatilidad no puede ser >100%
+                    if num == 0.0:
+                        continue  # 0% de volatilidad es raro pero no imposible como output intermedio
+                    if num > 100:
                         anomalies.append(
                             {
                                 "agent": agent,

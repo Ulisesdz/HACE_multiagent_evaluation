@@ -112,7 +112,6 @@ Evaluaciones batch sobre el dataset de pruebas (45 casos).
    - Escalación basada en fallos críticos, scores ambiguos o discrepancias
 
 **Ventajas vs sistemas individuales:**
-- 99% reproducibilidad (vs 98% LLM-Judge, 100% Baseline)
 - Cobertura semántica completa (vs Baseline que solo valida numérico/estructural)
 - Menor costo (menos llamadas a LLM que LLM-Judge puro)
 

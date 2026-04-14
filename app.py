@@ -369,7 +369,7 @@ def render_baseline_panel(baseline_eval):
 
 def render_hybrid_panel(hybrid_eval):
     """
-    Renderiza el panel de MACE (Hybrid Evaluation) con DETALLES COMPLETOS
+    Renderiza el panel de MACE (Hybrid Evaluation)
 
     Args:
         hybrid_eval: Dict resultado de HybridEvaluator.evaluate()
@@ -897,16 +897,12 @@ def evaluate_with_hybrid(trace_data: dict) -> dict:
 
 def render_comparison_table(baseline_eval=None, llm_judge_data=None, hybrid_eval=None):
     """
-    Renderiza tabla comparativa dinámica de 2 o 3 métodos
-
-    Args:
-        baseline_eval: Resultado de evaluate_baseline (opcional)
-        llm_judge_data: Dict con LLM-Judge (opcional)
-        hybrid_eval: Dict con MACE (opcional)
+    Renderiza tabla comparativa dinámica.
+    - Muestra los 3 métodos en la tabla de scores.
+    - La comparación relativa de tiempos es solo LLM-Judge vs MACE
     """
     st.markdown("### Comparativa de Sistemas de Auditoría")
 
-    # Contar evaluadores activos
     active_count = sum(
         1 for x in [baseline_eval, llm_judge_data, hybrid_eval] if x is not None
     )
@@ -916,19 +912,17 @@ def render_comparison_table(baseline_eval=None, llm_judge_data=None, hybrid_eval
         )
         return
 
+    # Tabla de scores
     data = {"Métrica": ["Score Global (0-1)", "Tiempo", "Metodología"]}
 
-    # 1. Añadir Baseline
     if baseline_eval:
         data["Baseline"] = [
             f"{float(baseline_eval.baseline_score):.3f}",
-            f"{float(baseline_eval.evaluation_time):.3f}s",
+            f"{float(baseline_eval.evaluation_time):.4f}s",
             "Determinista",
         ]
 
-    # 2. Añadir LLM-Judge
     if llm_judge_data:
-        # Normalizar score de 1-4 a 0-1
         llm_score = float(llm_judge_data["comprehensive_eval"].overall_score) / 4
         llm_time = float(llm_judge_data.get("elapsed_time", 3.5))
         data["LLM-Judge"] = [
@@ -937,46 +931,83 @@ def render_comparison_table(baseline_eval=None, llm_judge_data=None, hybrid_eval
             "Cualitativo (LLM)",
         ]
 
-    # 3. Añadir MACE
     if hybrid_eval:
         mace_score = float(hybrid_eval["final_score"])
         mace_time = float(hybrid_eval["evaluation_time"])
         layers_used = "2 capas" if not hybrid_eval["layer3_used"] else "3 capas"
-
         data["MACE"] = [
             f"{mace_score:.3f}",
             f"{mace_time:.3f}s",
             f"Híbrido ({layers_used})",
         ]
 
-    df_comparison = pd.DataFrame(data)
-    st.dataframe(df_comparison, width="stretch", hide_index=True)
+    st.dataframe(pd.DataFrame(data), use_container_width=True, hide_index=True)
 
-    # Gráfico de tiempos comparativos
-    if active_count == 3:
-        st.markdown("####Comparación de Tiempos")
+    # Comparación de tiempos
+    show_time_comparison = llm_judge_data is not None or hybrid_eval is not None
 
-        col1, col2, col3 = st.columns(3)
+    if not show_time_comparison:
+        return
 
-        baseline_time = float(baseline_eval.evaluation_time)
-        llm_time = float(llm_judge_data.get("elapsed_time", 3.5))
-        mace_time = float(hybrid_eval["evaluation_time"])
+    st.markdown("#### Comparación de Tiempos")
 
-        with col1:
-            st.metric("Baseline", f"{baseline_time:.3f}s", delta="Más rápido")
+    llm_time = (
+        float(llm_judge_data.get("elapsed_time", 3.5)) if llm_judge_data else None
+    )
+    mace_time = float(hybrid_eval["evaluation_time"]) if hybrid_eval else None
+    base_time = float(baseline_eval.evaluation_time) if baseline_eval else None
 
-        with col2:
-            delta_llm = f"+{((llm_time - baseline_time) / baseline_time * 100):.0f}%"
-            st.metric("LLM-Judge", f"{llm_time:.2f}s", delta=delta_llm)
+    # Cuántas columnas mostrar
+    cols = st.columns(3)
 
-        with col3:
+    # Columna 0: Baseline (siempre informativo, sin comparación relativa)
+    with cols[0]:
+        if base_time is not None:
+            st.metric(
+                label="Baseline",
+                value=f"{base_time:.4f}s",
+                help="Determinista. No se compara en escala relativa porque la diferencia "
+                "de magnitud con LLM-Judge y MACE haría los multiplicadores poco informativos.",
+            )
+        else:
+            st.empty()
+
+    # Columna 1: LLM-Judge
+    with cols[1]:
+        if llm_time is not None:
+            st.metric(label="LLM-Judge", value=f"{llm_time:.2f}s")
+        else:
+            st.empty()
+
+    # Columna 2: MACE vs LLM-Judge (solo si ambos están disponibles)
+    with cols[2]:
+        if mace_time is not None and llm_time is not None:
+
+            ratio = llm_time / mace_time if mace_time > 0 else 1.0
+
             if mace_time < llm_time:
-                speedup = ((llm_time - mace_time) / llm_time) * 100
-                delta_mace = f"-{speedup:.0f}% vs LLM-J"
+                delta_value = -1.0  # número negativo → verde con inverse
+                caption = f"×{ratio:.1f} más rápido que LLM-Judge"
             else:
-                delta_mace = f"+{((mace_time - llm_time) / llm_time * 100):.0f}%"
+                delta_value = 1.0  # número positivo → rojo con inverse
+                caption = f"×{ratio:.1f} más lento que LLM-Judge"
 
-            st.metric("MACE", f"{mace_time:.3f}s", delta=delta_mace)
+            st.metric(
+                label="MACE",
+                value=f"{mace_time:.2f}s",
+                delta=delta_value,
+                delta_color="inverse",
+            )
+            st.caption(caption)
+
+            if hybrid_eval and hybrid_eval.get("layer3_used"):
+                st.caption("Layer 3 activado en esta evaluación")
+            elif hybrid_eval:
+                st.caption("Resuelto con Layers 1-2 únicamente")
+
+        elif mace_time is not None:
+            # Solo MACE activo (sin LLM-Judge para comparar)
+            st.metric(label="MACE", value=f"{mace_time:.2f}s")
 
 
 # --- SIDEBAR (Panel de Control) ---
@@ -1081,6 +1112,8 @@ with st.sidebar:
             graph_image = app.get_graph().draw_mermaid_png()
             # graph_image = app.get_graph(xray=1).draw_mermaid_png() # Para ver lógica de cada agente
             st.image(graph_image, caption="Arquitectura Jerárquica")
+            with open("grafo_arquitectura.png", "wb") as f:
+                f.write(graph_image)
         except Exception as e:
             st.error(f"No se pudo generar el grafo: {e}")
 
