@@ -15,25 +15,25 @@ OUTPUT_DIR = "evaluation/visualization/plots/"
 
 def load_hybrid_data():
     """
-    Carga datos de MACE desde accumulated_data o CSV legacy
+    Carga datos de HACE desde accumulated_data o CSV legacy
     """
     accumulated_path = Path(ACCUMULATED_DATA)
 
     if accumulated_path.exists():
-        print(f"Cargando MACE desde: {ACCUMULATED_DATA}")
+        print(f"Cargando HACE desde: {ACCUMULATED_DATA}")
         df = pd.read_csv(ACCUMULATED_DATA)
 
-        # Filtrar solo offline y con MACE data
-        df = df[(df["source"] == "offline") & (df["mace_score"].notna())].copy()
+        # Filtrar solo offline y con HACE data
+        df = df[(df["source"] == "offline") & (df["HACE_score"].notna())].copy()
 
         # Convertir a numérico por si acaso
         numeric_cols = [
-            "mace_score",
-            "mace_layer1",
-            "mace_layer2",
-            "mace_layer3",
-            "mace_layer3_used",
-            "mace_time",
+            "HACE_score",
+            "HACE_layer1",
+            "HACE_layer2",
+            "HACE_layer3",
+            "HACE_layer3_used",
+            "HACE_time",
         ]
         for col in numeric_cols:
             if col in df.columns:
@@ -60,28 +60,28 @@ def plot_hybrid_layers_distribution():
     df, _ = load_hybrid_data()
 
     if df.empty:
-        print("No hay datos MACE, omitiendo gráfica.")
+        print("No hay datos HACE, omitiendo gráfica.")
         return
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     fig.suptitle(
-        "MACE - Distribución de Scores por Capa", fontsize=16, fontweight="bold"
+        "HACE - Distribución de Scores por Capa", fontsize=16, fontweight="bold"
     )
 
     # Layer 1
     axes[0, 0].hist(
-        df["mace_layer1"].dropna(),
+        df["HACE_layer1"].dropna(),
         bins=20,
         edgecolor="black",
         alpha=0.7,
         color="#3498db",
     )
     axes[0, 0].axvline(
-        df["mace_layer1"].mean(),
+        df["HACE_layer1"].mean(),
         color="red",
         linestyle="--",
         linewidth=2,
-        label=f'Media: {df["mace_layer1"].mean():.3f}',
+        label=f'Media: {df["HACE_layer1"].mean():.3f}',
     )
     axes[0, 0].set_title("Layer 1: Guardrails (Deterministic)")
     axes[0, 0].set_xlabel("Score (0-1)")
@@ -91,18 +91,18 @@ def plot_hybrid_layers_distribution():
 
     # Layer 2
     axes[0, 1].hist(
-        df["mace_layer2"].dropna(),
+        df["HACE_layer2"].dropna(),
         bins=20,
         edgecolor="black",
         alpha=0.7,
         color="#e74c3c",
     )
     axes[0, 1].axvline(
-        df["mace_layer2"].mean(),
+        df["HACE_layer2"].mean(),
         color="red",
         linestyle="--",
         linewidth=2,
-        label=f'Media: {df["mace_layer2"].mean():.3f}',
+        label=f'Media: {df["HACE_layer2"].mean():.3f}',
     )
     axes[0, 1].set_title("Layer 2: Semantic (ML)")
     axes[0, 1].set_xlabel("Score (0-1)")
@@ -111,21 +111,21 @@ def plot_hybrid_layers_distribution():
     axes[0, 1].grid(True, alpha=0.3)
 
     # Layer 3 (solo casos donde se usó)
-    df_layer3 = df[df["mace_layer3"].notna()]
+    df_layer3 = df[df["HACE_layer3"].notna()]
     if len(df_layer3) > 0:
         axes[1, 0].hist(
-            df_layer3["mace_layer3"],
+            df_layer3["HACE_layer3"],
             bins=15,
             edgecolor="black",
             alpha=0.7,
             color="#f39c12",
         )
         axes[1, 0].axvline(
-            df_layer3["mace_layer3"].mean(),
+            df_layer3["HACE_layer3"].mean(),
             color="red",
             linestyle="--",
             linewidth=2,
-            label=f'Media: {df_layer3["mace_layer3"].mean():.3f}',
+            label=f'Media: {df_layer3["HACE_layer3"].mean():.3f}',
         )
         axes[1, 0].set_title(
             f"Layer 3: LLM-Judge Selectivo (usado en {len(df_layer3)} casos)"
@@ -147,18 +147,18 @@ def plot_hybrid_layers_distribution():
 
     # Score Final
     axes[1, 1].hist(
-        df["mace_score"].dropna(),
+        df["HACE_score"].dropna(),
         bins=20,
         edgecolor="black",
         alpha=0.7,
         color="#9b59b6",
     )
     axes[1, 1].axvline(
-        df["mace_score"].mean(),
+        df["HACE_score"].mean(),
         color="red",
         linestyle="--",
         linewidth=2,
-        label=f'Media: {df["mace_score"].mean():.3f}',
+        label=f'Media: {df["HACE_score"].mean():.3f}',
     )
     axes[1, 1].set_title("Score Final (Weighted Fusion)")
     axes[1, 1].set_xlabel("Score (0-1)")
@@ -179,13 +179,13 @@ def plot_layer3_usage():
     df, _ = load_hybrid_data()
 
     if df.empty:
-        print("No hay datos MACE, omitiendo gráfica.")
+        print("No hay datos HACE, omitiendo gráfica.")
         return
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
     # Pie chart de uso de Layer 3
-    layer3_counts = df["mace_layer3_used"].value_counts()
+    layer3_counts = df["HACE_layer3_used"].value_counts()
     labels = ["No Escalado (Layers 1-2)", "Escalado a Layer 3"]
     colors = ["#2ecc71", "#e74c3c"]
 
@@ -200,13 +200,13 @@ def plot_layer3_usage():
     axes[0].set_title("Distribución de Uso de Layer 3")
 
     # Comparación de tiempos
-    df_no_layer3 = df[df["mace_layer3_used"] == 0]
-    df_with_layer3 = df[df["mace_layer3_used"] == 1]
+    df_no_layer3 = df[df["HACE_layer3_used"] == 0]
+    df_with_layer3 = df[df["HACE_layer3_used"] == 1]
 
     if len(df_no_layer3) > 0 and len(df_with_layer3) > 0:
         data_to_plot = [
-            df_no_layer3["mace_time"].dropna(),
-            df_with_layer3["mace_time"].dropna(),
+            df_no_layer3["HACE_time"].dropna(),
+            df_with_layer3["HACE_time"].dropna(),
         ]
         labels_box = ["Sin Layer 3\n(rápido)", "Con Layer 3\n(profundo)"]
 
@@ -222,8 +222,8 @@ def plot_layer3_usage():
         axes[1].grid(True, axis="y", alpha=0.3)
 
         # Añadir promedios
-        avg_no_l3 = df_no_layer3["mace_time"].mean()
-        avg_with_l3 = df_with_layer3["mace_time"].mean()
+        avg_no_l3 = df_no_layer3["HACE_time"].mean()
+        avg_with_l3 = df_with_layer3["HACE_time"].mean()
         axes[1].text(
             0.5,
             0.95,
@@ -251,7 +251,7 @@ def plot_layer3_usage():
 
 
 def plot_hybrid_by_difficulty():
-    """Scores MACE por nivel de dificultad"""
+    """Scores HACE por nivel de dificultad"""
     df, _ = load_hybrid_data()
 
     if df.empty or "difficulty" not in df.columns:
@@ -264,7 +264,7 @@ def plot_hybrid_by_difficulty():
 
     # Agrupar por dificultad
     df_grouped = df.groupby("difficulty").agg(
-        {"mace_score": ["mean", "std", "count"], "mace_layer3_used": "sum"}
+        {"HACE_score": ["mean", "std", "count"], "HACE_layer3_used": "sum"}
     )
 
     df_grouped = df_grouped.reindex(difficulty_order)
@@ -273,8 +273,8 @@ def plot_hybrid_by_difficulty():
     x = np.arange(len(difficulty_order))
     bars = ax.bar(
         x,
-        df_grouped[("mace_score", "mean")],
-        yerr=df_grouped[("mace_score", "std")],
+        df_grouped[("HACE_score", "mean")],
+        yerr=df_grouped[("HACE_score", "std")],
         capsize=5,
         alpha=0.7,
         color="#9b59b6",
@@ -284,8 +284,8 @@ def plot_hybrid_by_difficulty():
     # Añadir n y % Layer 3
     for i, (bar, diff) in enumerate(zip(bars, difficulty_order)):
         if diff in df_grouped.index:
-            count = int(df_grouped.loc[diff, ("mace_score", "count")])
-            layer3_count = int(df_grouped.loc[diff, ("mace_layer3_used", "sum")])
+            count = int(df_grouped.loc[diff, ("HACE_score", "count")])
+            layer3_count = int(df_grouped.loc[diff, ("HACE_layer3_used", "sum")])
             layer3_pct = (layer3_count / count * 100) if count > 0 else 0
 
             height = bar.get_height()
@@ -299,7 +299,7 @@ def plot_hybrid_by_difficulty():
             )
 
     ax.set_title(
-        "MACE Score por Dificultad (con % de uso de Layer 3)",
+        "HACE Score por Dificultad (con % de uso de Layer 3)",
         fontsize=14,
         fontweight="bold",
     )
@@ -320,14 +320,14 @@ def plot_quality_confidence_distribution():
     df, _ = load_hybrid_data()
 
     if df.empty:
-        print("No hay datos MACE, omitiendo gráfica.")
+        print("No hay datos HACE, omitiendo gráfica.")
         return
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
     # Quality labels
-    if "mace_quality" in df.columns:
-        quality_counts = df["mace_quality"].value_counts()
+    if "HACE_quality" in df.columns:
+        quality_counts = df["HACE_quality"].value_counts()
         colors_quality = {
             "Excelente": "#2ecc71",
             "Bueno": "#3498db",
@@ -348,13 +348,13 @@ def plot_quality_confidence_distribution():
             axes[0].text(count + 0.5, i, f"{pct:.1f}%", va="center")
     else:
         axes[0].text(
-            0.5, 0.5, "Columna mace_quality no disponible", ha="center", va="center"
+            0.5, 0.5, "Columna HACE_quality no disponible", ha="center", va="center"
         )
         axes[0].axis("off")
 
     # Confidence levels
-    if "mace_confidence" in df.columns:
-        confidence_counts = df["mace_confidence"].value_counts()
+    if "HACE_confidence" in df.columns:
+        confidence_counts = df["HACE_confidence"].value_counts()
         colors_conf = {"high": "#2ecc71", "medium": "#f39c12", "low": "#e74c3c"}
 
         colors = [colors_conf.get(c, "#95a5a6") for c in confidence_counts.index]
@@ -376,7 +376,7 @@ def plot_quality_confidence_distribution():
             axes[1].text(i, count + 0.5, f"{pct:.1f}%", ha="center", va="bottom")
     else:
         axes[1].text(
-            0.5, 0.5, "Columna mace_confidence no disponible", ha="center", va="center"
+            0.5, 0.5, "Columna HACE_confidence no disponible", ha="center", va="center"
         )
         axes[1].axis("off")
 
@@ -393,17 +393,17 @@ def plot_layer_correlation():
     df, _ = load_hybrid_data()
 
     if df.empty:
-        print("No hay datos MACE, omitiendo gráfica.")
+        print("No hay datos HACE, omitiendo gráfica.")
         return
 
     # Solo casos con Layer 3
-    df_with_l3 = df[df["mace_layer3"].notna()].copy()
+    df_with_l3 = df[df["HACE_layer3"].notna()].copy()
 
     if len(df_with_l3) < 5:
         print("Muy pocos casos con Layer 3, omitiendo gráfica de correlación.")
         return
 
-    layers_data = df_with_l3[["mace_layer1", "mace_layer2", "mace_layer3"]].dropna()
+    layers_data = df_with_l3[["HACE_layer1", "HACE_layer2", "HACE_layer3"]].dropna()
 
     if layers_data.empty:
         print("No hay datos completos de las 3 capas.")
@@ -450,11 +450,11 @@ def plot_layer_correlation():
 
 
 def generate_all_hybrid_plots():
-    """Generar todas las visualizaciones de MACE"""
+    """Generar todas las visualizaciones de HACE"""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     print("\n" + "=" * 70)
-    print("GENERANDO GRÁFICAS MACE (HYBRID EVALUATION)")
+    print("GENERANDO GRÁFICAS HACE (HYBRID EVALUATION)")
     print("=" * 70 + "\n")
 
     plot_hybrid_layers_distribution()
@@ -464,7 +464,7 @@ def generate_all_hybrid_plots():
     plot_layer_correlation()
 
     print("\n" + "=" * 70)
-    print("TODAS LAS GRÁFICAS MACE GENERADAS")
+    print("TODAS LAS GRÁFICAS HACE GENERADAS")
     print(f"Ubicación: {OUTPUT_DIR}")
     print("=" * 70 + "\n")
 

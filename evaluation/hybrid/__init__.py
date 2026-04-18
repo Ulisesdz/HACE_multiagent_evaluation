@@ -1,5 +1,5 @@
 """
-MACE - Multi-layered Agent Consensus Evaluator
+HACE - Hybrid Agent Consensus Evaluator
 Cascading Hybrid Evaluation System
 
 Arquitectura de 3 capas:

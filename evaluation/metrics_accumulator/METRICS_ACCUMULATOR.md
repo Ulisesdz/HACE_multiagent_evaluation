@@ -77,22 +77,22 @@ Evaluaciones batch sobre el dataset de pruebas (45 casos).
 - **2**: Mejorable
 - **1**: Crítico
 
-### MACE Metrics (Hybrid - Escala 0-1)
+### HACE Metrics (Hybrid - Escala 0-1)
 
-**MACE** (Multi-layered Agent Consensus Evaluator) combina validación determinista, evaluación semántica con embeddings, y LLM-Judge selectivo en una arquitectura de 3 capas.
+**HACE** (Hybrid Agent Consensus Evaluator) combina validación determinista, evaluación semántica con embeddings, y LLM-Judge selectivo en una arquitectura de 3 capas.
 
 | Campo | Descripción | Rango |
 |-------|-------------|-------|
-| `mace_score` | Score global híbrido final | 0-1 |
-| `mace_quality` | Label cualitativo | `Excelente`, `Bueno`, `Mejorable`, `Crítico` |
-| `mace_confidence` | Nivel de confianza en evaluación | `high`, `medium`, `low` |
-| `mace_layer1` | Score Layer 1 (Guardrails) | 0-1 |
-| `mace_layer2` | Score Layer 2 (Semantic) | 0-1 |
-| `mace_layer3` | Score Layer 3 (LLM-Judge) | 0-1 (null si no se usó) |
-| `mace_layer3_used` | ¿Se escaló a Layer 3? | 0 (No) o 1 (Sí) |
-| `mace_time` | Tiempo total de evaluación | >0 |
+| `HACE_score` | Score global híbrido final | 0-1 |
+| `HACE_quality` | Label cualitativo | `Excelente`, `Bueno`, `Mejorable`, `Crítico` |
+| `HACE_confidence` | Nivel de confianza en evaluación | `high`, `medium`, `low` |
+| `HACE_layer1` | Score Layer 1 (Guardrails) | 0-1 |
+| `HACE_layer2` | Score Layer 2 (Semantic) | 0-1 |
+| `HACE_layer3` | Score Layer 3 (LLM-Judge) | 0-1 (null si no se usó) |
+| `HACE_layer3_used` | ¿Se escaló a Layer 3? | 0 (No) o 1 (Sí) |
+| `HACE_time` | Tiempo total de evaluación | >0 |
 
-**Componentes de MACE:**
+**Componentes de HACE:**
 
 1. **Layer 1 (Guardrails - ~0.05s):** Validadores deterministas
    - Completitud estructural
@@ -132,15 +132,15 @@ Evaluaciones batch sobre el dataset de pruebas (45 casos).
 
 ---
 
-### Datos Almacenados
+### Datos AlHACEnados
 
-✅ **SE ALMACENA:**
+✅ **SE ALHACENA:**
 - Pregunta del usuario (`user_query`)
 - Respuestas del sistema
 - Métricas de evaluación
 - Trazas de ejecución (herramientas usadas, routing)
 
-❌ **NO SE ALMACENA:**
+❌ **NO SE ALHACENA:**
 - Información personal identificable (PII)
 - Tokens de sesión
 - Credenciales

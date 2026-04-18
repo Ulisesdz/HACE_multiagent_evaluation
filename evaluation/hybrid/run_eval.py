@@ -114,7 +114,7 @@ class TraceCollector:
 
 def run_hybrid_evaluation():
     """
-    Ejecutar evaluación híbrida MACE sobre dataset completo
+    Ejecutar evaluación híbrida HACE sobre dataset completo
 
     Flujo:
     1. Cargar dataset de evaluación
@@ -143,7 +143,7 @@ def run_hybrid_evaluation():
     all_results = []
 
     print("=" * 80)
-    print("MACE - Evaluación Híbrida (BATCH MODE)")
+    print("HACE - Evaluación Híbrida (BATCH MODE)")
     print("=" * 80)
     print(f"Dataset: {DATASET_PATH}")
     print(f"Total de casos: {len(dataset)}")
@@ -235,14 +235,14 @@ def run_hybrid_evaluation():
                 "final_answer": trace.final_answer,
             }
 
-            # Evaluar con MACE
-            print("Evaluando con MACE...")
+            # Evaluar con HACE
+            print("Evaluando con HACE...")
             evaluation = evaluator.evaluate(trace_data)
 
             # Resumen en consola
             print(f"\n{'─'*60}")
             print(f" RESULTADO:")
-            print(f"   MACE Score:      {evaluation['final_score']:.3f}")
+            print(f"   HACE Score:      {evaluation['final_score']:.3f}")
             print(f"   Quality Label:   {evaluation['quality_label']}")
             print(f"   Confidence:      {evaluation['confidence']}")
             print(f"   • Layer 1 Score: {evaluation['layer1_score']:.3f}")
@@ -284,7 +284,7 @@ def run_hybrid_evaluation():
                     [e["agent"] for e in trace.agent_executions]
                 ),
                 "sql_queries_count": len(trace.sql_queries),
-                # Scores MACE (TODOS NUMÉRICOS)
+                # Scores HACE (TODOS NUMÉRICOS)
                 "hybrid_score": float(evaluation["final_score"]),
                 "layer1_score": float(evaluation["layer1_score"]),
                 "layer2_score": float(evaluation["layer2_score"]),
@@ -293,7 +293,7 @@ def run_hybrid_evaluation():
                     if evaluation["layer3_score"] is not None
                     else None
                 ),
-                # Metadata MACE
+                # Metadata HACE
                 "quality_label": str(evaluation["quality_label"]),
                 "confidence": str(evaluation["confidence"]),
                 "layer3_used": int(evaluation["layer3_used"]),  # 0 o 1
@@ -369,10 +369,10 @@ def run_hybrid_evaluation():
 
     # ESTADÍSTICAS GLOBALES
     print(f"\n{'='*80}")
-    print("ESTADÍSTICAS GLOBALES (MACE)")
+    print("ESTADÍSTICAS GLOBALES (HACE)")
     print(f"{'='*80}\n")
     print(f"Total de casos evaluados: {len(df)}")
-    print(f"MACE Score promedio:      {df['hybrid_score'].mean():.3f}")
+    print(f"HACE Score promedio:      {df['hybrid_score'].mean():.3f}")
     print(f"Tiempo promedio:          {df['evaluation_time'].mean():.3f}s")
 
     print(f"\nScores por Capa:")
@@ -422,7 +422,7 @@ def run_hybrid_evaluation():
         )
 
     print(f"\n{'='*80}")
-    print("EVALUACIÓN MACE COMPLETADA")
+    print("EVALUACIÓN HACE COMPLETADA")
     print(f"{'='*80}\n")
 
 

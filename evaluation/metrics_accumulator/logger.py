@@ -40,15 +40,15 @@ class MetricsLogger:
         "llm_judge_final",
         "llm_judge_error_category",
         "llm_judge_time",
-        # MACE Metrics
-        "mace_score",
-        "mace_quality",
-        "mace_confidence",
-        "mace_layer1",
-        "mace_layer2",
-        "mace_layer3",
-        "mace_layer3_used",
-        "mace_time",
+        # HACE Metrics
+        "HACE_score",
+        "HACE_quality",
+        "HACE_confidence",
+        "HACE_layer1",
+        "HACE_layer2",
+        "HACE_layer3",
+        "HACE_layer3_used",
+        "HACE_time",
         # Metadata
         "critical_failures",
         "raw_trace",
@@ -191,22 +191,22 @@ class MetricsLogger:
                 }
             )
 
-        # 3. MACE (Híbrido)
+        # 3. HACE (Híbrido)
         if hybrid_eval:
             record.update(
                 {
-                    "mace_score": float(hybrid_eval["final_score"]),
-                    "mace_quality": str(hybrid_eval["quality_label"]),
-                    "mace_confidence": str(hybrid_eval["confidence"]),
-                    "mace_layer1": float(hybrid_eval["layer1_score"]),
-                    "mace_layer2": float(hybrid_eval["layer2_score"]),
-                    "mace_layer3": (
+                    "HACE_score": float(hybrid_eval["final_score"]),
+                    "HACE_quality": str(hybrid_eval["quality_label"]),
+                    "HACE_confidence": str(hybrid_eval["confidence"]),
+                    "HACE_layer1": float(hybrid_eval["layer1_score"]),
+                    "HACE_layer2": float(hybrid_eval["layer2_score"]),
+                    "HACE_layer3": (
                         float(hybrid_eval["layer3_score"])
                         if hybrid_eval["layer3_score"] is not None
                         else None
                     ),
-                    "mace_layer3_used": int(hybrid_eval["layer3_used"]),
-                    "mace_time": float(hybrid_eval["evaluation_time"]),
+                    "HACE_layer3_used": int(hybrid_eval["layer3_used"]),
+                    "HACE_time": float(hybrid_eval["evaluation_time"]),
                 }
             )
         else:
@@ -214,14 +214,14 @@ class MetricsLogger:
                 {
                     k: None
                     for k in [
-                        "mace_score",
-                        "mace_quality",
-                        "mace_confidence",
-                        "mace_layer1",
-                        "mace_layer2",
-                        "mace_layer3",
-                        "mace_layer3_used",
-                        "mace_time",
+                        "HACE_score",
+                        "HACE_quality",
+                        "HACE_confidence",
+                        "HACE_layer1",
+                        "HACE_layer2",
+                        "HACE_layer3",
+                        "HACE_layer3_used",
+                        "HACE_time",
                     ]
                 }
             )
@@ -341,22 +341,22 @@ class MetricsLogger:
                 }
             )
 
-        # 3. MACE (Híbrido)
+        # 3. HACE (Híbrido)
         if hybrid_eval:
             record.update(
                 {
-                    "mace_score": float(hybrid_eval["final_score"]),
-                    "mace_quality": str(hybrid_eval["quality_label"]),
-                    "mace_confidence": str(hybrid_eval["confidence"]),
-                    "mace_layer1": float(hybrid_eval["layer1_score"]),
-                    "mace_layer2": float(hybrid_eval["layer2_score"]),
-                    "mace_layer3": (
+                    "HACE_score": float(hybrid_eval["final_score"]),
+                    "HACE_quality": str(hybrid_eval["quality_label"]),
+                    "HACE_confidence": str(hybrid_eval["confidence"]),
+                    "HACE_layer1": float(hybrid_eval["layer1_score"]),
+                    "HACE_layer2": float(hybrid_eval["layer2_score"]),
+                    "HACE_layer3": (
                         float(hybrid_eval["layer3_score"])
                         if hybrid_eval["layer3_score"] is not None
                         else None
                     ),
-                    "mace_layer3_used": int(hybrid_eval["layer3_used"]),
-                    "mace_time": float(hybrid_eval["evaluation_time"]),
+                    "HACE_layer3_used": int(hybrid_eval["layer3_used"]),
+                    "HACE_time": float(hybrid_eval["evaluation_time"]),
                 }
             )
         else:
@@ -364,14 +364,14 @@ class MetricsLogger:
                 {
                     k: None
                     for k in [
-                        "mace_score",
-                        "mace_quality",
-                        "mace_confidence",
-                        "mace_layer1",
-                        "mace_layer2",
-                        "mace_layer3",
-                        "mace_layer3_used",
-                        "mace_time",
+                        "HACE_score",
+                        "HACE_quality",
+                        "HACE_confidence",
+                        "HACE_layer1",
+                        "HACE_layer2",
+                        "HACE_layer3",
+                        "HACE_layer3_used",
+                        "HACE_time",
                     ]
                 }
             )
@@ -441,7 +441,7 @@ class MetricsLogger:
         numeric_cols = [
             "baseline_score",
             "llm_judge_overall",
-            "mace_score",
+            "HACE_score",
             "baseline_hallucination_rate",
         ]
 
@@ -463,8 +463,8 @@ class MetricsLogger:
                 else None
             ),
             "hybrid_avg_score": (
-                float(df["mace_score"].mean())
-                if "mace_score" in df and df["mace_score"].notna().any()
+                float(df["HACE_score"].mean())
+                if "HACE_score" in df and df["HACE_score"].notna().any()
                 else None
             ),
             "avg_hallucination_rate": (

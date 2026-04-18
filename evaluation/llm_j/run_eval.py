@@ -340,7 +340,7 @@ def run_comprehensive_evaluation():
                 llm_judge_data=llm_judge_data,
             )
 
-            # PASO 4: ALMACENAR RESULTADOS (para CSV legacy)
+            # PASO 4: ALHACENAR RESULTADOS (para CSV legacy)
             result = {
                 # Metadata
                 "id": qid,
@@ -419,8 +419,8 @@ def run_comprehensive_evaluation():
     df = pd.DataFrame(all_results)
 
     # Guardar CSV completo
-    df.to_csv(f"{FILE_PATH}_results.csv", index=False)
-    print(f"Resultados completos guardados en: {FILE_PATH}_results.csv")
+    df.to_csv(f"{FILE_PATH}_llmj_results.csv", index=False)
+    print(f"Resultados completos guardados en: {FILE_PATH}_llmj_results.csv")
 
     # Guardar resumen ejecutivo
     summary = df[
@@ -437,8 +437,8 @@ def run_comprehensive_evaluation():
             "final_output_score",
         ]
     ].copy()
-    summary.to_csv(f"{FILE_PATH}_summary.csv", index=False)
-    print(f"Resumen ejecutivo guardado en: {FILE_PATH}_summary.csv")
+    summary.to_csv(f"{FILE_PATH}_llmj_summary.csv", index=False)
+    print(f"Resumen ejecutivo guardado en: {FILE_PATH}_llmj_summary.csv")
 
     # Info del accumulator
     print(f"\nMétricas acumuladas guardadas en:")

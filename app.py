@@ -278,7 +278,7 @@ def render_llm_judge_panel(llm_judge_data):
     if comprehensive_eval.error_category != "None":
         st.warning(f"**Categoría de Error:** {comprehensive_eval.error_category}")
 
-    with st.expander("🔍 Ver Análisis Detallado"):
+    with st.expander("Ver Análisis Detallado"):
         st.markdown("#### Análisis del Planner")
         st.write(planner_eval.analysis)
         st.markdown("#### Análisis del Supervisor")
@@ -369,7 +369,7 @@ def render_baseline_panel(baseline_eval):
 
 def render_hybrid_panel(hybrid_eval):
     """
-    Renderiza el panel de MACE (Hybrid Evaluation)
+    Renderiza el panel de HACE (Hybrid Evaluation)
 
     Args:
         hybrid_eval: Dict resultado de HybridEvaluator.evaluate()
@@ -391,7 +391,7 @@ def render_hybrid_panel(hybrid_eval):
     st.markdown(
         f"""
         <div class="audit-panel" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-            <h3 style="margin-top: 0; text-align: center">MACE - Hybrid Evaluation</h3>
+            <h3 style="margin-top: 0; text-align: center">HACE - Hybrid Evaluation</h3>
             <div style="text-align: center; margin: 20px 0;">
                 <div class="metric-value {score_class}">{final_score:.3f}</div>
                 <div style="font-size: 1.2rem; margin-top: 10px; opacity: 0.9;">{quality_label}</div>
@@ -403,7 +403,7 @@ def render_hybrid_panel(hybrid_eval):
     )
 
     # ========== MÉTRICAS POR CAPA ==========
-    st.markdown("### 📊 Scores por Capa")
+    st.markdown("### Scores por Capa")
 
     col1, col2, col3 = st.columns(3)
 
@@ -447,7 +447,7 @@ def render_hybrid_panel(hybrid_eval):
 
     # ========== ANÁLISIS DEL SISTEMA ==========
     st.markdown("---")
-    st.markdown("### 📈 Análisis del Sistema")
+    st.markdown("### Análisis del Sistema")
 
     col_meta1, col_meta2, col_meta3 = st.columns(3)
 
@@ -523,7 +523,7 @@ def render_hybrid_panel(hybrid_eval):
                     )
 
             # --- Expander con detalles completos ---
-            with st.expander("🔍 Ver Detalles Completos de Layer 1"):
+            with st.expander("Ver Detalles Completos de Layer 1"):
                 for validator_name, result in layer1_details.items():
                     status = result.get("pass", False)
                     status_icon = "✅" if status else "❌"
@@ -880,7 +880,7 @@ def render_hybrid_panel(hybrid_eval):
 
 def evaluate_with_hybrid(trace_data: dict) -> dict:
     """
-    Evaluar con sistema híbrido MACE
+    Evaluar con sistema híbrido HACE
 
     Args:
         trace_data: Dict con trazas del sistema
@@ -899,7 +899,7 @@ def render_comparison_table(baseline_eval=None, llm_judge_data=None, hybrid_eval
     """
     Renderiza tabla comparativa dinámica.
     - Muestra los 3 métodos en la tabla de scores.
-    - La comparación relativa de tiempos es solo LLM-Judge vs MACE
+    - La comparación relativa de tiempos es solo LLM-Judge vs HACE
     """
     st.markdown("### Comparativa de Sistemas de Auditoría")
 
@@ -932,16 +932,16 @@ def render_comparison_table(baseline_eval=None, llm_judge_data=None, hybrid_eval
         ]
 
     if hybrid_eval:
-        mace_score = float(hybrid_eval["final_score"])
-        mace_time = float(hybrid_eval["evaluation_time"])
+        HACE_score = float(hybrid_eval["final_score"])
+        HACE_time = float(hybrid_eval["evaluation_time"])
         layers_used = "2 capas" if not hybrid_eval["layer3_used"] else "3 capas"
-        data["MACE"] = [
-            f"{mace_score:.3f}",
-            f"{mace_time:.3f}s",
+        data["HACE"] = [
+            f"{HACE_score:.3f}",
+            f"{HACE_time:.3f}s",
             f"Híbrido ({layers_used})",
         ]
 
-    st.dataframe(pd.DataFrame(data), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(data), width="stretch", hide_index=True)
 
     # Comparación de tiempos
     show_time_comparison = llm_judge_data is not None or hybrid_eval is not None
@@ -954,7 +954,7 @@ def render_comparison_table(baseline_eval=None, llm_judge_data=None, hybrid_eval
     llm_time = (
         float(llm_judge_data.get("elapsed_time", 3.5)) if llm_judge_data else None
     )
-    mace_time = float(hybrid_eval["evaluation_time"]) if hybrid_eval else None
+    HACE_time = float(hybrid_eval["evaluation_time"]) if hybrid_eval else None
     base_time = float(baseline_eval.evaluation_time) if baseline_eval else None
 
     # Cuántas columnas mostrar
@@ -967,7 +967,7 @@ def render_comparison_table(baseline_eval=None, llm_judge_data=None, hybrid_eval
                 label="Baseline",
                 value=f"{base_time:.4f}s",
                 help="Determinista. No se compara en escala relativa porque la diferencia "
-                "de magnitud con LLM-Judge y MACE haría los multiplicadores poco informativos.",
+                "de magnitud con LLM-Judge y HACE haría los multiplicadores poco informativos.",
             )
         else:
             st.empty()
@@ -979,24 +979,28 @@ def render_comparison_table(baseline_eval=None, llm_judge_data=None, hybrid_eval
         else:
             st.empty()
 
-    # Columna 2: MACE vs LLM-Judge (solo si ambos están disponibles)
+    # Columna 2: HACE vs LLM-Judge (solo si ambos están disponibles)
     with cols[2]:
-        if mace_time is not None and llm_time is not None:
+        if HACE_time is not None and llm_time is not None:
 
-            ratio = llm_time / mace_time if mace_time > 0 else 1.0
-
-            if mace_time < llm_time:
-                delta_value = -1.0  # número negativo → verde con inverse
-                caption = f"×{ratio:.1f} más rápido que LLM-Judge"
+            if HACE_time < llm_time:
+                # HACE es más rápido: Multiplicador positivo (flecha verde hacia arriba)
+                ratio = llm_time / HACE_time if HACE_time > 0 else 1.0
+                delta_str = f"{ratio:.1f}x"
+                caption = "más rápido que LLM-Judge"
+                color = "normal"
             else:
-                delta_value = 1.0  # número positivo → rojo con inverse
-                caption = f"×{ratio:.1f} más lento que LLM-Judge"
+                # HACE es más lento: Multiplicador negativo (flecha roja hacia abajo)
+                ratio = HACE_time / llm_time if llm_time > 0 else 1.0
+                delta_str = f"-{ratio:.1f}x"
+                caption = "más lento que LLM-Judge"
+                color = "normal"
 
             st.metric(
-                label="MACE",
-                value=f"{mace_time:.2f}s",
-                delta=delta_value,
-                delta_color="inverse",
+                label="HACE",
+                value=f"{HACE_time:.2f}s",
+                delta=delta_str,
+                delta_color=color,
             )
             st.caption(caption)
 
@@ -1005,9 +1009,9 @@ def render_comparison_table(baseline_eval=None, llm_judge_data=None, hybrid_eval
             elif hybrid_eval:
                 st.caption("Resuelto con Layers 1-2 únicamente")
 
-        elif mace_time is not None:
-            # Solo MACE activo (sin LLM-Judge para comparar)
-            st.metric(label="MACE", value=f"{mace_time:.2f}s")
+        elif HACE_time is not None:
+            # Solo HACE activo (sin LLM-Judge para comparar)
+            st.metric(label="HACE", value=f"{HACE_time:.2f}s")
 
 
 # --- SIDEBAR (Panel de Control) ---
@@ -1016,7 +1020,7 @@ with st.sidebar:
 
     # BOTÓN PARA IR AL DASHBOARD
     st.markdown("---")
-    if st.button("Abrir Dashboard de Análisis", use_container_width=True):
+    if st.button("Abrir Dashboard de Análisis", width="stretch"):
         st.switch_page("pages/1_Dashboard.py")
     st.markdown("---")
     st.markdown("### Roles Activos")
@@ -1060,8 +1064,8 @@ with st.sidebar:
 
     st.divider()
 
-    # Toggle para MACE
-    audit_hybrid = st.toggle("MACE(Evaluación Híbrida)", value=True)
+    # Toggle para HACE
+    audit_hybrid = st.toggle("HACE(Evaluación Híbrida)", value=True)
     if audit_hybrid:
         st.caption("Sistema de 3 capas activo:")
         st.caption("• L1: Guardrails (Determinista)")
@@ -1095,7 +1099,7 @@ with st.sidebar:
                         else "N/A"
                     ),
                 )
-                st.metric("MACE Promedio", f"{stats['hybrid_avg_score']:.2f}/1.0")
+                st.metric("HACE Promedio", f"{stats['hybrid_avg_score']:.2f}/1.0")
 
                 if stats["error_categories"]:
                     st.write("**Categorías de Error:**")
@@ -1175,7 +1179,7 @@ if st.session_state.evaluations:
             if eval_data["llm_judge"]:
                 render_llm_judge_panel(eval_data["llm_judge"])
 
-            # Renderizar MACE si existe
+            # Renderizar HACE si existe
             if eval_data.get("hybrid"):
                 render_hybrid_panel(eval_data["hybrid"])
 
@@ -1634,12 +1638,12 @@ if user_input:
                         render_baseline_panel(baseline_eval)
 
                     # ============================================================
-                    # 3C. MACE HYBRID (Si está activado)
+                    # 3C. HACE HYBRID (Si está activado)
                     # ============================================================
                     if audit_hybrid:
                         st.divider()
 
-                        with st.spinner("🔬 MACE analizando (3 capas)..."):
+                        with st.spinner("🔬 HACE analizando (3 capas)..."):
                             # Preparar trace data (mismo formato que baseline)
                             trace_data = {
                                 "user_question": trace.user_question,

@@ -8,9 +8,10 @@ plt.style.use("seaborn-v0_8-darkgrid")
 
 # Paths
 BASELINE_RESULTS_LEGACY = "evaluation/baseline/dataset_baseline_results.csv"
-LLM_JUDGE_RESULTS_LEGACY = "evaluation/llm_j/dataset_results.csv"
+LLM_JUDGE_RESULTS_LEGACY = "evaluation/llm_j/dataset_llmj_results.csv"
 HYBRID_RESULTS_LEGACY = "evaluation/hybrid/dataset_hybrid_results.csv"
 ACCUMULATED_DATA = "evaluation/accumulated_data/offline_metrics.csv"
+ONLINE_DATA = "evaluation/accumulated_data/online_metrics.csv"
 OUTPUT_DIR = "evaluation/visualization/plots/"
 
 
@@ -35,14 +36,21 @@ def load_comparison_data_all():
             "baseline_time",
             "llm_judge_overall",
             "llm_judge_time",
-            "mace_score",
-            "mace_time",
-            "mace_layer3_used",
+            "HACE_score",
+            "HACE_time",
+            "HACE_layer3_used",
         ]
 
         for col in numeric_cols:
             if col in df_raw.columns:
                 df_raw[col] = pd.to_numeric(df_raw[col], errors="coerce")
+
+        # Colapsa las múltiples filas del mismo TC-001 en una sola,
+        # cogiendo los datos válidos (no nulos) de cada evaluador.
+        # df_raw = df_raw.groupby(["query_id", "difficulty"], as_index=False).first()
+        df_raw = df_raw.groupby(["query_id", "difficulty"], as_index=False).last()
+
+        print(f"Casos únicos tras fusionar (deberían ser 45): {len(df_raw)}")
 
         # Crear DataFrame unificado
         df_merged = df_raw[["query_id", "difficulty"]].copy()
@@ -75,31 +83,31 @@ def load_comparison_data_all():
         else:
             print(f"   LLM-Judge: 0 casos")
 
-        # 3. MACE
-        has_mace = df_raw["mace_score"].notna()
-        if has_mace.any():
-            df_merged.loc[has_mace, "mace_score"] = df_raw.loc[has_mace, "mace_score"]
-            df_merged.loc[has_mace, "mace_eval_time"] = df_raw.loc[
-                has_mace, "mace_time"
+        # 3. HACE
+        has_HACE = df_raw["HACE_score"].notna()
+        if has_HACE.any():
+            df_merged.loc[has_HACE, "HACE_score"] = df_raw.loc[has_HACE, "HACE_score"]
+            df_merged.loc[has_HACE, "HACE_eval_time"] = df_raw.loc[
+                has_HACE, "HACE_time"
             ]
-            df_merged.loc[has_mace, "mace_layer3_used"] = df_raw.loc[
-                has_mace, "mace_layer3_used"
+            df_merged.loc[has_HACE, "HACE_layer3_used"] = df_raw.loc[
+                has_HACE, "HACE_layer3_used"
             ]
-            print(f"   MACE: {has_mace.sum()} casos")
+            print(f"   HACE: {has_HACE.sum()} casos")
         else:
-            print(f"   MACE: 0 casos")
+            print(f"   HACE: 0 casos")
 
         # Contar casos coincidentes
-        all_three = has_baseline & has_llm & has_mace
+        all_three = has_baseline & has_llm & has_HACE
         print(f"\nCasos con los 3 métodos: {all_three.sum()}")
 
         baseline_and_llm = has_baseline & has_llm
-        baseline_and_mace = has_baseline & has_mace
-        llm_and_mace = has_llm & has_mace
+        baseline_and_HACE = has_baseline & has_HACE
+        llm_and_HACE = has_llm & has_HACE
 
         print(f"   • Baseline + LLM-Judge: {baseline_and_llm.sum()}")
-        print(f"   • Baseline + MACE: {baseline_and_mace.sum()}")
-        print(f"   • LLM-Judge + MACE: {llm_and_mace.sum()}")
+        print(f"   • Baseline + HACE: {baseline_and_HACE.sum()}")
+        print(f"   • LLM-Judge + HACE: {llm_and_HACE.sum()}")
 
         return df_merged, "accumulated", 4
 
@@ -109,7 +117,7 @@ def load_comparison_data_all():
         # Intentar cargar desde CSVs individuales
         baseline_path = Path(BASELINE_RESULTS_LEGACY)
         llm_path = Path(LLM_JUDGE_RESULTS_LEGACY)
-        mace_path = Path(HYBRID_RESULTS_LEGACY)
+        HACE_path = Path(HYBRID_RESULTS_LEGACY)
 
         # Baseline
         if baseline_path.exists():
@@ -141,20 +149,20 @@ def load_comparison_data_all():
             df_llm = pd.DataFrame()
             print(f"   LLM-Judge legacy: No encontrado")
 
-        # MACE
-        if mace_path.exists():
-            df_mace = pd.read_csv(mace_path)
-            df_mace = df_mace.rename(
+        # HACE
+        if HACE_path.exists():
+            df_HACE = pd.read_csv(HACE_path)
+            df_HACE = df_HACE.rename(
                 columns={
                     "id": "query_id",
-                    "hybrid_score": "mace_score",
-                    "evaluation_time": "mace_eval_time",
+                    "hybrid_score": "HACE_score",
+                    "evaluation_time": "HACE_eval_time",
                 }
             )
-            print(f"   MACE legacy: {len(df_mace)} casos")
+            print(f"   HACE legacy: {len(df_HACE)} casos")
         else:
-            df_mace = pd.DataFrame()
-            print(f"   MACE legacy: No encontrado")
+            df_HACE = pd.DataFrame()
+            print(f"   HACE legacy: No encontrado")
 
         # Merge incremental
         if not df_baseline.empty:
@@ -163,8 +171,8 @@ def load_comparison_data_all():
             ].copy()
         elif not df_llm.empty:
             df_merged = df_llm[["query_id", "difficulty"]].copy()
-        elif not df_mace.empty:
-            df_merged = df_mace[["query_id", "difficulty"]].copy()
+        elif not df_HACE.empty:
+            df_merged = df_HACE[["query_id", "difficulty"]].copy()
         else:
             print("No se encontraron datos en ningún CSV")
             return pd.DataFrame(), "none", 4
@@ -178,15 +186,15 @@ def load_comparison_data_all():
                 how="outer",
             )
 
-        # Merge MACE
-        if not df_mace.empty and not df_merged.empty:
+        # Merge HACE
+        if not df_HACE.empty and not df_merged.empty:
             df_merged = pd.merge(
                 df_merged,
-                df_mace[["query_id", "mace_score", "mace_eval_time", "layer3_used"]],
+                df_HACE[["query_id", "HACE_score", "HACE_eval_time", "layer3_used"]],
                 on="query_id",
                 how="outer",
             )
-            df_merged = df_merged.rename(columns={"layer3_used": "mace_layer3_used"})
+            df_merged = df_merged.rename(columns={"layer3_used": "HACE_layer3_used"})
 
         print(f"\nTotal merged: {len(df_merged)} casos")
 
@@ -231,12 +239,12 @@ def plot_score_comparison_triple():
         )
         plotted_any = True
 
-    if "mace_score" in df.columns and df["mace_score"].notna().any():
+    if "HACE_score" in df.columns and df["HACE_score"].notna().any():
         axes[0].hist(
-            df["mace_score"].dropna(),
+            df["HACE_score"].dropna(),
             bins=20,
             alpha=0.5,
-            label=f'MACE (n={df["mace_score"].notna().sum()})',
+            label=f'HACE (n={df["HACE_score"].notna().sum()})',
             color="mediumpurple",
             edgecolor="black",
         )
@@ -276,9 +284,9 @@ def plot_score_comparison_triple():
         data_to_plot.append(df["llm_judge_normalized"].dropna())
         labels_plot.append("LLM-Judge")
 
-    if "mace_score" in df.columns and df["mace_score"].notna().any():
-        data_to_plot.append(df["mace_score"].dropna())
-        labels_plot.append("MACE")
+    if "HACE_score" in df.columns and df["HACE_score"].notna().any():
+        data_to_plot.append(df["HACE_score"].dropna())
+        labels_plot.append("HACE")
 
     if len(data_to_plot) >= 2:
         bp = axes[1].boxplot(
@@ -336,18 +344,18 @@ def plot_time_comparison_triple():
         times["LLM-Judge"] = 180.5
         print(f"   LLM-Judge time: ~180.5s (estimado)")
 
-    if "mace_eval_time" in df.columns and df["mace_eval_time"].notna().any():
-        times["MACE"] = df["mace_eval_time"].mean()
-        print(f"   MACE time: {times['MACE']:.3f}s")
+    if "HACE_eval_time" in df.columns and df["HACE_eval_time"].notna().any():
+        times["HACE"] = df["HACE_eval_time"].mean()
+        print(f"   HACE time: {times['HACE']:.3f}s")
     else:
-        times["MACE"] = 1.9
-        print(f"   MACE time: ~1.9s (estimado)")
+        times["HACE"] = 1.9
+        print(f"   HACE time: ~1.9s (estimado)")
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # Labels SIN saltos de línea
-    methods = ["Baseline\n(Automático)", "LLM-Judge\n(Cualitativo)", "MACE\n(Híbrido)"]
-    values = [times["Baseline"], times["LLM-Judge"], times["MACE"]]
+    methods = ["Baseline\n(Automático)", "LLM-Judge\n(Cualitativo)", "HACE\n(Híbrido)"]
+    values = [times["Baseline"], times["LLM-Judge"], times["HACE"]]
     colors = ["steelblue", "coral", "mediumpurple"]
 
     bars = ax.bar(methods, values, color=colors, edgecolor="black", alpha=0.7)
@@ -374,15 +382,15 @@ def plot_time_comparison_triple():
     ax.grid(True, axis="y", alpha=0.3)
 
     # Añadir speedup comparativo
-    if times["MACE"] and times["LLM-Judge"]:
-        mace_time = times["MACE"]
+    if times["HACE"] and times["LLM-Judge"]:
+        HACE_time = times["HACE"]
         llm_time = times["LLM-Judge"]
-        speedup = ((llm_time - mace_time) / llm_time) * 100
+        speedup = ((llm_time - HACE_time) / llm_time) * 100
 
         ax.text(
             0.5,
             0.95,
-            f"MACE es {speedup:.0f}% más rápido que LLM-Judge",
+            f"HACE es {speedup:.0f}% más rápido que LLM-Judge",
             transform=ax.transAxes,
             ha="center",
             va="top",
@@ -429,11 +437,11 @@ def plot_difficulty_comparison_triple():
             f"   LLM-Judge por difficulty: {grouped_data['LLM-Judge'].notna().sum()} niveles"
         )
 
-    if "mace_score" in df.columns and df["mace_score"].notna().any():
-        grouped_data["MACE"] = (
-            df.groupby("difficulty")["mace_score"].mean().reindex(difficulty_order)
+    if "HACE_score" in df.columns and df["HACE_score"].notna().any():
+        grouped_data["HACE"] = (
+            df.groupby("difficulty")["HACE_score"].mean().reindex(difficulty_order)
         )
-        print(f"   MACE por difficulty: {grouped_data['MACE'].notna().sum()} niveles")
+        print(f"   HACE por difficulty: {grouped_data['HACE'].notna().sum()} niveles")
 
     if not grouped_data:
         print("No hay datos válidos para gráfica de dificultad.")
@@ -444,7 +452,7 @@ def plot_difficulty_comparison_triple():
     x = np.arange(len(difficulty_order))
     width = 0.25
 
-    colors = {"Baseline": "steelblue", "LLM-Judge": "coral", "MACE": "mediumpurple"}
+    colors = {"Baseline": "steelblue", "LLM-Judge": "coral", "HACE": "mediumpurple"}
 
     for i, (method, data) in enumerate(grouped_data.items()):
         offset = (i - len(grouped_data) / 2 + 0.5) * width
@@ -553,26 +561,26 @@ def plot_summary_table_triple():
             summary_data["Tiempo Promedio"].append("~180.5s")
         summary_data["Características"].append("Cualitativo, semántico")
 
-    # MACE
-    if "mace_score" in df.columns and df["mace_score"].notna().any():
-        mace_data = df["mace_score"].dropna()
-        summary_data["Método"].append("MACE")
-        summary_data["Casos"].append(f"{len(mace_data)}")
-        summary_data["Score Promedio"].append(f"{mace_data.mean():.3f}")
-        summary_data["Desv. Estándar"].append(f"{mace_data.std():.3f}")
+    # HACE
+    if "HACE_score" in df.columns and df["HACE_score"].notna().any():
+        HACE_data = df["HACE_score"].dropna()
+        summary_data["Método"].append("HACE")
+        summary_data["Casos"].append(f"{len(HACE_data)}")
+        summary_data["Score Promedio"].append(f"{HACE_data.mean():.3f}")
+        summary_data["Desv. Estándar"].append(f"{HACE_data.std():.3f}")
 
-        if "mace_eval_time" in df.columns and df["mace_eval_time"].notna().any():
+        if "HACE_eval_time" in df.columns and df["HACE_eval_time"].notna().any():
             summary_data["Tiempo Promedio"].append(
-                f"{df['mace_eval_time'].mean():.3f}s"
+                f"{df['HACE_eval_time'].mean():.3f}s"
             )
         else:
             summary_data["Tiempo Promedio"].append("~1.9s")
 
         # Calcular % Layer 3
-        if "mace_layer3_used" in df.columns:
-            layer3_count = df["mace_layer3_used"].notna().sum()
+        if "HACE_layer3_used" in df.columns:
+            layer3_count = df["HACE_layer3_used"].notna().sum()
             if layer3_count > 0:
-                layer3_pct = (df["mace_layer3_used"].sum() / layer3_count) * 100
+                layer3_pct = (df["HACE_layer3_used"].sum() / layer3_count) * 100
                 summary_data["Características"].append(
                     f"Híbrido, Layer 3: {layer3_pct:.0f}%"
                 )
@@ -616,7 +624,7 @@ def plot_summary_table_triple():
             table[(i, j)].set_facecolor(color)
 
     plt.title(
-        f"Resumen Comparativo: Baseline vs LLM-Judge vs MACE",
+        f"Resumen Comparativo: Baseline vs LLM-Judge vs HACE",
         fontsize=14,
         fontweight="bold",
         pad=20,
@@ -647,5 +655,136 @@ def generate_all_comparison_plots():
     print("=" * 70 + "\n")
 
 
+def generate_online_comparison_plots():
+    """Genera comparativas exclusivas para los datos capturados en tiempo real (Streamlit)"""
+    online_path = Path(ONLINE_DATA)
+
+    if not online_path.exists():
+        print(f"No se encontró el archivo de métricas online: {ONLINE_DATA}")
+        return
+
+    print("\n" + "=" * 70)
+    print("GENERANDO GRÁFICAS ONLINE (PRODUCCIÓN)")
+    print("=" * 70 + "\n")
+
+    df = pd.read_csv(ONLINE_DATA)
+    df = df[df["source"] == "online"].copy()
+
+    if len(df) == 0:
+        print("No hay registros online guardados aún.")
+        return
+
+    print(f"Total de registros online encontrados: {len(df)}")
+
+    # Asegurar tipos numéricos
+    cols_to_numeric = [
+        "baseline_score",
+        "baseline_time",
+        "llm_judge_overall",
+        "llm_judge_time",
+        "HACE_score",
+        "HACE_time",
+    ]
+    for col in cols_to_numeric:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    # Normalizar LLM-Judge (viene de 1-4, lo paso a 0-1 para comparar)
+    if "llm_judge_overall" in df.columns:
+        df["llm_judge_normalized"] = df["llm_judge_overall"] / 4
+
+    # 1. GRÁFICA DE CAJAS (BOXPLOT) - SCORES ONLINE
+    data_to_plot = []
+    labels_plot = []
+
+    if "baseline_score" in df.columns and df["baseline_score"].notna().any():
+        data_to_plot.append(df["baseline_score"].dropna())
+        labels_plot.append("Baseline")
+
+    if (
+        "llm_judge_normalized" in df.columns
+        and df["llm_judge_normalized"].notna().any()
+    ):
+        data_to_plot.append(df["llm_judge_normalized"].dropna())
+        labels_plot.append("LLM-Judge")
+
+    if "HACE_score" in df.columns and df["HACE_score"].notna().any():
+        data_to_plot.append(df["HACE_score"].dropna())
+        labels_plot.append("HACE")
+
+    if len(data_to_plot) >= 2:
+        fig, ax = plt.subplots(figsize=(8, 6))
+        bp = ax.boxplot(
+            data_to_plot, tick_labels=labels_plot, patch_artist=True, showmeans=True
+        )
+        colors = ["steelblue", "coral", "mediumpurple"]
+        for patch, color in zip(bp["boxes"], colors[: len(data_to_plot)]):
+            patch.set_facecolor(color)
+
+        ax.set_title(
+            "Rendimiento en Producción (Interacciones Online)", fontweight="bold"
+        )
+        ax.set_ylabel("Score Normalizado (0-1)")
+        ax.grid(True, axis="y", alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(f"{OUTPUT_DIR}online_comparison_scores.png", dpi=300)
+        print("Guardado: online_comparison_scores.png")
+        plt.close()
+
+    # 2. GRÁFICA DE TIEMPOS ONLINE
+    times = {}
+    if "baseline_time" in df.columns:
+        times["Baseline"] = df["baseline_time"].mean()
+    if "llm_judge_time" in df.columns:
+        times["LLM-Judge"] = df["llm_judge_time"].mean()
+    if "HACE_time" in df.columns:
+        times["HACE"] = df["HACE_time"].mean()
+
+    # Filtrar solo los que no son NaN
+    times = {k: v for k, v in times.items() if not np.isnan(v)}
+
+    if len(times) > 0:
+        fig, ax = plt.subplots(figsize=(8, 6))
+        methods = list(times.keys())
+        values = list(times.values())
+
+        # Mapear colores a los métodos correctos
+        color_map = {
+            "Baseline": "steelblue",
+            "LLM-Judge": "coral",
+            "HACE": "mediumpurple",
+        }
+        bar_colors = [color_map.get(m, "gray") for m in methods]
+
+        bars = ax.bar(methods, values, color=bar_colors, edgecolor="black", alpha=0.7)
+
+        for bar, time_val in zip(bars, values):
+            height = bar.get_height()
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                height + (max(values) * 0.02),
+                f"{time_val:.2f}s",
+                ha="center",
+                va="bottom",
+                fontweight="bold",
+            )
+
+        ax.set_title(
+            "Tiempos de Respuesta en Producción", fontsize=14, fontweight="bold"
+        )
+        ax.set_ylabel("Tiempo promedio (segundos)")
+        ax.set_ylim([0, max(values) * 1.15])
+        ax.grid(True, axis="y", alpha=0.3)
+
+        plt.tight_layout()
+        plt.savefig(f"{OUTPUT_DIR}online_comparison_times.png", dpi=300)
+        print("Guardado: online_comparison_times.png")
+        plt.close()
+
+
 if __name__ == "__main__":
+    # Genera las gráficas del dataset (45 casos)
     generate_all_comparison_plots()
+
+    # Genera las gráficas de uso real en la interfaz web
+    generate_online_comparison_plots()

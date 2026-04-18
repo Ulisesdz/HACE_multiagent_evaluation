@@ -45,9 +45,9 @@ multiagent_evalutation/
 │   │   ├── judge.py       # Lógica del evaluador LLM
 │   │   ├── run_eval.py    # Batch evaluation
 │   │   ├── LLM_JUDGE_EVALUATION_GUIDE.md  # Documentación completa
-│   │   ├── dataset_results.csv      # Resultados completos (generado)
-│   │   └── dataset_summary.csv      # Resumen ejecutivo (generado)
-│   ├── hybrid/             # Fase 3: MACE (Multi-layered Agent Consensus Evaluator)
+│   │   ├── dataset_llmj_results.csv      # Resultados completos (generado)
+│   │   └── dataset_llmj_summary.csv      # Resumen ejecutivo (generado)
+│   ├── hybrid/             # Fase 3: HACE (Hybrid Agent Consensus Evaluator)
 │   │   ├── __init__.py
 │   │   ├── layer1_guardrails.py  # Capa 1: Validadores deterministas (hallucinations, SQL, coverage)
 │   │   ├── layer2_semantic.py    # Capa 2: Evaluación semántica basada en Embeddings y Similitud de Coseno
@@ -66,9 +66,9 @@ multiagent_evalutation/
 │   └── visualization/     # Generación de Gráficas
 │       ├── __init__.py
 │       ├── plot_baseline.py       # Gráficas de Baseline Metrics
-│       ├── plot_hybrid.py         # Gráficas de MACE
+│       ├── plot_hybrid.py         # Gráficas de HACE
 │       ├── plot_llm_judge.py      # Gráficas de LLM-Judge
-│       ├── plot_comparison.py     # Comparativas Baseline, LLM-Judge y MACE
+│       ├── plot_comparison.py     # Comparativas Baseline, LLM-Judge y HACE
 │       └── plots/                 # Directorio de salida de gráficas
 ├── pages/          # Sub-páginas del Frontend
 │   └── 1_dashboard.py     # Dashboard con gráficas y cálculos de los sistemas de evaluación
@@ -184,8 +184,8 @@ python -m evaluation.llm_j.run_eval
 
 **Salida:**
 ```
-evaluation/llm_j/dataset_results.csv    # Resultados completos
-evaluation/llm_j/dataset_summary.csv    # Resumen ejecutivo
+evaluation/llm_j/dataset_llmj_results.csv    # Resultados completos
+evaluation/llm_j/dataset_llmj_summary.csv    # Resumen ejecutivo
 ```
 
 **Módulos evaluados (Escala 1-4):**
@@ -223,22 +223,22 @@ evaluation/llm_j/dataset_summary.csv    # Resumen ejecutivo
 
 ---
 
-### MACE Metrics (Hybrid - Escala 0-1) 
+### HACE Metrics (Hybrid - Escala 0-1) 
 
-**MACE** (Multi-layered Agent Consensus Evaluator) combina validación determinista, evaluación semántica con embeddings, y LLM-Judge selectivo en una arquitectura de 3 capas.
+**HACE** (Hybrid Agent Consensus Evaluator) combina validación determinista, evaluación semántica con embeddings, y LLM-Judge selectivo en una arquitectura de 3 capas.
 
 | Campo | Descripción | Rango |
 |-------|-------------|-------|
-| `mace_score` | Score global híbrido final | 0-1 |
-| `mace_quality` | Label cualitativo | `Excelente`, `Bueno`, `Mejorable`, `Crítico` |
-| `mace_confidence` | Nivel de confianza en evaluación | `high`, `medium`, `low` |
-| `mace_layer1` | Score Layer 1 (Guardrails) | 0-1 |
-| `mace_layer2` | Score Layer 2 (Semantic) | 0-1 |
-| `mace_layer3` | Score Layer 3 (LLM-Judge) | 0-1 (null si no se usó) |
-| `mace_layer3_used` | ¿Se escaló a Layer 3? | 0 (No) o 1 (Sí) |
-| `mace_time` | Tiempo total de evaluación | >0 |
+| `HACE_score` | Score global híbrido final | 0-1 |
+| `HACE_quality` | Label cualitativo | `Excelente`, `Bueno`, `Mejorable`, `Crítico` |
+| `HACE_confidence` | Nivel de confianza en evaluación | `high`, `medium`, `low` |
+| `HACE_layer1` | Score Layer 1 (Guardrails) | 0-1 |
+| `HACE_layer2` | Score Layer 2 (Semantic) | 0-1 |
+| `HACE_layer3` | Score Layer 3 (LLM-Judge) | 0-1 (null si no se usó) |
+| `HACE_layer3_used` | ¿Se escaló a Layer 3? | 0 (No) o 1 (Sí) |
+| `HACE_time` | Tiempo total de evaluación | >0 |
 
-**Componentes de MACE:**
+**Componentes de HACE:**
 
 1. **Layer 1 (Guardrails):** Validadores deterministas
    - Completitud estructural

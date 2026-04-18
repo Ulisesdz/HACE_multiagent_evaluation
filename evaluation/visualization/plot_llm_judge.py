@@ -8,7 +8,7 @@ from pathlib import Path
 plt.style.use("seaborn-v0_8-darkgrid")
 sns.set_palette("Set2")
 
-LLM_JUDGE_RESULTS_LEGACY = "evaluation/llm_j/dataset_results.csv"
+LLM_JUDGE_RESULTS_LEGACY = "evaluation/llm_j/dataset_llmj_results.csv"
 ACCUMULATED_DATA = "evaluation/accumulated_data/offline_metrics.csv"
 OUTPUT_DIR = "evaluation/visualization/plots/"
 

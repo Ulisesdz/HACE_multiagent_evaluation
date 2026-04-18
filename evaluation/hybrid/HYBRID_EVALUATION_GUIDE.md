@@ -1,4 +1,4 @@
-# MACE - Multi-layered Agent Consensus Evaluator
+# HACE - Hybrid Agent Consensus Evaluator
 
 ## Descripción
 
@@ -127,7 +127,7 @@ Coordinador del pipeline:
 |--------|----------|------------------|-----------|----------|-------------|
 | Baseline | 0.02s | Total | ❌ | ✅ | ✅ |
 | LLM-Judge | 3.5s | Parcial | ✅ | ✅ | ✅ |
-| **MACE** | **~1.9s** | Equilibrio | **✅** | **✅** | **✅** |
+| **HACE** | **~1.9s** | Equilibrio | **✅** | **✅** | **✅** |
 
 ---
 
