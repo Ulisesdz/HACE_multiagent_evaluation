@@ -28,6 +28,7 @@ multiagent_evalutation/
 │       └── predictor.py       # Inferencia para el Agente
 └── evaluation/
 │   ├── accumulated_data/  # Sistema de Acumulación de Métricas
+│   │   ├── dataset_unified_results.csv   # Métricas unificadas de los 3 sistemas (generado)
 │   │   ├── online_metrics.csv   # Métricas desde Streamlit (generado)
 │   │   └── offline_metrics.csv  # Métricas desde run_eval.py (generado)
 │   ├── baseline/          # Fase 1: Métricas Automáticas Deterministas
@@ -55,14 +56,17 @@ multiagent_evalutation/
 │   │   ├── scorer.py             # Algoritmo de ponderación y fusión de scores entre capas
 │   │   ├── orchestrator.py       # Pipeline de evaluación híbrida y lógica de escalado condicional
 │   │   ├── run_eval.py           # Batch evaluation del sistema híbrido sobre dataset completo
+│   │   ├── optimization_hace.py  # Optimización de los hiperparámetros del sistema HACE
 │   │   ├── HYBRID_EVALUATION_GUIDE.md  # Documentación completa
+│   │   ├── hace_calibration_results.csv  # Resultados detallados del grid de Hiperparámetros (generado)
 │   │   ├── dataset_hybrid_results.csv  # Resultados detallados por caso (generado)
 │   │   └── dataset_hybrid_summary.csv  # Resumen ejecutivo con métricas de eficiencia (generado)
 │   ├── metrics_accumulator/  # Sistema de Logging de Métricas
 │   │   ├── __init__.py
 │   │   ├── logger.py      # MetricsLogger class (logging unificado)
+│   │   ├── run_eval_gloabl.py      # Batch evaluation de los 3 sistemas sobre dataset completo
 │   │   ├── METRICS_ACCUMULATOR.md      # Documentación del logger
-│   │   └── dataset.json   # Dataset de 45 casos de prueba
+│   │   └── dataset.json   # Dataset sintético de 45 casos de prueba
 │   └── visualization/     # Generación de Gráficas
 │       ├── __init__.py
 │       ├── plot_baseline.py       # Gráficas de Baseline Metrics
@@ -124,6 +128,27 @@ Opción B: Consola (CLI) Interacción rápida por terminal.
 ```bash
 python -m orchestrator.main
 ```
+
+### Fase 4: Evaluación y Calibración Offline (Opcional/Avanzado)
+El sistema cuenta con un pipeline completo para evaluar su propio rendimiento de forma rigurosa usando un dataset sintético de 45 casos (`dataset.json`).
+
+**1. Evaluación Unificada:**
+Para ejecutar los tres evaluadores (Baseline, LLM-Judge y HACE) en lote sobre todo el dataset y consolidar los resultados:
+```bash
+python -m evaluation.metrics_accumulator.run_eval_global
+```
+
+Salida principal: evaluation/accumulated_data/dataset_unified_results.csv
+
+**2. Optimización de Hiperparámetros (LOO-CV):**
+Para calibrar los pesos de la arquitectura HACE sin introducir Data Leakage, el sistema incluye un optimizador basado en Leave-One-Out Cross-Validation frente a un Heuristic Reference Score:
+```bash
+python -m evaluation.hybrid.optimization_hace
+```
+Salida principal: evaluation/hybrid/hace_calibration_results.csv 
+y gráfica de sensibilidad en evaluation/visualization/plots/.
+
+---
 
 ## Características Avanzadas
 ### Observabilidad con MLflow
@@ -300,6 +325,19 @@ El sistema ahora **acumula automáticamente** todas las evaluaciones en CSVs uni
 ## Generación de Visualizaciones
 
 El sistema incluye **scripts de generación automática de gráficas** para análisis comparativo.
+
+### **Paso 1: Ejecutar Evaluaciones Offline**
+Puedes ejecutar los evaluadores por separado, o usar el script global unificado (Recomendado):
+
+```bash
+# RECOMENDADO: Ejecutar los 3 evaluadores a la vez y unificar resultados
+python -m evaluation.metrics_accumulator.run_eval_global
+
+# Opcional: Ejecutar individualmente
+python -m evaluation.baseline.run_eval
+python -m evaluation.llm_j.run_eval
+python -m evaluation.hybrid.run_eval
+```
 
 ### **Paso 1: Ejecutar Evaluaciones Offline**
 ```bash

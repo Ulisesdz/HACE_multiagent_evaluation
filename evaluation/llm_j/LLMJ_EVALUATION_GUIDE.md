@@ -440,7 +440,7 @@ El sistema **acumula automáticamente** todas las métricas de evaluación (onli
 - `online_metrics.csv` - Evaluaciones desde Streamlit (sesiones de usuario)
 - `offline_metrics.csv` - Evaluaciones batch desde `run_eval.py`
 
-**Campos alHACEnados:**
+**Campos almacenar:**
 ```csv
 timestamp,source,query_id,user_query,num_tasks,difficulty,category,
 baseline_score,baseline_routing_f1,baseline_numeric_f1,baseline_hallucination_rate,

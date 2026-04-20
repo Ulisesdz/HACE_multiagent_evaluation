@@ -4,8 +4,6 @@
 
 Este directorio contiene las evaluaciones acumuladas del sistema multi-agente, tanto online (Streamlit) como offline (batch).
 
-**Versión:** 2.0  
-**Fecha de creación:** Marzo 2026  
 **Propósito:** Acumular métricas para análisis histórico, detección de drift, y fine-tuning futuro.
 
 ---
@@ -26,6 +24,7 @@ Evaluaciones batch sobre el dataset de pruebas (45 casos).
 - `evaluation/baseline/run_eval.py`
 - `evaluation/llm_j/run_eval.py`
 - `evaluation/hybrid/run_eval.py`
+- `evaluation/metrics_accumulator/run_eval_global.py`
 
 **Generación:** Manual ejecutando los scripts de batch evaluation.
 
@@ -115,12 +114,6 @@ Evaluaciones batch sobre el dataset de pruebas (45 casos).
 - Cobertura semántica completa (vs Baseline que solo valida numérico/estructural)
 - Menor costo (menos llamadas a LLM que LLM-Judge puro)
 
-**Papers base:**
-- BERTScore (Zhang et al., 2019) - Similitud semántica
-- ARES (Saad-Falcon et al., 2023) - Clasificadores binarios para RAG
-- Cascading LLMs (Chen et al., 2023) - Routing adaptativo
-- Prometheus (Kim et al., 2023) - Rubric-guided evaluation
-
 ---
 
 ### Metadata Adicional
@@ -132,15 +125,15 @@ Evaluaciones batch sobre el dataset de pruebas (45 casos).
 
 ---
 
-### Datos AlHACEnados
+### Datos Almacenados
 
-✅ **SE ALHACENA:**
+**SE ALMACENA:**
 - Pregunta del usuario (`user_query`)
 - Respuestas del sistema
 - Métricas de evaluación
 - Trazas de ejecución (herramientas usadas, routing)
 
-❌ **NO SE ALHACENA:**
+**NO SE ALMACENA:**
 - Información personal identificable (PII)
 - Tokens de sesión
 - Credenciales

@@ -1,8 +1,10 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
 from pathlib import Path
+from scipy.stats import pearsonr
 
 plt.style.use("seaborn-v0_8-darkgrid")
 
@@ -17,7 +19,7 @@ OUTPUT_DIR = "evaluation/visualization/plots/"
 
 def load_comparison_data_all():
     """
-    Carga datos de TODOS los métodos desde accumulated_data o CSVs legacy.
+    Carga datos de todos los métodos desde accumulated_data o CSVs legacy.
     """
     accumulated_path = Path(ACCUMULATED_DATA)
 
@@ -47,8 +49,7 @@ def load_comparison_data_all():
 
         # Colapsa las múltiples filas del mismo TC-001 en una sola,
         # cogiendo los datos válidos (no nulos) de cada evaluador.
-        # df_raw = df_raw.groupby(["query_id", "difficulty"], as_index=False).first()
-        df_raw = df_raw.groupby(["query_id", "difficulty"], as_index=False).last()
+        # df_raw = df_raw.groupby(["query_id", "difficulty"], as_index=False).last()
 
         print(f"Casos únicos tras fusionar (deberían ser 45): {len(df_raw)}")
 
@@ -636,6 +637,122 @@ def plot_summary_table_triple():
     plt.close()
 
 
+def plot_methods_correlation():
+    """Calcula y grafica la correlación de Pearson entre los 3 métodos evaluadores."""
+    df, _, _ = load_comparison_data_all()
+
+    if len(df) == 0:
+        print("No hay datos para correlación.")
+        return
+
+    # Mapeo de nombres limpios a las columnas
+    cols_map = {
+        "Baseline": "baseline_score",
+        "LLM-Judge": "llm_judge_normalized",
+        "HACE": "HACE_score",
+    }
+
+    # Filtrar solo las columnas que realmente existen y tienen datos
+    available_cols = {
+        name: col
+        for name, col in cols_map.items()
+        if col in df.columns and df[col].notna().any()
+    }
+
+    if len(available_cols) < 2:
+        print("No hay suficientes métodos para calcular la correlación.")
+        return
+
+    # Crear un sub-dataframe limpio sin NaNs
+    df_corr = df[list(available_cols.values())].dropna().copy()
+
+    if len(df_corr) < 5:
+        print("Insuficientes datos superpuestos (mínimo 5) para calcular correlación.")
+        return
+
+    # Renombrar columnas para que se vean bien en la gráfica
+    df_corr.columns = list(available_cols.keys())
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+    # 1. Mapa de Calor (Heatmap) de correlación
+    corr_matrix = df_corr.corr(method="pearson")
+    sns.heatmap(
+        corr_matrix,
+        annot=True,
+        fmt=".3f",
+        cmap="coolwarm",
+        center=0,
+        square=True,
+        linewidths=2,
+        cbar_kws={"shrink": 0.8},
+        ax=axes[0],
+        vmin=-1,
+        vmax=1,
+    )
+    axes[0].set_title(
+        f"Matriz de Correlación (n={len(df_corr)})", fontweight="bold", fontsize=13
+    )
+
+    # 2. Scatter plot (HACE vs LLM-Judge) si ambos existen
+    if "LLM-Judge" in df_corr.columns and "HACE" in df_corr.columns:
+        sns.regplot(
+            x="LLM-Judge",
+            y="HACE",
+            data=df_corr,
+            ax=axes[1],
+            scatter_kws={
+                "alpha": 0.7,
+                "color": "mediumpurple",
+                "s": 60,
+                "edgecolor": "white",
+            },
+            line_kws={"color": "coral", "linestyle": "--", "linewidth": 2.5},
+        )
+
+        # Calcular valor exacto de p y r
+        r, p_val = pearsonr(df_corr["LLM-Judge"], df_corr["HACE"])
+        p_text = "< 0.001" if p_val < 0.001 else f"{p_val:.3f}"
+
+        axes[1].set_title(
+            "Regresión: LLM-Judge vs HACE", fontweight="bold", fontsize=13
+        )
+        axes[1].set_xlabel("Score LLM-Judge (Normalizado 0-1)")
+        axes[1].set_ylabel("Score HACE (0-1)")
+
+        # Cajita de texto con los resultados
+        axes[1].text(
+            0.05,
+            0.95,
+            f"Pearson $r$ = {r:.3f}\n$p$-value {p_text}",
+            transform=axes[1].transAxes,
+            va="top",
+            ha="left",
+            fontsize=11,
+            bbox=dict(
+                boxstyle="round,pad=0.5", facecolor="white", alpha=0.9, edgecolor="gray"
+            ),
+        )
+        axes[1].grid(True, alpha=0.3)
+    else:
+        axes[1].text(
+            0.5,
+            0.5,
+            "Faltan datos de LLM-Judge o HACE\npara dibujar el scatter plot.",
+            ha="center",
+            va="center",
+            fontsize=12,
+        )
+        axes[1].axis("off")
+
+    plt.tight_layout()
+    plt.savefig(
+        f"{OUTPUT_DIR}comparison_correlation_triple.png", dpi=300, bbox_inches="tight"
+    )
+    print(f"Guardado: comparison_correlation_triple.png")
+    plt.close()
+
+
 def generate_all_comparison_plots():
     """Generar todas las comparativas (3 métodos)"""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -648,6 +765,7 @@ def generate_all_comparison_plots():
     plot_time_comparison_triple()
     plot_difficulty_comparison_triple()
     plot_summary_table_triple()
+    plot_methods_correlation()
 
     print("\n" + "=" * 70)
     print("TODAS LAS GRÁFICAS COMPARATIVAS GENERADAS")

@@ -232,7 +232,7 @@ def run_baseline_batch_evaluation():
                 llm_judge_data=None,  # Solo Baseline por ahora
             )
 
-            # ALHACENAR RESULTADOS
+            # A RESULTADOS
             result = {
                 # Metadata
                 "id": qid,

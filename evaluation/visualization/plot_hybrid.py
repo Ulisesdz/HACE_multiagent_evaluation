@@ -184,22 +184,28 @@ def plot_layer3_usage():
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
-    # Pie chart de uso de Layer 3
-    layer3_counts = df["HACE_layer3_used"].value_counts()
-    labels = ["No Escalado (Layers 1-2)", "Escalado a Layer 3"]
+    # SOLUCIÓN 1: Conteo explícito para evitar inversión del Quesito
+    count_0 = (df["HACE_layer3_used"] == 0).sum()
+    count_1 = (df["HACE_layer3_used"] == 1).sum()
+
+    sizes = [count_0, count_1]
+    labels = [
+        f"No Escalado\n({count_0} casos)",
+        f"Escalado a Layer 3\n({count_1} casos)",
+    ]
     colors = ["#2ecc71", "#e74c3c"]
 
     axes[0].pie(
-        layer3_counts.values,
+        sizes,
         labels=labels,
         autopct="%1.1f%%",
         colors=colors,
         startangle=90,
         explode=(0.05, 0.05),
     )
-    axes[0].set_title("Distribución de Uso de Layer 3")
+    axes[0].set_title("Distribución de Uso de Layer 3", fontweight="bold")
 
-    # Comparación de tiempos
+    # Comparación de tiempos (Boxplot)
     df_no_layer3 = df[df["HACE_layer3_used"] == 0]
     df_with_layer3 = df[df["HACE_layer3_used"] == 1]
 
@@ -217,22 +223,16 @@ def plot_layer3_usage():
         bp["boxes"][0].set_facecolor("#2ecc71")
         bp["boxes"][1].set_facecolor("#e74c3c")
 
-        axes[1].set_title("Comparación de Tiempos de Evaluación")
+        # SOLUCIÓN 3: Mover el texto al título para que no tape el boxplot
+        avg_no_l3 = df_no_layer3["HACE_time"].mean()
+        avg_with_l3 = df_with_layer3["HACE_time"].mean()
+        axes[1].set_title(
+            f"Tiempos (Media -> Sin L3: {avg_no_l3:.2f}s | Con L3: {avg_with_l3:.2f}s)",
+            fontweight="bold",
+        )
         axes[1].set_ylabel("Tiempo (segundos)")
         axes[1].grid(True, axis="y", alpha=0.3)
 
-        # Añadir promedios
-        avg_no_l3 = df_no_layer3["HACE_time"].mean()
-        avg_with_l3 = df_with_layer3["HACE_time"].mean()
-        axes[1].text(
-            0.5,
-            0.95,
-            f"Sin L3: {avg_no_l3:.3f}s | Con L3: {avg_with_l3:.3f}s",
-            transform=axes[1].transAxes,
-            ha="center",
-            va="top",
-            bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
-        )
     else:
         axes[1].text(
             0.5,
@@ -281,7 +281,8 @@ def plot_hybrid_by_difficulty():
         edgecolor="black",
     )
 
-    # Añadir n y % Layer 3
+    ax.set_ylim([0, 1.05])
+
     for i, (bar, diff) in enumerate(zip(bars, difficulty_order)):
         if diff in df_grouped.index:
             count = int(df_grouped.loc[diff, ("HACE_score", "count")])
@@ -289,13 +290,22 @@ def plot_hybrid_by_difficulty():
             layer3_pct = (layer3_count / count * 100) if count > 0 else 0
 
             height = bar.get_height()
+
+            # Situado en la MITAD de la barra y con fondo blanco visible
             ax.text(
                 bar.get_x() + bar.get_width() / 2,
-                height + 0.02,
+                height / 2,  # Mitad de la barra para que NUNCA corte con el techo
                 f"n={count}\nL3: {layer3_pct:.0f}%",
                 ha="center",
-                va="bottom",
-                fontsize=9,
+                va="center",
+                fontsize=11,
+                fontweight="bold",
+                bbox=dict(
+                    boxstyle="round,pad=0.3",
+                    facecolor="white",
+                    alpha=0.9,
+                    edgecolor="gray",
+                ),
             )
 
     ax.set_title(
@@ -306,7 +316,6 @@ def plot_hybrid_by_difficulty():
     ax.set_ylabel("Score (0-1)")
     ax.set_xticks(x)
     ax.set_xticklabels(difficulty_order)
-    ax.set_ylim([0, 1.1])
     ax.grid(True, axis="y", alpha=0.3)
 
     plt.tight_layout()
@@ -345,7 +354,7 @@ def plot_quality_confidence_distribution():
         # Añadir porcentajes
         for i, (label, count) in enumerate(quality_counts.items()):
             pct = (count / len(df)) * 100
-            axes[0].text(count + 0.5, i, f"{pct:.1f}%", va="center")
+            axes[0].text(count + 0.5, i, f"{pct:.1f}%", va="center", fontweight="bold")
     else:
         axes[0].text(
             0.5, 0.5, "Columna HACE_quality no disponible", ha="center", va="center"
@@ -369,11 +378,19 @@ def plot_quality_confidence_distribution():
         axes[1].set_title("Distribución de Confidence Levels")
         axes[1].set_ylabel("Frecuencia")
         axes[1].grid(True, axis="y", alpha=0.3)
+        axes[1].set_ylim(0, confidence_counts.max() * 1.15)  # Dar un poco más de techo
 
         # Añadir porcentajes
         for i, (_, count) in enumerate(confidence_counts.items()):
             pct = (count / len(df)) * 100
-            axes[1].text(i, count + 0.5, f"{pct:.1f}%", ha="center", va="bottom")
+            axes[1].text(
+                i,
+                count + 0.5,
+                f"{pct:.1f}%",
+                ha="center",
+                va="bottom",
+                fontweight="bold",
+            )
     else:
         axes[1].text(
             0.5, 0.5, "Columna HACE_confidence no disponible", ha="center", va="center"

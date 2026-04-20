@@ -340,7 +340,7 @@ def run_comprehensive_evaluation():
                 llm_judge_data=llm_judge_data,
             )
 
-            # PASO 4: ALHACENAR RESULTADOS (para CSV legacy)
+            # PASO 4: ALMACE RESULTADOS (para CSV legacy)
             result = {
                 # Metadata
                 "id": qid,
