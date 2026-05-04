@@ -66,7 +66,7 @@ multiagent_evalutation/
 │   │   ├── logger.py      # MetricsLogger class (logging unificado)
 │   │   ├── run_eval_gloabl.py      # Batch evaluation de los 3 sistemas sobre dataset completo
 │   │   ├── METRICS_ACCUMULATOR.md      # Documentación del logger
-│   │   └── dataset.json   # Dataset sintético de 45 casos de prueba
+│   │   └── dataset.json   # Dataset sintético de 80 casos de prueba
 │   └── visualization/     # Generación de Gráficas
 │       ├── __init__.py
 │       ├── plot_baseline.py       # Gráficas de Baseline Metrics
@@ -102,7 +102,7 @@ Para poner en marcha el sistema completo, debes seguir este orden lógico: Datos
 
 ### Fase 2: Configuración del RAG (Base de Conocimiento)
 Vectorizamos los archivos de texto (RAG_KNOWLEDGE.txt) para que los agentes puedan consultar teoría o datos cualitativos.
-Asegúrate de que existan los archivos .txt en las carpetas crypto/ y weather/.
+Asegúrate de que existan los archivos .txt en la carpeta crypto/
 
 Ejecuta:
 ```bash
@@ -129,7 +129,7 @@ Opción B: Consola (CLI) Interacción rápida por terminal.
 python -m orchestrator.main
 ```
 
-### Fase 4: Evaluación y Calibración Offline (Opcional/Avanzado)
+### Fase 4: Evaluación y Calibración Offline 
 El sistema cuenta con un pipeline completo para evaluar su propio rendimiento de forma rigurosa usando un dataset sintético de 45 casos (`dataset.json`).
 
 **1. Evaluación Unificada:**
@@ -160,12 +160,11 @@ uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db
 ```
 3. Accede a http://127.0.0.1:5000 para ver:
 - Traces: Diagramas de cascada (Waterfall) de cada interacción Agente-Herramienta.
-- Prompts: Inspección de qué texto exacto se envía al LLM.
 - Latencia: Tiempos de respuesta de cada nodo.
 
 ### Guardrails y Grounding Dinámico
 El sistema implementa mecanismos de seguridad robustos:
-- Introspección de Esquema: Los agentes leen la base de datos al inicio para saber qué tablas (Monedas/Ciudades) existen realmente.
+- Introspección de Esquema: Los agentes leen la base de datos al inicio para saber qué tablas (Monedas) existen realmente.
 - Anclaje (Grounding): Si preguntas por una ciudad que no está en la DB, el agente rechazará la pregunta en lugar de alucinar datos.
 - Prompting Estricto: Reglas explícitas para diferenciar entre un dato histórico (SQL) y una predicción (ML).
 
@@ -200,8 +199,6 @@ evaluation/baseline/dataset_baseline_summary.csv    # Resumen ejecutivo
 #### LLM As A Judge
 El LLM Evaluador analiza la triada: Pregunta Usuario → Contexto Técnico (SQL/Tool) → Respuesta Agente y evalúa (Score 1-4) en base a la Fidelidad del Dato y Validación de Procedimiento.
 
-**Cambio importante:** A partir de la versión 2.0, LLM-Judge usa **escala 1-4** (antes 0-10) para mayor consistencia y reproducibilidad.
-
 ##### **Evaluación Offline (Batch):**
 ```bash
 python -m evaluation.llm_j.run_eval
@@ -227,8 +224,6 @@ evaluation/llm_j/dataset_llmj_summary.csv    # Resumen ejecutivo
 - **3**: Bueno (equivalente a 7-8)
 - **2**: Mejorable (equivalente a 5-6)
 - **1**: Crítico (equivalente a 0-4)
-
-**Razón del cambio:** La escala 1-4 mejora la reproducibilidad del evaluador LLM al reducir la ambigüedad en valores intermedios. Los valores 4, 5, 6, 7 en la escala 0-10 rara vez se usaban, lo que generaba inconsistencias.
 
 **Características:**
 - Detección de errores semánticos
@@ -337,15 +332,6 @@ python -m evaluation.metrics_accumulator.run_eval_global
 python -m evaluation.baseline.run_eval
 python -m evaluation.llm_j.run_eval
 python -m evaluation.hybrid.run_eval
-```
-
-### **Paso 1: Ejecutar Evaluaciones Offline**
-```bash
-# Evaluar con Baseline
-python -m evaluation.baseline.run_eval
-
-# Evaluar con LLM-Judge
-python -m evaluation.llm_j.run_eval
 ```
 
 ### **Paso 2: Generar Gráficas**
