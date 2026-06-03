@@ -78,10 +78,15 @@ def train_all_models():
         model = RandomForestRegressor(n_estimators=100, random_state=42)
         model.fit(X_train, y_train)
 
-        # 7. Evaluación (Test)
+        # 7. Evaluación (Test) - Random Forest
         predictions = model.predict(X_test)
         mae = mean_absolute_error(y_test, predictions)
         r2 = r2_score(y_test, predictions)
+
+        # Evaluación - BASELINE (Media de los 3 días anteriores)
+        # X_test tiene las columnas "d-1", "d-2", "d-3", así que su media por fila es el baseline
+        baseline_predictions = X_test.mean(axis=1)
+        baseline_mae = mean_absolute_error(y_test, baseline_predictions)
 
         # Precisión porcentual simple
         with np.errstate(divide="ignore", invalid="ignore"):
@@ -129,6 +134,9 @@ def train_all_models():
         print(f"Error Medio (MAE): {mae:.2f} USD")
         print(f"R2 Score: {r2:.4f}")
         print(f"Accuracy aprox (100-MAPE): {accuracy_perc:.2f}%")
+
+        print(f"MAE Baseline (Media 3d): {baseline_mae:.2f} USD")
+        print(f"Mejora vs Baseline: {baseline_mae - mae:.2f} USD")
 
     conn.close()
 
