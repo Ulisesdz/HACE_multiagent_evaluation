@@ -106,7 +106,7 @@ def load_data(source: str = "offline") -> pd.DataFrame:
 
 # ========== HEADER ==========
 st.markdown('<h1 class="main-header">HACE Dashboard</h1>', unsafe_allow_html=True)
-st.markdown("**Hybrid Agent Consensus Evaluator** - Sistema Híbrido de Evaluación")
+st.markdown("**Hybrid Agent Comprehensive Evaluator** - Sistema Híbrido de Evaluación")
 
 # ========== SIDEBAR ==========
 with st.sidebar:

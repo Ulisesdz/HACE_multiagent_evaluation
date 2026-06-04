@@ -3,7 +3,7 @@ Este proyecto implementa una **Firma de Inversión basada en Agentes de IA**. Si
 
 El sistema combina Modelos de Machine Learning (Random Forest para predicción numérica), Búsqueda en Internet (Datos en vivo), RAG (Conocimiento técnico) y Análisis de Riesgos (Cálculo de volatilidad).
 
-![Arquitectura Conceptual del Sistema](grafo_arquitectura.png)
+![Arquitectura Conceptual del Sistema](architecture_graphs/grafo_arquitectura.png)
 
 ## Estructura del Proyecto
 
@@ -19,7 +19,7 @@ multiagent_evalutation/
 │   └── utils.py           # Decoradores de logs y utilidades
 ├── crypto/
 │   ├── crypto_data.db     # Base de datos SQLite con precios históricos
-│   ├── RAG_KNOWLEDGE.txt  # Conocimiento técnico (Halving, Consensus, Macro)
+│   ├── RAG_KNOWLEDGE.txt  # Conocimiento técnico (Halving, Comprehensive, Macro)
 │   ├── models/            # Modelos .joblib entrenados (Random Forest)
 │   ├── plots/             # Gráficas de validación de los modelos ML
 │   └── src/               # Backend de ML
@@ -48,7 +48,7 @@ multiagent_evalutation/
 │   │   ├── LLM_JUDGE_EVALUATION_GUIDE.md  # Documentación completa
 │   │   ├── dataset_llmj_results.csv      # Resultados completos (generado)
 │   │   └── dataset_llmj_summary.csv      # Resumen ejecutivo (generado)
-│   ├── hybrid/             # Fase 3: HACE (Hybrid Agent Consensus Evaluator)
+│   ├── hybrid/             # Fase 3: HACE (Hybrid Agent Comprehensive Evaluator)
 │   │   ├── __init__.py
 │   │   ├── layer1_guardrails.py  # Capa 1: Validadores deterministas (hallucinations, SQL, coverage)
 │   │   ├── layer2_semantic.py    # Capa 2: Evaluación semántica basada en Embeddings y Similitud de Coseno
@@ -130,7 +130,7 @@ python -m orchestrator.main
 ```
 
 ### Fase 4: Evaluación y Calibración Offline 
-El sistema cuenta con un pipeline completo para evaluar su propio rendimiento de forma rigurosa usando un dataset sintético de 45 casos (`dataset.json`).
+El sistema cuenta con un pipeline completo para evaluar su propio rendimiento de forma rigurosa usando un dataset sintético de 80 casos (`dataset.json`).
 
 **1. Evaluación Unificada:**
 Para ejecutar los tres evaluadores (Baseline, LLM-Judge y HACE) en lote sobre todo el dataset y consolidar los resultados:
@@ -245,7 +245,7 @@ evaluation/llm_j/dataset_llmj_summary.csv    # Resumen ejecutivo
 
 ### HACE Metrics (Hybrid - Escala 0-1) 
 
-**HACE** (Hybrid Agent Consensus Evaluator) combina validación determinista, evaluación semántica con embeddings, y LLM-Judge selectivo en una arquitectura de 3 capas.
+**HACE** (Hybrid Agent Comprehensive Evaluator) combina validación determinista, evaluación semántica con embeddings, y LLM-Judge selectivo en una arquitectura de 3 capas.
 
 | Campo | Descripción | Rango |
 |-------|-------------|-------|
@@ -272,7 +272,7 @@ evaluation/llm_j/dataset_llmj_summary.csv    # Resumen ejecutivo
    - Routing Quality (keywords ponderados)
    - Report Completeness
 
-3. **Layer 3 (LLM-Judge Selectivo):** Solo se ejecuta en ~40% de casos
+3. **Layer 3 (LLM-Judge Selectivo):** Solo se ejecuta en ~20% de casos
    - Evaluación profunda de módulos problemáticos detectados en Layer 1-2
    - Usa el mismo LLM-Judge de evaluación cualitativa
    - Escalación basada en fallos críticos, scores ambiguos o discrepancias
@@ -406,7 +406,7 @@ Cada sub-agente dispone de autonomía para razonar sobre la consulta del usuario
   Crea las bases de datos SQLite y gestiona las tablas para cada activo.
 
 - **trainer.py**  
-  Implementa un `RandomForestRegressor`.  
+  Implementa un `RandomForestRegressor` y lo compara con una predicción Baseline.  de media ponderada por los 3 últimos días 
   Realiza un *split* cronológico (80/20) para garantizar que el modelo no "prediga el pasado" y guarda los modelos optimizados en la subcarpeta `models/`.
 
 - **predictor.py**  

@@ -1,14 +1,6 @@
 # Sistema de Evaluación Baseline Multi-Agente
 
-## Índice
-1. [Introducción y Filosofía](#introducción)
-2. [Arquitectura del Sistema](#arquitectura)
-3. [Metodología de Evaluación](#metodología)
-4. [Métricas Detalladas](#métricas)
-5. [Cobertura del Dataset](#dataset)
----
-
-## 1. Introducción y Filosofía {#introducción}
+## 1. Introducción y Filosofía
 
 ### 1.1 ¿Qué es Baseline Metrics?
 
@@ -33,7 +25,6 @@
 #### Principio de Velocidad
 > "La evaluación debe ser órdenes de magnitud más rápida que la ejecución"
 
-- **Target**: <0.5s por caso (vs ~3.5s de LLM-Judge).
 - **Sin I/O de red**: No hay llamadas a APIs externas.
 - **Sin inferencia**: No hay procesamiento de LLMs.
 
@@ -42,7 +33,6 @@
 ✅ **USA Baseline para:**
 - Detección de errores numéricos (alucinaciones, imprecisiones)
 - Validación de routing lógico
-- Tests de regresión automatizados (CI/CD)
 - Evaluación rápida durante desarrollo
 - Métricas objetivas para comparaciones científicas
 
@@ -54,7 +44,7 @@
 
 ---
 
-## 2. Arquitectura del Sistema {#arquitectura}
+## 2. Arquitectura del Sistema
 
 ### 2.1 Pipeline de Evaluación
 ```
@@ -109,7 +99,7 @@ Traza del Sistema → TraceCollector → Baseline Evaluator → Métricas
 
 ---
 
-## 3. Metodología de Evaluación {#metodología}
+## 3. Metodología de Evaluación
 
 ### 3.1 Métrica 1: Routing Accuracy (F1-Score)
 
@@ -135,14 +125,6 @@ Reglas de keywords (prioridad descendente):
 | `volatilidad`, `riesgo`, `seguro` | **Risk_Officer** |
 | `precio`, `gráfico`, `top`, `predicción` | **Technical_Analyst** |
 | Default | **Technical_Analyst** |
-
-**Ejemplo:**
-```python
-task = "Calcular volatilidad Solana"
-# Detecta "volatilidad" → expected = "Risk_Officer"
-# Actual routing: "Risk_Officer"
-# ✅ CORRECTO
-```
 
 **Paso 3: Confusion Matrix**
 
@@ -394,12 +376,6 @@ Completed: ['']  # Bug: current_task no se capturó
 # Coverage = 0% ← FALSO NEGATIVO
 ```
 
-**Fix**: En `app.py` usar fallback:
-```python
-if not current_task and trace.routing_trace:
-    current_task = trace.routing_trace[-1].get("task", "")
-```
-
 ---
 
 ### 3.4 Métrica 4: SQL Correctness (%)
@@ -541,7 +517,7 @@ sql_queries = []
 
 ---
 
-## 4. Score Global (Baseline Score) {#score-global}
+## 4. Score Global (Baseline Score)
 
 ### 4.1 Fórmula de Agregación
 ```python
@@ -604,13 +580,13 @@ baseline_score = 1.0×0.30 + 0.2×0.30 + 1.0×0.25 + 1.0×0.15
 
 ---
 
-## 5. Cobertura del Dataset {#dataset}
+## 5. Cobertura del Dataset
 
 ### 5.1 Dataset Compartido
 
 Baseline usa **el mismo dataset** que LLM-Judge:
 - **Ubicación**: `evaluation/llm_j/dataset.json`
-- **Total de casos**: 45
+- **Total de casos**: 80
 - **Categorías**: 20+ (Planner, Routing, Technical, Fundamental, Risk, End-to-End)
 
 ### 5.2 Métricas Aplicables por Caso

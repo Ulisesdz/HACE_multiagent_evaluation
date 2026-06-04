@@ -18,7 +18,7 @@ Evaluaciones generadas durante sesiones de usuario en Streamlit.
 **Generación:** Automática cada vez que un usuario evalúa una consulta en la interfaz web.
 
 ### `offline_metrics.csv`
-Evaluaciones batch sobre el dataset de pruebas (45 casos).
+Evaluaciones batch sobre el dataset de pruebas (80 casos).
 
 **Fuente:** 
 - `evaluation/baseline/run_eval.py`
@@ -78,7 +78,7 @@ Evaluaciones batch sobre el dataset de pruebas (45 casos).
 
 ### HACE Metrics (Hybrid - Escala 0-1)
 
-**HACE** (Hybrid Agent Consensus Evaluator) combina validación determinista, evaluación semántica con embeddings, y LLM-Judge selectivo en una arquitectura de 3 capas.
+**HACE** (Hybrid Agent Comprehensive Evaluator) combina validación determinista, evaluación semántica con embeddings, y LLM-Judge selectivo en una arquitectura de 3 capas.
 
 | Campo | Descripción | Rango |
 |-------|-------------|-------|
@@ -93,19 +93,19 @@ Evaluaciones batch sobre el dataset de pruebas (45 casos).
 
 **Componentes de HACE:**
 
-1. **Layer 1 (Guardrails - ~0.05s):** Validadores deterministas
+1. **Layer 1 (Guardrails):** Validadores deterministas
    - Completitud estructural
    - Sintaxis de routing
    - Rangos numéricos plausibles
    - Existencia de archivos mencionados
 
-2. **Layer 2 (Semantic - ~0.5s):** Evaluación semántica con embeddings
+2. **Layer 2 (Semantic):** Evaluación semántica con embeddings
    - Task Fidelity (BERTScore-inspired)
    - Agent Fidelity (similitud tool output vs respuesta)
    - Routing Quality (keywords ponderados)
    - Report Completeness
 
-3. **Layer 3 (LLM-Judge Selectivo - ~3.5s):** Solo se ejecuta en ~40% de casos
+3. **Layer 3 (LLM-Judge Selectivo):** Solo se ejecuta en ~20% de casos
    - Evaluación profunda de módulos problemáticos detectados en Layer 1-2
    - Usa el mismo LLM-Judge de evaluación cualitativa
    - Escalación basada en fallos críticos, scores ambiguos o discrepancias

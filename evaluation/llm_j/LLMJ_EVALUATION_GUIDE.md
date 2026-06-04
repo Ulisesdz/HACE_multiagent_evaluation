@@ -1,16 +1,6 @@
 # Sistema de Evaluación ComprLLM-J Multi-Agente
 
-## Índice
-1. [Arquitectura del Sistema](#arquitectura)
-2. [Metodología de Evaluación](#metodología)
-3. [Cobertura del Dataset](#dataset)
-4. [Métricas y Scoring](#métricas)
-5. [Interpretación de Resultados](#interpretación)
-6. [Casos de Uso](#casos-de-uso)
-
----
-
-## 1. Arquitectura del Sistema {#arquitectura}
+## 1. Arquitectura del Sistema
 
 ### Pipeline de Ejecución
 ```
@@ -192,7 +182,7 @@ Usuario → Planner → Supervisor → Agente → Supervisor → ... → Informe
 
 ---
 
-## 2. Metodología de Evaluación {#metodología}
+## 2. Metodología de Evaluación
 
 ### 2.1 Captura de Trazas (TraceCollector)
 
@@ -242,44 +232,46 @@ Un LLM "Auditor Jefe" recibe TODAS las evaluaciones modulares y:
 
 ---
 
-## 3. Cobertura del Dataset {#dataset}
+## 3. Cobertura del Dataset
 
 ### 3.1 Estadísticas del Dataset
 
-- **Total de Casos**: 45
+- **Total de Casos**: 80
 - **Distribución por Dificultad**:
-  - Easy: 13 casos (28.9%)
-  - Medium: 14 casos (31.1%)
-  - Hard: 13 casos (28.9%)
-  - Very Hard: 5 casos (11.1%)
+  - Easy: 23 casos
+  - Medium: 22 casos
+  - Hard: 27 casos
+  - Very Hard: 8 casos
 
 ### 3.2 Cobertura por Módulo
 
 | Módulo | Casos | % |
 |--------|-------|---|
-| Planner | 6 | 13.3% |
-| Supervisor | 9 | 20.0% |
-| Technical_Analyst | 7 | 15.6% |
-| Fundamental_Analyst | 5 | 11.1% |
-| Risk_Officer | 5 | 11.1% |
-| Final_Output | 4 | 8.9% |
-| End-to-End | 9 | 20.0% |
+| Supervisor | 17 | 21.25% |
+| Planner | 14 | 17.50% |
+| Technical_Analyst | 14 | 17.50% |
+| Risk_Officer | 10 | 12.50%|
+| Fundamental_Analyst | 9 | 11.25% |
+| System (End-to-End) | 8 | 10.00% |
+| Final_Output | 6 | 7.50% |
+| Planner + Technical | 2 | 2.50% |
 
 ### 3.3 Cobertura por Tipo de Error
 
-| Error Esperado | Casos |
-|----------------|-------|
-| None (Baseline) | 7 |
-| Planning_Error | 6 |
-| Routing_Error | 9 |
-| Tool_Error (Logic) | 3 |
-| Fabrication | 6 |
-| Incompleteness | 5 |
-| Risk_Negligence | 2 |
-| Parametric_Leak | 3 |
-| Loop_Error | 1 |
-| Chart_Attribution | 2 |
-| Task_Completion | 1 |
+| Error Esperado (Agrupado) | Casos | Desglose de variantes incluidas |
+|--------|-------|---|
+| None (Baseline) | 11 | Casos de éxito esperado sin fallos. |
+| Planning_Error | 12 | "Incluye sub-tipos (Incompleteness, Precision Loss, Date Loss, etc.) y cruces (ej. or Routing_Error, or Logic_Error)." |
+| Routing_Error | 12 | Errores puros de enrutamiento y combinados con Task_Completion. |
+| Incompleteness / Structure | 11 | "Fallos en el formato final, omisión de datos o completitud de tareas (incluye Task_Completion)." |
+| Fabrication | 9 | Invenciones puras y fallos combinados con fidelidad de salida. |
+| Parametric_Leak | 6 | Fugas de conocimiento paramétrico (con o sin Fabrication). |
+| Hallucination | 5 | "Gráficos fantasma, negación de datos existentes, etc." |
+| Output_Fidelity | 4 | Mezcla de salidas o pérdida de fidelidad respecto a la herramienta. |
+| Tool / Logic_Error (SQL) | 4 | Errores de sintaxis SQL o fallos lógicos en consultas. |
+| Chart_Attribution_Error | 2 | Asignación incorrecta de gráficos generados. |
+| Loop_Error | 2 | Bucles de ejecución por parte del Supervisor. |
+| Risk_Negligence | 2 | Omisión de advertencias críticas de riesgo. |
 
 ### 3.4 Casos Destacados
 
@@ -305,7 +297,7 @@ Un LLM "Auditor Jefe" recibe TODAS las evaluaciones modulares y:
 
 **TC-029**: Risk Negligence
 - **Objetivo**: Verificar que Risk Officer advierta si volatilidad > 5%
-- **Esperado**: "⚠️ Volatilidad ALTA del 8.2%. Riesgo significativo."
+- **Esperado**: "Volatilidad ALTA del 8.2%. Riesgo significativo."
 - **Fallo común**: Solo reporta "8.2%" sin advertencia
 
 **TC-034**: Chart Attribution

@@ -8,7 +8,7 @@ from evaluation.hybrid.scorer import HybridScorer
 
 class HybridEvaluator:
     """
-    HACE - Hybrid Agent Consensus Evaluator
+    HACE - Hybrid Agent Comprehensive Evaluator
 
     Arquitectura de 3 capas:
     - Layer 1: Guardrails (Deterministic)

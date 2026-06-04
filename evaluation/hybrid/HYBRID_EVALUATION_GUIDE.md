@@ -1,4 +1,4 @@
-# HACE - Hybrid Agent Consensus Evaluator
+# HACE - Hybrid Agent Comprehensive Evaluator
 
 ## Descripción
 
@@ -18,7 +18,7 @@ Sistema de evaluación híbrida de 3 capas para sistemas multi-agente. Combina v
 └──────────────┬──────────────────────────┘
                │
    ┌───────────▼───────────┐
-   │  CAPA 1: GUARDRAILS   │  (~0.05s)
+   │  CAPA 1: GUARDRAILS   │
    │  (Deterministic)      │
    └───────────┬───────────┘
                │
@@ -31,13 +31,12 @@ Sistema de evaluación híbrida de 3 capas para sistemas multi-agente. Combina v
 ┌──▼─────┐          ┌─────▼──────┐
 │ CAPA 2 │          │ CRITICAL   │
 │ SEMANT │          │ FAILURE    │
-│ (~0.5s)│          │ → CAPA 3   │
+│        │          │ → CAPA 3   │
 └──┬─────┘          └─────┬──────┘
    │                      │
 ┌──▼──────┐         ┌─────▼──────┐
 │ ¿PASS?  │         │ CAPA 3:    │
 └──┬──────┘         │ LLM-JUDGE  │
-   │                │ (~3.5s)    │
    │                └─────┬──────┘
    │                      │
    └──────────┬───────────┘
@@ -100,13 +99,13 @@ Coordinador del pipeline:
 
 ### Latencia
 
-| Escenario | Capas | Tiempo | % Casos |
-|-----------|-------|--------|---------|
-| Perfecto | 1+2 | ~0.55s | ~60% |
-| Ambiguo | 1+2+3 | ~4.0s | ~30% |
-| Crítico | 1+3 | ~3.55s | ~10% |
+| Escenario | Capas | % Casos |
+|-----------|-------|---------|
+| Perfecto | 1+2| ~60% |
+| Ambiguo | 1+2+3 | ~30% |
+| Crítico | 1+3| ~10% |
 
-**Reducción vs LLM-Judge puro:** ~46%
+**Reducción vs LLM-Judge puro:** ~70%
 
 ### Reproducibilidad
 
@@ -116,18 +115,18 @@ Coordinador del pipeline:
 
 ### Distribución de Carga
 
-- ~60% casos resueltos en Capas 1-2 (rápido)
-- ~40% requieren Capa 3 (profundo)
+- ~80% casos resueltos en Capas 1-2 (rápido)
+- ~20% requieren Capa 3 (profundo)
 
 ---
 
 ## Comparación con Otros Métodos
 
-| Método | Latencia | Reproducibilidad | Semántico | Numérico | Estructural |
-|--------|----------|------------------|-----------|----------|-------------|
-| Baseline | 0.02s | Total | ❌ | ✅ | ✅ |
-| LLM-Judge | 3.5s | Parcial | ✅ | ✅ | ✅ |
-| **HACE** | **~1.9s** | Equilibrio | **✅** | **✅** | **✅** |
+| Método | Reproducibilidad | Semántico | Numérico | Estructural |
+|--------|------------------|-----------|----------|-------------|
+| Baseline | Total | ❌ | ✅ | ✅ |
+| LLM-Judge | Parcial | ✅ | ✅ | ✅ |
+| **HACE** | Equilibrio | **✅** | **✅** | **✅** |
 
 ---
 
