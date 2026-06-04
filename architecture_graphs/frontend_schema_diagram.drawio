@@ -1,0 +1,143 @@
+<mxfile host="65bd71144e">
+    <diagram id="hCb_VAAV-pvr0O3cSW3e" name="Page-1">
+        <mxGraphModel dx="2764" dy="842" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1200" math="0" shadow="0">
+            <root>
+                <mxCell id="cell-0"/>
+                <mxCell id="cell-1" parent="cell-0"/>
+                <mxCell id="cell-title" value="Frontend conversacional · app.py · Streamlit" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=2;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="300" y="10" width="700" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-outer" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f4fb;strokeColor=#5b9bd5;strokeWidth=2;dashed=1;" parent="cell-1" vertex="1">
+                    <mxGeometry x="-30" y="20" width="1030" height="930" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-box" value="&lt;i&gt;Sidebar&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f7ff;strokeColor=#5b9bd5;strokeWidth=1;dashed=1;verticalAlign=top;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="30" y="50" width="200" height="880" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-title" value="&lt;b&gt;Comité de Inversión&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;fontColor=#0050a0;" parent="cell-1" vertex="1">
+                    <mxGeometry x="40" y="75" width="180" height="36" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-dashboard" value="&lt;b&gt;→ Abrir Dashboard&lt;/b&gt;&lt;br&gt;st.switch_page()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="40" y="120" width="180" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-roles" value="&lt;b&gt;Roles activos&lt;/b&gt;&lt;br&gt;Supervisor (CIO)&lt;br&gt;&lt;i&gt;Coordinación y control del flujo&lt;/i&gt;&lt;br&gt;Technical Analyst&lt;br&gt;Fundamental Analyst&lt;br&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;Risk Officer&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=11;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="40" y="178" width="180" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-audit-box" value="&lt;i&gt;Sistema de auditoría&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff0e8;strokeColor=#d6561c;strokeWidth=1;dashed=1;verticalAlign=top;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="30" y="320" width="200" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-llmj" value="&lt;b&gt;● LLM-Judge&lt;/b&gt; (toggle)&lt;br&gt;Planner · Supervisor&lt;br&gt;Agentes · Output Final&lt;br&gt;Rúbricas 1–4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6d5;strokeColor=#d6561c;fontSize=11;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="40" y="340" width="180" height="76" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-base" value="&lt;b&gt;● Baseline Metrics&lt;/b&gt; (toggle)&lt;br&gt;Routing F1&lt;br&gt;Numeric F1 · Task Coverage&lt;br&gt;SQL Correctness" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6d5;strokeColor=#d6561c;fontSize=11;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="40" y="428" width="180" height="76" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-hace" value="&lt;b&gt;● HACE&lt;/b&gt; (toggle)&lt;br&gt;L1: Guardrails (det.)&lt;br&gt;L2: Semantic (embeddings)&lt;br&gt;L3: LLM-Judge (selectivo)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6d5;strokeColor=#d6561c;fontSize=11;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="40" y="516" width="180" height="76" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-stats" value="&lt;b&gt;Métricas acumuladas&lt;/b&gt;&lt;br&gt;[Ver Estadísticas] btn&lt;br&gt;Total evaluaciones&lt;br&gt;Baseline / LLM-J / HACE avg&lt;br&gt;Categorías de error" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=11;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="40" y="640" width="180" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-debug" value="&lt;b&gt;Debugging&lt;/b&gt;&lt;br&gt;[Ver Grafo del Sistema]&lt;br&gt;[Limpiar Sesión]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=11;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="40" y="756" width="180" height="84" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-user" value="👤 &lt;b&gt;Usuario&lt;/b&gt;&lt;br&gt;Introduce consulta en lenguaje natural" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="430" y="55" width="300" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-arr-u-e" style="edgeStyle=orthogonalEdgeStyle;" parent="cell-1" source="cell-user" target="cell-entrada" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-entrada" value="&lt;b&gt;Entrada · st.chat_input()&lt;/b&gt;&lt;br&gt;LangGraph app.stream() → streaming por nodos" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="380" y="150" width="400" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-arr-e-pipe" style="edgeStyle=orthogonalEdgeStyle;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="cell-1" source="cell-entrada" target="cell-pipe-box" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="580" y="222"/>
+                            <mxPoint x="370" y="222"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="cell-arr-e-trace" style="edgeStyle=orthogonalEdgeStyle;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="cell-1" source="cell-entrada" target="cell-trace-box" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="580" y="222"/>
+                            <mxPoint x="730" y="222"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="cell-pipe-box" value="&lt;i&gt;Panel de pipeline · st.status()&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fff0;strokeColor=#82b366;strokeWidth=2;dashed=1;verticalAlign=top;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="255" y="237" width="230" height="220" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-rt" value="&lt;b&gt;Eventos en tiempo real&lt;/b&gt;&lt;br&gt;· Tareas generadas (Planner)&lt;br&gt;· Routing (Supervisor)&lt;br&gt;· Tool calls + outputs&lt;br&gt;· Imágenes PNG (plots_temp/)&lt;br&gt;· Reportes agentes (color)&lt;br&gt;· Respuesta final (AIMessage)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="264" y="266" width="212" height="181" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-trace-box" value="&lt;i&gt;TraceCollector · captura estructurada&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fff0;strokeColor=#82b366;strokeWidth=2;dashed=1;verticalAlign=top;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="615" y="237" width="230" height="220" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-dt" value="&lt;b&gt;Datos del turno&lt;/b&gt;&lt;br&gt;· user_question&lt;br&gt;· planner_tasks&lt;br&gt;· routing_trace&lt;br&gt;· agent_executions&lt;br&gt;· sql_queries&lt;br&gt;· final_answer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="624" y="266" width="212" height="181" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-arr-pipe-trace" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;dashed=1;strokeDashPattern=3 3;" parent="cell-1" source="cell-pipe-box" target="cell-trace-box" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-eval-label" value="&lt;i&gt;Evaluadores · ejecutados al finalizar cada turno (si toggle activo)&lt;/i&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="255" y="460" width="590" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-eval-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff0e8;strokeColor=#d6561c;strokeWidth=2;dashed=1;" parent="cell-1" vertex="1">
+                    <mxGeometry x="248" y="500" width="610" height="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-llmj" value="&lt;b&gt;LLM-Judge&lt;/b&gt;&lt;br&gt;evaluate_planner()&lt;br&gt;evaluate_supervisor()&lt;br&gt;evaluate_agent()&lt;br&gt;evaluate_final_output()&lt;br&gt;evaluate_comprehensive()&lt;br&gt;→ score 1-4 normalizado&lt;br&gt;→ elapsed_time&lt;br&gt;→ MLflow log_metric" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6d5;strokeColor=#d6561c;fontSize=11;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="258" y="516" width="180" height="226" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-base" value="&lt;b&gt;Baseline&lt;/b&gt;&lt;br&gt;evaluate_baseline()&lt;br&gt;Determinista 100%&lt;br&gt;Routing F1&lt;br&gt;Numeric F1&lt;br&gt;Task Coverage&lt;br&gt;SQL Correctness&lt;br&gt;→ score 0-1&lt;br&gt;→ MLflow log_metric" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6d5;strokeColor=#d6561c;fontSize=11;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="460" y="516" width="180" height="226" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-hace" value="&lt;b&gt;HACE&lt;/b&gt;&lt;br&gt;HybridEvaluator.evaluate()&lt;br&gt;L1 Guardrails (det.)&lt;br&gt;L2 Semantic (embed.)&lt;br&gt;L3 LLM-Judge (selectivo)&lt;br&gt;Escalación condicional&lt;br&gt;→ score + quality label&lt;br&gt;→ confidence&lt;br&gt;→ MLflow log_metric/param" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6d5;strokeColor=#d6561c;fontSize=11;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="662" y="516" width="180" height="226" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-arr-dt-lj" style="edgeStyle=orthogonalEdgeStyle;" parent="cell-1" source="cell-dt" target="cell-llmj" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="730" y="490"/>
+                            <mxPoint x="348" y="490"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="cell-arr-dt-bl" style="edgeStyle=orthogonalEdgeStyle;" parent="cell-1" source="cell-dt" target="cell-base" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="730" y="490"/>
+                            <mxPoint x="550" y="490"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="cell-arr-dt-hc" style="edgeStyle=orthogonalEdgeStyle;" parent="cell-1" source="cell-dt" target="cell-hace" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="730" y="490"/>
+                            <mxPoint x="752" y="490"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="cell-ml" value="&lt;b&gt;Tabla comparativa · render_comparison_table()&lt;/b&gt;&lt;br&gt;MetricsLogger → offline_metrics.csv · online_metrics.csv" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="350" y="786" width="400" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-arr-lj-ml" style="edgeStyle=orthogonalEdgeStyle;" parent="cell-1" source="cell-llmj" target="cell-ml" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-arr-bl-ml" style="edgeStyle=orthogonalEdgeStyle;" parent="cell-1" source="cell-base" target="cell-ml" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-arr-hc-ml" style="edgeStyle=orthogonalEdgeStyle;" parent="cell-1" source="cell-hace" target="cell-ml" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-hist" value="&lt;b&gt;Historial de evaluaciones · st.tabs()&lt;/b&gt;&lt;br&gt;Turno 1 · Turno 2 · … → render_llm / render_baseline / render_hybrid / comparison" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f4fb;strokeColor=#5b9bd5;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="255" y="870" width="590" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-arr-ml-hist" style="edgeStyle=orthogonalEdgeStyle;" parent="cell-1" source="cell-ml" target="cell-hist" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

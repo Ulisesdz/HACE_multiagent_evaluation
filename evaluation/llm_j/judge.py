@@ -1,94 +1,303 @@
 from langchain_core.prompts import ChatPromptTemplate
-from pydantic import BaseModel, Field
-from pydantic.types import StringConstraints
-from typing_extensions import Annotated
+from typing import List
 from orchestrator.config import get_llm
+from evaluation.llm_j.prompts import (
+    COMPREHENSIVE_JUDGE_PROMPT,
+    FINAL_OUTPUT_JUDGE_PROMPT,
+    AGENT_JUDGE_PROMPT,
+    SUPERVISOR_JUDGE_PROMPT,
+    PLANNER_JUDGE_PROMPT,
+)
+from evaluation.llm_j.state import (
+    PlannerEvaluation,
+    SupervisorEvaluation,
+    AgentEvaluation,
+    FinalOutputEvaluation,
+    ComprehensiveEvaluation,
+)
 
 judge_llm = get_llm()
 
 
-class EvaluationResult(BaseModel):
-    step_by_step_analysis: Annotated[
-        str,
-        StringConstraints(max_length=800)
-    ] = Field(
-        description=(
-            "Análisis conciso paso a paso. "
-            "Máximo 120 palabras o 800 caracteres."
-        )
-    )
-    score: int = Field(
-        description="Puntuación 0-10. 0=Error Crítico/Invención, 5=Error Lógico/Procedimiento, 10=Perfecto."
-    )
-    error_type: str = Field(
-        description="Categoría: 'None' (Correcto), 'Fabrication' (Dato inventado), 'Logic_Error' (SQL/Tool mal formulada), 'Data_Mismatch' (Dato mal leído)."
-    )
-
-
-JUDGE_PROMPT = """
-Eres un Auditor de Calidad para sistemas de Inteligencia Artificial (LLM-as-a-Judge).
-Tu trabajo es evaluar una interacción completa basándote en el CONTEXTO TÉCNICO disponible y el COMPORTAMIENTO ESPERADO (en caso de que esté especificado).
-
---- INPUTS DEL SISTEMA ---
-1. [PREGUNTA]: {question}
-2. [COMPORTAMIENTO ESPERADO]: {expected_behavior}
-3. [CONTEXTO TÉCNICO] (Tools/SQL): {context}
-4. [RESPUESTA AGENTE]: {answer}
--------------------------
-
---- PROCEDIMIENTO DE AUDITORÍA (PASO A PASO) ---
-
-PASO 1: VERIFICAR LA LÓGICA DE LA HERRAMIENTA (Procedimiento)
-Analiza si la herramienta o consulta ejecutada (visible en [CONTEXTO TÉCNICO]) tiene sentido para la [PREGUNTA].
-- **Patrón de Orden:** Si el usuario pide "Mínimos/Bajos/Peores", la SQL/Lógica debe buscar valores ascendentes (ASC). Si usa DESC (descendente), es un **Logic_Error**.
-- **Patrón de Cantidad:** Si el usuario pide "Top 3", la consulta debe tener un límite acorde (LIMIT 3). Si trae solo 1, es un error de procedimiento.
-- **Patrón RAG:** Si es texto, verifica si el fragmento recuperado tiene relación semántica con la pregunta.
-- Máximo 120 palabras y Formato en viñetas (bullets).
-
-PASO 2: VERIFICAR LA FIDELIDAD DEL DATO (Grounding)
-Compara los datos/hechos de la [RESPUESTA FINAL] con el [CONTEXTO TÉCNICO].
-- **Si hay Tabla/Números:** Verifica que el número citado en la respuesta coincida exactamente con la celda correspondiente del contexto. Si el agente cita una columna equivocada (ej: Low en vez de Close) o un número que no existe, es **Fabrication** o **Data_Mismatch**.
-- **Si hay Texto (RAG):** Verifica que la afirmación del agente esté respaldada por el texto recuperado.
-- **Si hay Error/Vacío:** Si el contexto dice "No results" y el agente inventa una respuesta, es **Fabrication** (Muy grave).
-
---- GUÍA DE PUNTUACIÓN ---
-
-* **SCORE 10 (Impecable):** * La lógica de la herramienta fue correcta (ej: orden correcto).
-    * El agente extrajo el dato fielmente del contexto.
-    * O BIEN: El contexto estaba vacío y el agente respondió honestamente que no sabía.
-
-* **SCORE 5 (Error de Lógica/Procedimiento - "Honest but Wrong"):**
-    * El agente reporta fielmente lo que dice el contexto, PERO la consulta subyacente estaba mal planteada para la intención del usuario (ej: el usuario pidió los precios más bajos, la SQL trajo los más altos, y el agente reportó esos precios altos). El agente no miente, pero el sistema falló.
-    * El agente reporta fielmente lo que dice el contexto, PERO NO responde con todos los datos ofrecidos por la herramienta. (ej: una consulta con LIMIT 3 y un dataframe con 3 filas, pero el agente solo reporta 2 resultados). El agente no miente, pero el sistema falló. 
-
-* **SCORE 0 (Alucinación/Invención - "Liar"):**
-    * El agente da datos numéricos o hechos que NO aparecen en el contexto.
-    * El agente modifica los datos arbitrariamente.
-    * El contexto es un error y el agente responde como si tuviera datos.
-
-Analiza críticamente. No asumas nada. Tu veredicto debe basarse solo en la evidencia mostrada.
-"""
-
-
-def evaluate_response(question, context, answer, expected_behavior="Sin especificar"):
-    structured_llm = judge_llm.with_structured_output(EvaluationResult)
-    prompt = ChatPromptTemplate.from_template(JUDGE_PROMPT)
-
+def evaluate_planner(
+    user_message: str, generated_tasks: list, expected_behavior: str
+) -> PlannerEvaluation:
+    """Evalúa el módulo Planner"""
+    structured_llm = judge_llm.with_structured_output(PlannerEvaluation)
+    prompt = ChatPromptTemplate.from_template(PLANNER_JUDGE_PROMPT)
     chain = prompt | structured_llm
 
     try:
         result = chain.invoke(
             {
-                "question": question,
-                "context": context,
-                "answer": answer,
+                "user_message": user_message,
+                "generated_tasks": generated_tasks,
                 "expected_behavior": expected_behavior,
             }
         )
         return result
     except Exception as e:
-        return EvaluationResult(
-            step_by_step_analysis=f"Error Juez: {str(e)}",
-            score=0,
-            error_type="System_Error",
+        return PlannerEvaluation(
+            correctness=1,
+            completeness=1,
+            precision=1,
+            task_decomposition=1,
+            errors=[f"Error de evaluación: {str(e)}"],
+            analysis=f"Fallo crítico en evaluación del Planner: {str(e)}",
+        )
+
+
+def evaluate_supervisor(
+    pending_tasks: list, routing_trace: list, expected_behavior: str
+) -> SupervisorEvaluation:
+    """Evalúa el módulo Supervisor"""
+    structured_llm = judge_llm.with_structured_output(SupervisorEvaluation)
+    prompt = ChatPromptTemplate.from_template(SUPERVISOR_JUDGE_PROMPT)
+    chain = prompt | structured_llm
+
+    try:
+        result = chain.invoke(
+            {
+                "pending_tasks": pending_tasks,
+                "routing_trace": routing_trace,
+                "expected_behavior": expected_behavior,
+            }
+        )
+        return result
+    except Exception as e:
+        return SupervisorEvaluation(
+            routing_accuracy=1,
+            task_completion=1,
+            routing_decisions=[],
+            errors=[f"Error de evaluación: {str(e)}"],
+            analysis=f"Fallo crítico en evaluación del Supervisor: {str(e)}",
+        )
+
+
+def evaluate_agent(
+    agent_name: str,
+    current_task: str,
+    available_tools: list,
+    tools_used: list,
+    tool_outputs: str,
+    agent_response: str,
+    expected_behavior: str,
+) -> AgentEvaluation:
+    """Evalúa un agente específico"""
+    structured_llm = judge_llm.with_structured_output(AgentEvaluation)
+    prompt = ChatPromptTemplate.from_template(AGENT_JUDGE_PROMPT)
+    chain = prompt | structured_llm
+
+    try:
+        result = chain.invoke(
+            {
+                "agent_name": agent_name,
+                "current_task": current_task,
+                "available_tools": available_tools,
+                "tools_used": tools_used,
+                "tool_outputs": tool_outputs[:2000],  # Truncar si es muy largo
+                "agent_response": agent_response[:1000],
+                "expected_behavior": expected_behavior,
+            }
+        )
+        return result
+    except Exception as e:
+        return AgentEvaluation(
+            agent_name=agent_name,
+            tool_selection=1,
+            tool_execution=1,
+            output_fidelity=1,
+            output_completeness=1,
+            hallucination_check=1,
+            errors=[f"Error de evaluación: {str(e)}"],
+            analysis=f"Fallo crítico en evaluación del agente: {str(e)}",
+        )
+
+
+def evaluate_final_output(
+    original_tasks: list, agent_outputs: list, final_report: str, expected_behavior: str
+) -> FinalOutputEvaluation:
+    """Evalúa el informe final consolidado"""
+    structured_llm = judge_llm.with_structured_output(FinalOutputEvaluation)
+    prompt = ChatPromptTemplate.from_template(FINAL_OUTPUT_JUDGE_PROMPT)
+    chain = prompt | structured_llm
+
+    try:
+        result = chain.invoke(
+            {
+                "original_tasks": original_tasks,
+                "agent_outputs": agent_outputs,
+                "final_report": final_report[:2000],
+                "expected_behavior": expected_behavior,
+            }
+        )
+        return result
+    except Exception as e:
+        return FinalOutputEvaluation(
+            completeness=1,
+            accuracy=1,
+            structure=1,
+            chart_attribution=1,
+            errors=[f"Error de evaluación: {str(e)}"],
+            analysis=f"Fallo crítico en evaluación del output final: {str(e)}",
+        )
+
+
+def evaluate_comprehensive(
+    planner_eval: PlannerEvaluation,
+    supervisor_eval: SupervisorEvaluation,
+    agents_eval: List[AgentEvaluation],
+    final_eval: FinalOutputEvaluation,
+) -> ComprehensiveEvaluation:
+    """
+    Evaluación comprehensiva con escala 1-4
+    """
+
+    # Calcular promedios (escala 1-4)
+    planner_avg = (
+        planner_eval.correctness
+        + planner_eval.completeness
+        + planner_eval.precision
+        + planner_eval.task_decomposition
+    ) / 4
+
+    supervisor_avg = (
+        supervisor_eval.routing_accuracy + supervisor_eval.task_completion
+    ) / 2
+
+    agents_avg = (
+        sum(
+            (
+                a.tool_selection
+                + a.tool_execution
+                + a.output_fidelity
+                + a.output_completeness
+                + a.hallucination_check
+            )
+            / 5
+            for a in agents_eval
+        )
+        / len(agents_eval)
+        if agents_eval
+        else 1
+    )
+
+    final_avg = (
+        final_eval.completeness
+        + final_eval.accuracy
+        + final_eval.structure
+        + final_eval.chart_attribution
+    ) / 4
+
+    # Calcular overall score con ponderación (resultado 1-4)
+    overall_score_float = (
+        planner_avg * 0.20
+        + supervisor_avg * 0.25
+        + agents_avg * 0.40
+        + final_avg * 0.15
+    )
+    overall_score_calculated = overall_score_float
+
+    # Determinar error category (adaptado a escala 1-4)
+    if overall_score_calculated >= 3.5:
+        error_category = "None"
+    elif planner_avg <= 2:
+        error_category = "Planning_Error"
+    elif supervisor_eval.routing_accuracy <= 2:
+        error_category = "Routing_Error"
+    elif any(a.tool_execution <= 2 for a in agents_eval):
+        error_category = "Tool_Error"
+    elif any(a.hallucination_check == 1 for a in agents_eval):
+        error_category = "Fabrication"
+    elif planner_eval.completeness <= 2 or final_eval.completeness <= 2:
+        error_category = "Incompleteness"
+    else:
+        error_category = "None"
+
+    # Identificar critical failures
+    critical_failures = []
+
+    if any(a.hallucination_check == 1 for a in agents_eval):
+        critical_failures.append("Fabricación de datos detectada")
+
+    if supervisor_eval.routing_accuracy <= 2 and len(agents_eval) > 1:
+        critical_failures.append("Routing incorrecto en múltiples tareas")
+
+    # Generar executive summary
+    if overall_score_calculated >= 3.5:
+        estado = "EXCELENTE"
+        descripcion = "Todos los módulos funcionan óptimamente."
+    elif overall_score_calculated >= 2.5:
+        estado = "BUENO"
+        descripcion = "Funcionamiento correcto con pequeñas áreas de mejora."
+    elif overall_score_calculated >= 1.5:
+        estado = "MEJORABLE"
+        descripcion = "Errores moderados detectados que requieren atención."
+    else:
+        estado = "CRÍTICO"
+        descripcion = "Errores graves que afectan funcionalidad."
+
+    # Identificar módulo con peor desempeño
+    scores_modulos = [
+        ("Planner", planner_avg),
+        ("Supervisor", supervisor_avg),
+        ("Agentes", agents_avg),
+        ("Output Final", final_avg),
+    ]
+    peor_modulo, peor_score = min(scores_modulos, key=lambda x: x[1])
+
+    if peor_score < 3:
+        summary = (
+            f"Sistema en estado {estado} (score: {overall_score_calculated}/4). "
+            f"{descripcion} Módulo con menor desempeño: {peor_modulo} ({peor_score:.1f}/4)."
+        )
+    else:
+        summary = f"Sistema en estado {estado} (score: {overall_score_calculated}/4). {descripcion}"
+
+    # Intentar obtener un resumen narrativo del LLM
+    try:
+        structured_llm = judge_llm.with_structured_output(ComprehensiveEvaluation)
+        prompt = ChatPromptTemplate.from_template(COMPREHENSIVE_JUDGE_PROMPT)
+        chain = prompt | structured_llm
+
+        result = chain.invoke(
+            {
+                "planner_eval": planner_eval.model_dump_json(),
+                "supervisor_eval": supervisor_eval.model_dump_json(),
+                "agents_eval": [a.model_dump_json() for a in agents_eval],
+                "final_eval": final_eval.model_dump_json(),
+            }
+        )
+
+        # Forzar los valores calculados manualmente
+        result.planner = planner_eval
+        result.supervisor = supervisor_eval
+        result.agents = agents_eval
+        result.final_output = final_eval
+        result.overall_score = overall_score_calculated
+        result.error_category = error_category
+
+        # Si el LLM generó un mejor resumen, usarlo
+        if result.executive_summary and len(result.executive_summary) > 10:
+            summary = result.executive_summary
+
+        result.executive_summary = summary
+        result.critical_failures = critical_failures if critical_failures else []
+
+        return result
+
+    except Exception as e:
+
+        # FALLBACK COMPLETO: Crear el objeto manualmente
+        print(f"[JUDGE WARNING] LLM falló, usando fallback manual: {str(e)}")
+
+        return ComprehensiveEvaluation(
+            planner=planner_eval,
+            supervisor=supervisor_eval,
+            agents=agents_eval,
+            final_output=final_eval,
+            overall_score=overall_score_calculated,
+            critical_failures=critical_failures,
+            error_category=error_category,
+            executive_summary=summary,
         )

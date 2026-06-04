@@ -3,7 +3,18 @@ import sqlite3
 import os
 
 
-def download_and_save(symbols=["BTC-USD", "ETH-USD", "SOL-USD"]):
+def download_and_save():
+
+    symbols = [
+        "BTC-USD",  # Reserva de valor
+        "ETH-USD",  # Smart Contracts (DeFi)
+        "SOL-USD",  # High Speed / High Risk
+        "BNB-USD",  # Exchange Token
+        "XRP-USD",  # Banca / Pagos
+        "ADA-USD",  # Académico / Peer Review
+        "DOGE-USD",  # Meme / Alta Volatilidad
+    ]
+
     # 1. Carpeta 'crypto'
     folder = "./crypto"
     if not os.path.exists(folder):

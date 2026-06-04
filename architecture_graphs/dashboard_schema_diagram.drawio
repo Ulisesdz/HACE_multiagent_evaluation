@@ -1,0 +1,121 @@
+<mxfile host="65bd71144e">
+    <diagram id="dashboard-diagram" name="Page-1">
+        <mxGraphModel dx="3149" dy="936" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="900" math="0" shadow="0">
+            <root>
+                <mxCell id="cell-0"/>
+                <mxCell id="cell-1" parent="cell-0"/>
+                <mxCell id="cell-outer" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f4fb;strokeColor=#5b9bd5;strokeWidth=2;dashed=1;" parent="cell-1" vertex="1">
+                    <mxGeometry x="-30" y="30" width="1300" height="870" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-box" value="&lt;i&gt;Sidebar&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f7ff;strokeColor=#5b9bd5;strokeWidth=1;dashed=1;verticalAlign=top;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="30" y="50" width="200" height="820" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-title" value="&lt;b&gt;Comité de Inversión&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;fontColor=#0050a0;" parent="cell-1" vertex="1">
+                    <mxGeometry x="40" y="75" width="180" height="36" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-back" value="← Volver al Asesor Financiero&lt;br&gt;st.switch_page(&quot;app.py&quot;)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="40" y="120" width="180" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-source" value="&lt;b&gt;Fuente de Datos&lt;/b&gt;&lt;br&gt;st.radio()&lt;br&gt;● Offline (dataset)&lt;br&gt;○ Online (chat)&lt;br&gt;○ Ambas" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=11;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="40" y="180" width="180" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-badge" value="&lt;b&gt;Badge fuente activa&lt;/b&gt;&lt;br&gt;Azul: Offline · Verde: Online&lt;br&gt;Violeta: Ambas&lt;br&gt;&lt;i&gt;n casos cargados&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontColor=#0050a0;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="40" y="295" width="180" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sb-filters" value="&lt;b&gt;Filtros&lt;/b&gt;&lt;br&gt;Dificultad (selectbox)&lt;br&gt;All · Easy · Medium · Hard · VH&lt;br&gt;Categoría (selectbox)&lt;br&gt;Métodos a mostrar (multiselect)&lt;br&gt;Baseline · LLM-Judge · HACE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#aaaaaa;fontSize=11;align=center;" parent="cell-1" vertex="1">
+                    <mxGeometry x="40" y="390" width="180" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-load" value="&lt;b&gt;load_data(source) · @st.cache_data(ttl=60)&lt;/b&gt;&lt;br&gt;offline_metrics.csv · online_metrics.csv → df_filtered" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="405" y="50" width="420" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-mg" value="&lt;b&gt;Métricas globales · st.columns(4)&lt;/b&gt;&lt;br&gt;Total casos evaluados · Baseline avg · LLM-Judge avg (÷4) · HACE avg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="330" y="130" width="570" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-arr-load-mg" style="edgeStyle=orthogonalEdgeStyle;" parent="cell-1" source="cell-load" target="cell-mg" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-tab1" value="&lt;b&gt;Comparación Global&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontColor=#0050a0;" parent="cell-1" vertex="1">
+                    <mxGeometry x="258" y="200" width="155" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-tab2" value="&lt;b&gt;HACE Detallado&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontColor=#5b008f;" parent="cell-1" vertex="1">
+                    <mxGeometry x="423" y="200" width="155" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-tab3" value="&lt;b&gt;Análisis de Tiempos&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontColor=#1a6b1a;" parent="cell-1" vertex="1">
+                    <mxGeometry x="588" y="200" width="155" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-tab4" value="&lt;b&gt;Análisis por Dificultad&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;fontColor=#b35900;" parent="cell-1" vertex="1">
+                    <mxGeometry x="753" y="200" width="155" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-tab5" value="Explorador de Datos" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="918" y="200" width="155" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-arr-mg-tabs" style="edgeStyle=orthogonalEdgeStyle;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="cell-1" source="cell-mg" target="cell-tab1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-cg-box" value="&lt;i&gt;Tab 1 · Comparación Global&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf4ff;strokeColor=#6c8ebf;strokeWidth=1;dashed=1;verticalAlign=top;fontSize=11;fontColor=#0050a0;" parent="cell-1" vertex="1">
+                    <mxGeometry x="248" y="260" width="315" height="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-hist" value="&lt;b&gt;Histograma de scores&lt;/b&gt;&lt;br&gt;px.histogram()&lt;br&gt;Baseline / LLM-Judge / HACE&lt;br&gt;superpuestos · nbins=20&lt;br&gt;opacity=0.7 · barmode=overlay" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="263" y="290" width="280" height="115" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-boxplot" value="&lt;b&gt;Boxplot comparativo&lt;/b&gt;&lt;br&gt;px.box()&lt;br&gt;IQR · mediana · whiskers&lt;br&gt;outliers individuales" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="263" y="425" width="280" height="95" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-hd-box" value="&lt;i&gt;Tab 2 · HACE Detallado&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f0ff;strokeColor=#9673a6;strokeWidth=1;dashed=1;verticalAlign=top;fontSize=11;fontColor=#5b008f;" parent="cell-1" vertex="1">
+                    <mxGeometry x="580" y="260" width="310" height="610" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-kpi" value="&lt;b&gt;KPIs · st.columns(4)&lt;/b&gt;&lt;br&gt;% uso Layer 3 · tiempo avg&lt;br&gt;% confianza alta · % calidad excelente" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="592" y="290" width="283" height="65" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-spc" value="&lt;b&gt;Scores por capa · go.Box&lt;/b&gt;&lt;br&gt;L1 · L2 · L3 (si existe)&lt;br&gt;+ Donut uso Layer 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="593.5" y="378" width="283" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-quality" value="&lt;b&gt;Distribución de calidad&lt;/b&gt;&lt;br&gt;px.bar() quality_counts&lt;br&gt;Excelente · Bueno · Mejorable · Crítico" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="593.5" y="476" width="283" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-sem" value="&lt;b&gt;Layer 2 (Embeddings)&lt;/b&gt;&lt;br&gt;Histograma semántico + vline media&lt;br&gt;Media · desv. std · casos &lt; threshold" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="593.5" y="580" width="283" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-corr" value="&lt;b&gt;Correlación L2-L3&lt;/b&gt;&lt;br&gt;Scatter + OLS trendline&lt;br&gt;r de Pearson (alto/medio/bajo)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="592" y="682.5" width="283" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-escal" value="&lt;b&gt;Patrón escalación L3&lt;/b&gt;&lt;br&gt;Bins L2 → tasa escalación (%)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="593.5" y="780" width="283" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-at-box" value="&lt;i&gt;Tab 3 · Análisis de Tiempos&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#efffef;strokeColor=#82b366;strokeWidth=1;dashed=1;verticalAlign=top;fontSize=11;fontColor=#1a6b1a;" parent="cell-1" vertex="1">
+                    <mxGeometry x="905" y="260" width="310" height="310" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-bartime" value="&lt;b&gt;Tiempo promedio por método&lt;/b&gt;&lt;br&gt;px.bar() · Baseline / LLM-J / HACE&lt;br&gt;(Baseline omitido de comparación)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="918" y="290" width="283" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-speedup" value="&lt;b&gt;Comparación LLM-Judge vs HACE&lt;/b&gt;&lt;br&gt;st.metric() · delta_color=inverse&lt;br&gt;× ratio más rápido/lento&lt;br&gt;Baseline solo como referencia" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="918" y="378" width="283" height="85" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-l3lat" value="&lt;b&gt;Impacto Layer 3 en latencia&lt;/b&gt;&lt;br&gt;go.Box() · Sin Layer 3 vs Con Layer 3&lt;br&gt;Tiempo promedio de cada grupo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="918" y="476" width="283" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-ad-box" value="&lt;i&gt;Tab 4 · Análisis por Dificultad&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffbf0;strokeColor=#d6b656;strokeWidth=1;dashed=1;verticalAlign=top;fontSize=11;fontColor=#b35900;" parent="cell-1" vertex="1">
+                    <mxGeometry x="250" y="570" width="310" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-bargroup" value="&lt;b&gt;Barras agrupadas por dificultad&lt;/b&gt;&lt;br&gt;px.bar() · barmode=group&lt;br&gt;Easy → Medium → Hard → Very Hard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="263.5" y="632" width="283" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="cell-pivot" value="&lt;b&gt;Tabla pivot · heatmap&lt;/b&gt;&lt;br&gt;pivot(Dificultad × Método)&lt;br&gt;background_gradient(cmap=RdYlGn)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;" parent="cell-1" vertex="1">
+                    <mxGeometry x="263.5" y="737" width="283" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="0" value="&lt;i&gt;Tab 5 · Explorador de Datos&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=1;dashed=1;verticalAlign=top;fontSize=11;" vertex="1" parent="cell-1">
+                    <mxGeometry x="902.5" y="580" width="315" height="295" as="geometry"/>
+                </mxCell>
+                <mxCell id="1" value="&lt;b&gt;st.multiselect() columnas&lt;/b&gt;&lt;br&gt;Selección de columnas a mostrar&lt;br&gt;Defaults: query_id · user_query · difficulty&lt;br&gt;· baseline_score · llm_judge_overall&lt;br&gt;· HACE_score · quality · confidence · L3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="cell-1">
+                    <mxGeometry x="917.5" y="611" width="283" height="115" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="&lt;b&gt;st.dataframe()&lt;/b&gt;&lt;br&gt;Tabla interactiva filtrada&lt;br&gt;height=400" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="cell-1">
+                    <mxGeometry x="917.5" y="739" width="283" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="&lt;b&gt;st.download_button()&lt;/b&gt;&lt;br&gt;Descargar CSV filtrado" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="cell-1">
+                    <mxGeometry x="917.5" y="812" width="283" height="44" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

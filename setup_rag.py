@@ -5,9 +5,7 @@ from langchain_chroma import Chroma
 from orchestrator.config import (
     get_embeddings,
     CRYPTO_RAG_TXT,
-    WEATHER_RAG_TXT,
     CRYPTO_VECTOR_DB,
-    WEATHER_VECTOR_DB,
 )
 
 
@@ -39,4 +37,3 @@ def create_vector_store(txt_path, db_path, name):
 
 if __name__ == "__main__":
     create_vector_store(CRYPTO_RAG_TXT, CRYPTO_VECTOR_DB, "Crypto RAG")
-    create_vector_store(WEATHER_RAG_TXT, WEATHER_VECTOR_DB, "Weather RAG")
