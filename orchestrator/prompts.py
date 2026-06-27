@@ -144,6 +144,7 @@ def get_technical_agent_prompt(available_coins: list) -> str:
         "   Formato: 'Basado en los últimos cierres [COPIA LOS DATOS], el modelo estima un precio futuro de: $[COPIA EL PRECIO EXACTO]'.\n\n"
         "--- REGLA DE ORO (TRANSCRIBIR, NO DESCRIBIR) ---\n"
         "PROHIBIDO EXPLICAR LO QUE HIZO LA HERRAMIENTA. Tu reporte debe contener LA INFORMACIÓN NUMÉRICA OBTENIDA y nada más.\n"
+        "SI LA HERRAMIENTA DEVUELVE UN ERROR, ESTÁ VACÍA O NO CONTIENE NÚMEROS, PROHIBIDO INVENTAR DATOS. Responde exactamente: 'Datos no disponibles en la base de datos'.\n"
         "EJEMPLO DE LO QUE NO DEBES HACER (MAL):\n"
         "- 'La respuesta se basa en la salida del modelo de predicción...'\n"
         "- 'He utilizado la herramienta para obtener...'\n"
@@ -214,15 +215,18 @@ def get_sql_generation_prompt(schema_str: str, user_query: str) -> str:
         f"{schema_str}\n"
         f"--------------------------\n\n"
         f"REGLAS CRÍTICAS:\n"
-        f"1. FORMATO: Devuelve SOLO el código SQL. Sin markdown.\n"
-        f"2. COLUMNAS: Selecciona siempre la fecha ('Date') junto con el valor ('Close', 'Volume').\n"
-        f'   - Bien: SELECT "Date", "Close" FROM "BTC_USD"...\n'
-        f"3. ORDEN: \n"
+        f"1. FORMATO: Devuelve SOLO el código SQL. Sin markdown ni explicaciones.\n"
+        f"2. IDIOMA (CRÍTICO - NO TRADUCIR): ESTÁ ESTRICTAMENTE PROHIBIDO traducir los nombres de las columnas al español. "
+        f"DEBES usar exactamente los nombres en inglés del esquema (Date, Close, High, Low, Open, Volume).\n"
+        f'   - MAL: SELECT "fecha", "precio" FROM SOL_USD\n'
+        f"   - MAL: SELECT Date, valor FROM SOL_USD\n"
+        f'   - BIEN: SELECT "Date", "Close" FROM "SOL_USD"\n'
+        f'3. COLUMNAS: Selecciona siempre "Date" junto con el valor solicitado (usualmente "Close").\n'
+        f"4. ORDEN: \n"
         f"   - Para 'últimos precios' o 'reciente': ORDER BY \"Date\" DESC LIMIT X.\n"
-        f"4. Si piden 'Top' o 'Máximos históricos' (All-time high), **NO USES CLAÚSULA WHERE CON FECHA**.\n"
-        f"   - Mal: SELECT ... WHERE Date = '2023-...' ORDER BY Close DESC\n"
-        f"   - Bien: SELECT Date, Close FROM ... ORDER BY Close DESC LIMIT X\n"
-        f"4. ROBUSTEZ: Usa comillas dobles para nombres de tablas/columnas si es necesario.\n\n"
+        f"5. TOP / MÁXIMOS HISTÓRICOS: Si piden 'Top' o 'Precios más altos', NO USES WHERE con fecha.\n"
+        f'   - Bien: SELECT "Date", "Close" FROM "SOL_USD" ORDER BY "Close" DESC LIMIT X\n'
+        f"6. ROBUSTEZ: Usa siempre comillas dobles para nombres de tablas y columnas.\n\n"
         f"Pregunta: '{user_query}'\n"
         f"SQL:"
     )

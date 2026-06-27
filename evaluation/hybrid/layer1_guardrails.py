@@ -290,7 +290,7 @@ class GuardrailsValidator:
     # HELPERS
     def _extract_numbers(self, text: str) -> List[float]:
         """
-        Extraer números de texto usando regex
+        Extraer números de texto usando regex, ignorando formatos de fecha.
 
         Args:
             text: String de texto
@@ -298,8 +298,16 @@ class GuardrailsValidator:
         Returns:
             Lista de números (float)
         """
+        # 1. Eliminar patrones de fecha (YYYY-MM-DD) para evitar falsos negativos
+        text_clean = re.sub(r"\b\d{4}-\d{2}-\d{2}\b", "", text)
+
+        # 2. Eliminar timestamps (HH:MM:SS)
+        # para que no extraiga esos números y altere las validaciones de máximos
+        text_clean = re.sub(r"\b\d{2}:\d{2}:\d{2}(?:\.\d+)?\b", "", text_clean)
+
+        # 3. Extraer los números restantes
         pattern = r"-?\d+(?:[.,]\d+)?"
-        matches = re.findall(pattern, text)
+        matches = re.findall(pattern, text_clean)
 
         numbers = []
         for match in matches:
